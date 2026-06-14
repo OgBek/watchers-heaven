@@ -12,16 +12,7 @@ interface PosterCardProps {
   type?: 'movie' | 'tv';
 }
 
-// Deterministic helper to assign realistic video qualities based on release year and movie ID
-function getMovieQuality(id: number, year?: string): string {
-  const qualities = ['4K', 'BluRay', 'HD', 'HD-Rip', 'CAM'];
-  // Recent 2026/2025 releases are more likely to have CAM or HD versions initially
-  if (year && (year.includes('2026') || year.includes('2025'))) {
-    return id % 3 === 0 ? 'CAM' : 'HD';
-  }
-  const index = Math.abs(id) % qualities.length;
-  return qualities[index];
-}
+// Quality badge removed — TMDB does not provide actual stream quality data
 
 export function PosterCard({ id, title, posterPath, rating, year, className, type = 'movie' }: PosterCardProps) {
   const router = useRouter();
@@ -32,8 +23,6 @@ export function PosterCard({ id, title, posterPath, rating, year, className, typ
   const handleClick = () => {
     router.push(`/${locale}/${type}/${id}`);
   };
-
-  const quality = getMovieQuality(id, year);
 
   return (
     <div 
@@ -48,12 +37,6 @@ export function PosterCard({ id, title, posterPath, rating, year, className, typ
             <span>{rating.toFixed(1)}</span>
           </div>
         )}
-      </div>
-
-      <div className="absolute top-2 right-2 z-30 pointer-events-none">
-        <div className="bg-blue-600/80 backdrop-blur-md text-white text-[9px] font-black tracking-wider px-1.5 py-0.5 rounded-md uppercase border border-blue-500/20 shadow-sm">
-          {quality}
-        </div>
       </div>
 
       {/* Fallback */}

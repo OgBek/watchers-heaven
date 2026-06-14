@@ -52,14 +52,14 @@ export function FloatingNav() {
               >
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
-                    ? 'bg-blue-50 dark:bg-blue-950/60 text-[#007bff] dark:text-blue-400' 
-                    : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-650 dark:hover:text-slate-350'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 text-accent-blue dark:text-blue-400' 
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-105/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}>
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
                 
                 {/* CSS Group Hover Tooltip */}
-                <div className="absolute opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-850 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl border border-slate-700/50 dark:border-slate-800/50">
+                <div className="absolute hidden lg:block opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-900 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl border border-slate-705/50 dark:border-slate-800/50">
                   {item.label}
                 </div>
               </Link>
@@ -82,14 +82,14 @@ export function FloatingNav() {
               >
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
-                    ? 'bg-blue-50 dark:bg-blue-950/60 text-[#007bff] dark:text-blue-400' 
-                    : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-650 dark:hover:text-slate-350'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 text-accent-blue dark:text-blue-400' 
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-105/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}>
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
                 
                 {/* CSS Group Hover Tooltip */}
-                <div className="absolute opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-850 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl border border-slate-700/50 dark:border-slate-800/50">
+                <div className="hidden lg:block absolute opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-900 dark:bg-slate-900 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl border border-slate-700/50 dark:border-slate-800/50">
                   {item.label}
                 </div>
               </Link>

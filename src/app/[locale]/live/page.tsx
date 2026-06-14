@@ -32,7 +32,7 @@ export default function LiveTvPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-            <Tv className="w-6 h-6 text-[#007bff]" />
+            <Tv className="w-6 h-6 text-accent-blue" />
             Live TV Channels
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Stream live channels directly in your browser</p>
@@ -53,7 +53,7 @@ export default function LiveTvPage() {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 gap-3">
-          <Loader className="w-8 h-8 animate-spin text-[#007bff]" />
+          <Loader className="w-8 h-8 animate-spin text-accent-blue" />
           <span>Fetching Live Streams...</span>
         </div>
       ) : (
@@ -119,7 +119,7 @@ export default function LiveTvPage() {
                       onClick={() => setSelectedChannel(channel)}
                       className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all duration-300 text-left border ${
                         isActive
-                          ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-100/50 dark:border-blue-900/50 text-[#007bff] dark:text-blue-450'
+                          ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-100/50 dark:border-blue-900/50 text-accent-blue dark:text-blue-450'
                           : 'bg-transparent border-transparent text-slate-600 dark:text-slate-350 hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
                       }`}
                     >
@@ -128,7 +128,7 @@ export default function LiveTvPage() {
                         <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate block">Slug: {channel.slug}</span>
                       </div>
                       {isActive && (
-                        <Play className="w-4 h-4 fill-[#007bff] dark:fill-blue-400 text-[#007bff] dark:text-blue-400 shrink-0" />
+                        <Play className="w-4 h-4 fill-accent-blue dark:fill-blue-400 text-accent-blue dark:text-blue-400 shrink-0" />
                       )}
                     </button>
                   );

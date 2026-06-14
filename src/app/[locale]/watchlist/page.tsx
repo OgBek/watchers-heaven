@@ -43,7 +43,7 @@ export default function WatchlistPage() {
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 flex items-center gap-2">
-            <Eye className="w-8 h-8 text-[#007bff]" />
+            <Eye className="w-8 h-8 text-accent-blue" />
             My Watchlist
           </h1>
           <p className="text-slate-500 text-sm mt-1">Keep track of movies and shows you want to watch</p>
@@ -51,7 +51,7 @@ export default function WatchlistPage() {
 
         {loading ? (
           <div className="flex justify-center py-20">
-            <Loader className="w-8 h-8 animate-spin text-[#007bff]" />
+            <Loader className="w-8 h-8 animate-spin text-accent-blue" />
           </div>
         ) : items.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">

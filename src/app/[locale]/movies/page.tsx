@@ -71,7 +71,7 @@ export default function MoviesPage() {
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-4 border-b border-slate-100 dark:border-slate-800/80">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-              <Film className="w-8 h-8 text-[#007bff]" />
+              <Film className="w-8 h-8 text-accent-blue" />
               Movies
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Explore all movies with real-time filters</p>
@@ -123,7 +123,7 @@ export default function MoviesPage() {
         {/* Content grid */}
         {loading ? (
           <div className="flex justify-center py-20">
-            <Loader className="w-8 h-8 animate-spin text-[#007bff]" />
+            <Loader className="w-8 h-8 animate-spin text-accent-blue" />
           </div>
         ) : movies.length > 0 ? (
           <div className="space-y-8">

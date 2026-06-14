@@ -4,7 +4,7 @@ import { ApiGateway } from '@/lib/api/gateway';
 import { Folder, ArrowLeft, Loader, Star, Film } from 'lucide-react';
 import { PosterCard } from '@/components/cards/PosterCard';
 
-const COLLECTION_IDS = [10, 1241, 86311, 119, 263, 9481, 531241, 10194];
+const COLLECTION_IDS = [10, 1241, 86311, 119, 263, 9481, 531241, 10194, 328, 121938, 131635, 9485, 295, 8650];
 
 export default function CollectionsPage() {
   const [collections, setCollections] = useState<any[]>([]);
@@ -69,7 +69,7 @@ export default function CollectionsPage() {
         ) : (
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-              <Folder className="w-8 h-8 text-[#007bff]" />
+              <Folder className="w-8 h-8 text-accent-blue" />
               Movie Collections
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Explore curated movie collections and legendary franchises</p>
@@ -152,7 +152,7 @@ export default function CollectionsPage() {
           </div>
         ) : loadingList ? (
           <div className="flex justify-center py-20">
-            <Loader className="w-8 h-8 animate-spin text-[#007bff]" />
+            <Loader className="w-8 h-8 animate-spin text-accent-blue" />
           </div>
         ) : (
           /* Predefined Collections Poster Cards list */

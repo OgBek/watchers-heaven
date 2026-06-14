@@ -106,7 +106,7 @@ export default function TvShowDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-main)]">
-        <Loader className="w-8 h-8 animate-spin text-[#007bff]" />
+        <Loader className="w-8 h-8 animate-spin text-accent-blue" />
       </div>
     );
   }
@@ -117,7 +117,7 @@ export default function TvShowDetailPage() {
         <p className="text-slate-500 mb-4 font-semibold">TV Show details not found.</p>
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 px-4 py-2 bg-[#007bff] text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-accent-blue text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Go Back
@@ -265,7 +265,7 @@ export default function TvShowDetailPage() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => router.push(`/${locale}/watch/${id}?s=1&e=1`)}
-                className="flex items-center gap-2 bg-[#007bff] hover:bg-blue-600 text-white px-5 py-3 rounded-2xl text-xs font-bold transition shadow-md"
+                className="flex items-center gap-2 bg-accent-blue hover:bg-blue-600 text-white px-5 py-3 rounded-2xl text-xs font-bold transition shadow-md"
               >
                 <Play className="w-4 h-4 fill-white text-white" />
                 Watch S1E1
@@ -275,12 +275,12 @@ export default function TvShowDetailPage() {
                 onClick={toggleBookmark}
                 className={`p-3 rounded-2xl border transition ${
                   isBookmarked 
-                    ? 'bg-blue-50 border-blue-100 text-[#007bff] dark:bg-blue-950 dark:border-blue-900' 
+                    ? 'bg-blue-50 border-blue-100 text-accent-blue dark:bg-blue-950 dark:border-blue-900' 
                     : 'border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                 }`}
                 title="Add to watchlist"
               >
-                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#007bff]' : ''}`} />
+                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-accent-blue' : ''}`} />
               </button>
 
               <button 
@@ -365,10 +365,10 @@ export default function TvShowDetailPage() {
             {/* List of episodes */}
             {loadingEpisodes ? (
               <div className="flex justify-center py-10">
-                <Loader className="w-6 h-6 animate-spin text-[#007bff]" />
+                <Loader className="w-6 h-6 animate-spin text-accent-blue" />
               </div>
             ) : seasonDetails?.episodes ? (
-              <div className="space-y-3 max-h-[350px] overflow-y-auto scrollbar-none pr-1">
+              <div className="space-y-3 max-h-[700px] overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
                 {seasonDetails.episodes.map((ep: any) => (
                   <div 
                     key={ep.id}
@@ -397,7 +397,7 @@ export default function TvShowDetailPage() {
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">{ep.overview || 'No description available for this episode.'}</p>
                       </div>
                     </div>
-                    <Play className="w-4 h-4 text-[#007bff] dark:text-blue-400 shrink-0 hidden sm:block mr-2" />
+                    <Play className="w-4 h-4 text-accent-blue dark:text-blue-400 shrink-0 hidden sm:block mr-2" />
                   </div>
                 ))}
               </div>

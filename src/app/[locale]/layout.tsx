@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FloatingNav } from "@/components/layout/FloatingNav";
+import { Footer } from "@/components/layout/Footer";
 import { CinemaModeProvider } from "@/components/effects/CinemaModeProvider";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import Script from "next/script";
@@ -41,8 +42,11 @@ export default function RootLayout({
           <CinemaModeProvider>
             <div className="flex min-h-screen">
               <FloatingNav />
-              <main className="flex-1 pl-24 pr-4 md:pr-8 w-full relative">
-                {children}
+              <main className="flex-1 w-full relative px-4 lg:pl-24 lg:pr-8 flex flex-col justify-between">
+                <div className="flex-grow">
+                  {children}
+                </div>
+                <Footer />
               </main>
             </div>
           </CinemaModeProvider>

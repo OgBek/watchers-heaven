@@ -78,7 +78,7 @@ export default function MovieDetailPage() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[var(--color-main)]">
-        <Loader className="w-8 h-8 animate-spin text-[#007bff]" />
+        <Loader className="w-8 h-8 animate-spin text-accent-blue" />
       </div>
     );
   }
@@ -89,7 +89,7 @@ export default function MovieDetailPage() {
         <p className="text-slate-500 mb-4 font-semibold">Movie details not found.</p>
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 px-4 py-2 bg-[#007bff] text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-accent-blue text-white rounded-xl text-sm font-semibold hover:bg-blue-600 transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Go Back
@@ -237,7 +237,7 @@ export default function MovieDetailPage() {
             <div className="flex items-center gap-2">
               <button 
                 onClick={() => router.push(`/${locale}/watch/${id}`)}
-                className="flex items-center gap-2 bg-[#007bff] hover:bg-blue-600 text-white px-5 py-3 rounded-2xl text-xs font-bold transition shadow-md"
+                className="flex items-center gap-2 bg-accent-blue hover:bg-blue-600 text-white px-5 py-3 rounded-2xl text-xs font-bold transition shadow-md"
               >
                 <Play className="w-4 h-4 fill-white text-white" />
                 Watch Now
@@ -247,12 +247,12 @@ export default function MovieDetailPage() {
                 onClick={toggleBookmark}
                 className={`p-3 rounded-2xl border transition ${
                   isBookmarked 
-                    ? 'bg-blue-50 border-blue-100 text-[#007bff] dark:bg-blue-950 dark:border-blue-900' 
+                    ? 'bg-blue-50 border-blue-100 text-accent-blue dark:bg-blue-950 dark:border-blue-900' 
                     : 'border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                 }`}
                 title="Add to watchlist"
               >
-                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#007bff]' : ''}`} />
+                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-accent-blue' : ''}`} />
               </button>
 
               <button 
