@@ -1,94 +1,194 @@
 'use client';
-import { Play, Bookmark, ExternalLink, Image as ImageIcon } from 'lucide-react';
+import { Play, Bookmark, RefreshCw, Image as ImageIcon } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
-import { ApiGateway } from '@/lib/api/gateway';
+import { useState, useEffect, useRef } from 'react';
 
-interface HeroFeatureProps {
-  tmdbId: string;
-  title: string;
-  synopsis: string;
-  backdropPath: string;
-  genres: string[];
+interface Movie {
+  id: number;
+  title?: string;
+  name?: string;
+  backdrop_path?: string;
+  overview?: string;
 }
 
-export function HeroFeature({ tmdbId, title, backdropPath }: HeroFeatureProps) {
+interface HeroFeatureProps {
+  movies: Movie[];
+}
+
+export function HeroFeature({ movies }: HeroFeatureProps) {
   const router = useRouter();
   const pathname = usePathname() || '/';
   const segments = pathname.split('/').filter(Boolean);
   const locale = segments[0] && ['en','am','om','ti','so'].includes(segments[0]) ? segments[0] : 'en';
 
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const currentMovie = movies[activeIndex] || movies[0];
+
+  // Auto-slide effect
+  useEffect(() => {
+    if (movies.length <= 1) return;
+
+    timerRef.current = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % movies.length);
+    }, 5000); // 5 seconds interval
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [movies]);
+
+  // Load bookmark state
+  useEffect(() => {
+    if (typeof window !== 'undefined' && currentMovie) {
+      const stored = localStorage.getItem('watchers-heaven-watchlist');
+      if (stored) {
+        try {
+          const ids: string[] = JSON.parse(stored);
+          setIsBookmarked(ids.includes(currentMovie.id.toString()));
+        } catch {}
+      }
+    }
+  }, [currentMovie]);
+
+  const toggleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof window === 'undefined' || !currentMovie) return;
+
+    const tmdbId = currentMovie.id.toString();
+    const stored = localStorage.getItem('watchers-heaven-watchlist');
+    let ids: string[] = [];
+    if (stored) {
+      try {
+        ids = JSON.parse(stored);
+      } catch {}
+    }
+
+    if (ids.includes(tmdbId)) {
+      ids = ids.filter(i => i !== tmdbId);
+      setIsBookmarked(false);
+    } else {
+      ids.push(tmdbId);
+      setIsBookmarked(true);
+    }
+    localStorage.setItem('watchers-heaven-watchlist', JSON.stringify(ids));
+  };
+
   const handleWatch = () => {
-    router.push(`/${locale}/watch/${tmdbId}`);
+    if (!currentMovie) return;
+    router.push(`/${locale}/watch/${currentMovie.id}`);
   };
 
   const handleDetails = () => {
-    router.push(`/${locale}/movie/${tmdbId}`);
+    if (!currentMovie) return;
+    router.push(`/${locale}/movie/${currentMovie.id}`);
   };
 
+  if (!currentMovie) return null;
+
   return (
-    <section className="relative w-full px-3 pt-3 pb-20">
-      {/* Large Rounded Artwork Card */}
-      <div className="relative w-full h-[55vh] min-h-[400px] max-h-[600px] rounded-[1.5rem] overflow-hidden bg-slate-100 shadow-sm">
+    <section className="relative w-full px-2 pt-3 pb-8">
+      {/* Large Rounded Artwork Card (Sized to 70vh for premium visual scale) */}
+      <div className="relative w-full h-[70vh] min-h-[500px] max-h-[750px] rounded-[2.5rem] overflow-hidden bg-slate-100 dark:bg-slate-950 shadow-md">
         
         {/* Fallback */}
-        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-amber-100 via-amber-50 to-orange-100">
-          <ImageIcon className="w-16 h-16 text-amber-200" />
+        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950">
+          <ImageIcon className="w-20 h-20 text-slate-350 dark:text-slate-700" />
         </div>
 
-        {/* Backdrop Image */}
-        <img 
-          src={`https://image.tmdb.org/t/p/original${backdropPath}`} 
-          alt={title}
-          className="absolute inset-0 z-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000"
-          onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
-          onError={(e) => { e.currentTarget.style.opacity = '0'; }}
-        />
-      </div>
+        {/* Carousel Backdrop Images with Crossfade */}
+        {movies.map((m, idx) => (
+          <img 
+            key={m.id}
+            src={`https://image.tmdb.org/t/p/original${m.backdrop_path}`} 
+            alt={m.title || m.name}
+            className={`absolute inset-0 z-0 w-full h-full object-cover transition-all duration-1000 transform ${
+              idx === activeIndex 
+                ? 'opacity-100 scale-100' 
+                : 'opacity-0 scale-105 pointer-events-none'
+            }`}
+          />
+        ))}
 
-      {/* Floating Bottom Pill Panel — overlaps the hero */}
-      <div className="relative z-20 -mt-14 mx-auto bg-white rounded-2xl shadow-lg border border-slate-100 flex overflow-hidden w-[92%] max-w-[420px]">
-        
-        {/* Vertical "MOVIE" Label */}
-        <div className="w-10 flex-shrink-0 flex items-center justify-center border-r border-slate-100">
-          <span className="text-[9px] font-bold text-slate-400 tracking-[0.2em] uppercase -rotate-90 whitespace-nowrap select-none">
-            MOVIE
-          </span>
+        {/* Dynamic Indicator Dots */}
+        <div className="absolute top-6 right-8 z-30 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10">
+          {movies.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => {
+                setActiveIndex(idx);
+                if (timerRef.current) {
+                  clearInterval(timerRef.current);
+                  timerRef.current = setInterval(() => {
+                    setActiveIndex((prev) => (prev + 1) % movies.length);
+                  }, 5000);
+                }
+              }}
+              className={`h-2 rounded-full transition-all duration-500 ${
+                idx === activeIndex ? 'w-6 bg-blue-500' : 'w-2 bg-white/50 hover:bg-white'
+              }`}
+              title={`Slide ${idx + 1}`}
+            />
+          ))}
         </div>
 
-        {/* Controls */}
-        <div className="flex-1 px-5 py-4 flex flex-col items-center">
-          <h2 className="text-xl font-bold text-slate-800 mb-3 line-clamp-1">{title}</h2>
+        {/* Absolute Centered Badge inside the Cutout with Box Shadow pseudo corners */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 z-20 bg-white dark:bg-slate-900 px-8 py-5 rounded-[24px] flex flex-col items-center min-w-[280px] max-w-[380px] shadow-lg border border-slate-100 dark:border-slate-800">
           
+          {/* Left Inverted Corner */}
+          <div className="v-cutout-tr right-full bottom-0" />
+          
+          {/* Right Inverted Corner */}
+          <div className="v-cutout-bl left-full bottom-0" />
+
+          {/* Badge Content */}
+          <span className="text-[10px] font-extrabold tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase mb-1.5 select-none">
+            TRENDING MOVIE
+          </span>
+          
+          <h2 className="text-xl font-extrabold text-slate-850 dark:text-white mb-4 text-center line-clamp-1">
+            {currentMovie.title || currentMovie.name}
+          </h2>
+          
+          {/* Action Buttons */}
           <div className="flex items-center gap-2">
             <button 
               onClick={handleWatch}
-              className="flex items-center gap-1.5 bg-[#007bff] text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-600 smooth-transition shadow-sm"
+              className="flex items-center gap-1.5 bg-[#007bff] hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
             >
-              <Play className="w-3.5 h-3.5 fill-white" />
+              <Play className="w-3.5 h-3.5 fill-white text-white" />
               Watch
             </button>
             
             <button 
               onClick={handleDetails}
-              className="flex items-center gap-1.5 bg-[#007bff] text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-600 smooth-transition shadow-sm"
+              className="flex items-center bg-[#007bff] hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-sm"
             >
               Details
             </button>
             
             <button 
-              onClick={() => alert('Bookmarked!')}
-              className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg smooth-transition"
-              title="Bookmark"
+              onClick={toggleBookmark}
+              className={`p-2 rounded-xl transition-all border ${
+                isBookmarked 
+                  ? 'bg-blue-50 border-blue-100 text-[#007bff] dark:bg-blue-950/50 dark:border-blue-900' 
+                  : 'border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-650 hover:bg-slate-50'
+              }`}
+              title={isBookmarked ? 'Remove from Watchlist' : 'Add to Watchlist'}
             >
-              <Bookmark className="w-4 h-4" />
+              <Bookmark className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-[#007bff]' : ''}`} />
             </button>
             
             <button 
-              onClick={() => window.open(ApiGateway.getMovieEmbedUrl(tmdbId), '_blank')}
-              className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg smooth-transition"
-              title="Open in new tab"
+              onClick={() => {
+                setActiveIndex((prev) => (prev + 1) % movies.length);
+              }}
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-650 hover:bg-slate-50 transition-all"
+              title="Next Slide"
             >
-              <ExternalLink className="w-4 h-4" />
+              <RefreshCw className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
