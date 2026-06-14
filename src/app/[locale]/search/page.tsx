@@ -82,6 +82,7 @@ export default function SearchPage() {
                 posterPath={item.poster_path}
                 rating={item.vote_average}
                 year={item.release_date ? item.release_date.split('-')[0] : (item.first_air_date ? item.first_air_date.split('-')[0] : '')}
+                type={item.media_type === 'tv' ? 'tv' : 'movie'}
               />
             ))}
           </div>
@@ -103,6 +104,7 @@ export default function SearchPage() {
                   posterPath={item.poster_path}
                   rating={item.vote_average}
                   year={item.release_date ? item.release_date.split('-')[0] : (item.first_air_date ? item.first_air_date.split('-')[0] : '')}
+                  type="movie"
                 />
               ))}
             </div>

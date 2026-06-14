@@ -9,6 +9,7 @@ interface PosterCardProps {
   rating?: number;
   year?: string;
   className?: string;
+  type?: 'movie' | 'tv';
 }
 
 // Deterministic helper to assign realistic video qualities based on release year and movie ID
@@ -22,14 +23,14 @@ function getMovieQuality(id: number, year?: string): string {
   return qualities[index];
 }
 
-export function PosterCard({ id, title, posterPath, rating, year, className }: PosterCardProps) {
+export function PosterCard({ id, title, posterPath, rating, year, className, type = 'movie' }: PosterCardProps) {
   const router = useRouter();
   const pathname = usePathname() || '/';
   const segments = pathname.split('/').filter(Boolean);
   const locale = segments[0] && ['en','am','om','ti','so'].includes(segments[0]) ? segments[0] : 'en';
 
   const handleClick = () => {
-    router.push(`/${locale}/movie/${id}`);
+    router.push(`/${locale}/${type}/${id}`);
   };
 
   const quality = getMovieQuality(id, year);

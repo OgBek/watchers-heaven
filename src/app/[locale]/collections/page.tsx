@@ -1,97 +1,61 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { ApiGateway } from '@/lib/api/gateway';
-import { FolderOpen, ArrowLeft, Loader, Star } from 'lucide-react';
+import { Folder, ArrowLeft, Loader, Star, Film } from 'lucide-react';
 import { PosterCard } from '@/components/cards/PosterCard';
 
-interface CollectionItem {
-  id: number;
-  name: string;
-  backdrop: string;
-  description: string;
-}
-
-const PREDEFINED_COLLECTIONS: CollectionItem[] = [
-  {
-    id: 10,
-    name: 'Star Wars Saga',
-    backdrop: '/sp158I1V0l5Wp0sCg5n6dM9c19b.jpg',
-    description: 'The epic space opera franchise created by George Lucas.'
-  },
-  {
-    id: 1241,
-    name: 'Harry Potter Collection',
-    backdrop: '/u52XL4y570ui4kE7C6Acl03V1sV.jpg',
-    description: 'The complete cinematic adventure of the Wizarding World.'
-  },
-  {
-    id: 86311,
-    name: 'The Avengers Collection',
-    backdrop: '/mdf5z56q1S6kM75Jz2u1sS5UvXy.jpg',
-    description: 'Earth\'s mightiest heroes assemble in the Marvel Cinematic Universe.'
-  },
-  {
-    id: 119,
-    name: 'Lord of the Rings',
-    backdrop: '/p2G2pA4b41PjP32YlF0N97Cg9e9.jpg',
-    description: 'The epic fantasy adventure set in Middle-earth, directed by Peter Jackson.'
-  },
-  {
-    id: 263,
-    name: 'The Dark Knight Trilogy',
-    backdrop: '/xfK16851L17mXtUo4fK700j19b.jpg',
-    description: 'Christopher Nolan\'s gritty, acclaimed take on the Batman saga.'
-  },
-  {
-    id: 9481,
-    name: 'Fast & Furious Saga',
-    backdrop: '/z8O5g6O5U08s15j4dE7C97VvXy.jpg',
-    description: 'The high-octane action film series centering on illegal street racing and heists.'
-  },
-  {
-    id: 531241,
-    name: 'Spider-Man Collection',
-    backdrop: '/kZzZ4u57O6kM85j3dE7C97VvXy.jpg',
-    description: 'The web-slinging adventures of Peter Parker across multiple dimensions.'
-  },
-  {
-    id: 10194,
-    name: 'Toy Story Collection',
-    backdrop: '/3b5z56q1S6kM75Jz2u1sS5UvXy.jpg',
-    description: 'Pixar\'s classic animated series following the secret lives of toys.'
-  }
-];
+const COLLECTION_IDS = [10, 1241, 86311, 119, 263, 9481, 531241, 10194];
 
 export default function CollectionsPage() {
-  const [selectedCol, setSelectedCol] = useState<CollectionItem | null>(null);
-  const [collectionData, setCollectionData] = useState<any | null>(null);
+  const [collections, setCollections] = useState<any[]>([]);
+  const [selectedCol, setSelectedCol] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingList, setLoadingList] = useState(false);
 
+  // Pagination for collection parts
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  // Load all predefined collections on mount
   useEffect(() => {
-    if (!selectedCol) {
-      setCollectionData(null);
-      return;
-    }
-
-    async function loadCollectionDetails() {
-      setLoading(true);
+    async function loadCollectionsList() {
+      setLoadingList(true);
       try {
-        const data = await ApiGateway.fetchTmdb<any>(`/collection/${selectedCol.id}`);
-        setCollectionData(data);
+        const data = await Promise.all(
+          COLLECTION_IDS.map(async (id) => {
+            try {
+              return await ApiGateway.fetchTmdb<any>(`/collection/${id}`);
+            } catch {
+              return null;
+            }
+          })
+        );
+        setCollections(data.filter(Boolean));
       } catch (err) {
-        console.error('Failed to load collection details:', err);
+        console.error('Failed to load collections list', err);
       } finally {
-        setLoading(false);
+        setLoadingList(false);
       }
     }
-    loadCollectionDetails();
-  }, [selectedCol]);
+    loadCollectionsList();
+  }, []);
+
+  const handleSelectCollection = (col: any) => {
+    setSelectedCol(col);
+    setCurrentPage(1);
+  };
+
+  // Paginated parts calculation
+  const parts = selectedCol?.parts || [];
+  const totalPages = Math.ceil(parts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const paginatedParts = parts.slice(startIndex, startIndex + itemsPerPage);
 
   return (
-    <div className="min-h-screen py-10 px-4 md:px-8 bg-[var(--color-main)]">
+    <div className="min-h-screen py-10 px-4 md:px-8 bg-[var(--color-main)] text-slate-800 dark:text-slate-100 transition-colors duration-300">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Back navigation or main header */}
+        {/* Header */}
         {selectedCol ? (
           <div className="flex items-center gap-4">
             <button 
@@ -105,48 +69,46 @@ export default function CollectionsPage() {
         ) : (
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-              <FolderOpen className="w-8 h-8 text-[#007bff]" />
+              <Folder className="w-8 h-8 text-[#007bff]" />
               Movie Collections
             </h1>
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Explore curated movie collections and legendary franchises</p>
           </div>
         )}
 
-        {/* Content Section */}
+        {/* Collections List or Detail View */}
         {selectedCol ? (
           <div className="space-y-8 animate-fadeIn">
             {/* Banner details */}
             <div className="relative w-full h-[30vh] min-h-[200px] rounded-[2rem] overflow-hidden bg-slate-800 shadow-xl border border-slate-100 dark:border-slate-800">
-              {collectionData?.backdrop_path ? (
+              {selectedCol.backdrop_path ? (
                 <img 
-                  src={`https://image.tmdb.org/t/p/original${collectionData.backdrop_path}`} 
+                  src={`https://image.tmdb.org/t/p/original${selectedCol.backdrop_path}`} 
                   alt={selectedCol.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover opacity-75"
                 />
               ) : (
                 <div className="w-full h-full bg-slate-900 flex items-center justify-center">
-                  <FolderOpen className="w-16 h-16 text-slate-750" />
+                  <Folder className="w-16 h-16 text-slate-750" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 md:p-8">
-                <h2 className="text-2xl md:text-3xl font-black text-white">{collectionData?.name || selectedCol.name}</h2>
+              <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex flex-col justify-end p-6 md:p-8">
+                <h2 className="text-2xl md:text-3xl font-black text-white">{selectedCol.name}</h2>
                 <p className="text-xs md:text-sm text-slate-300 max-w-2xl mt-2 leading-relaxed">
-                  {collectionData?.overview || selectedCol.description}
+                  {selectedCol.overview || 'Explore all movies inside this cinematic collection.'}
                 </p>
               </div>
             </div>
 
-            {loading ? (
-              <div className="flex justify-center py-20">
-                <Loader className="w-8 h-8 animate-spin text-[#007bff]" />
-              </div>
-            ) : collectionData?.parts?.length > 0 ? (
-              <div className="space-y-4">
+            {/* Movies grid with pagination */}
+            {paginatedParts.length > 0 ? (
+              <div className="space-y-6">
                 <h3 className="text-xs font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase">
-                  Movies in this collection
+                  Movies in this collection (Page {currentPage} of {totalPages})
                 </h3>
+                
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {collectionData.parts.map((item: any) => (
+                  {paginatedParts.map((item: any) => (
                     <PosterCard
                       key={item.id}
                       id={item.id}
@@ -154,9 +116,33 @@ export default function CollectionsPage() {
                       posterPath={item.poster_path}
                       rating={item.vote_average}
                       year={item.release_date ? item.release_date.split('-')[0] : ''}
+                      type="movie"
                     />
                   ))}
                 </div>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-center gap-4 pt-6">
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-50 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
+                    >
+                      Previous
+                    </button>
+                    <span className="text-xs font-black text-slate-500 dark:text-slate-400">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-50 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
+                    >
+                      Next
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="text-center py-20 text-slate-400">
@@ -164,30 +150,39 @@ export default function CollectionsPage() {
               </div>
             )}
           </div>
+        ) : loadingList ? (
+          <div className="flex justify-center py-20">
+            <Loader className="w-8 h-8 animate-spin text-[#007bff]" />
+          </div>
         ) : (
-          /* Collections Cards list */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {PREDEFINED_COLLECTIONS.map((col) => (
+          /* Predefined Collections Poster Cards list */
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
+            {collections.map((col) => (
               <div
                 key={col.id}
-                onClick={() => setSelectedCol(col)}
-                className="group relative aspect-[1.8/1] rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl border border-slate-100 dark:border-slate-800/80 transition-all duration-300 hover:-translate-y-1 bg-slate-900"
+                onClick={() => handleSelectCollection(col)}
+                className="group relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl border border-slate-100 dark:border-slate-850 transition-all duration-300 hover:-translate-y-1.5 bg-slate-900"
               >
-                {/* Backdrop cover */}
-                <img 
-                  src={`https://image.tmdb.org/t/p/w780${col.backdrop}`} 
-                  alt={col.name}
-                  className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-102 group-hover:opacity-75 transition duration-500"
-                  onError={(e) => {
-                    // Fallback to solid color
-                    e.currentTarget.style.display = 'none';
-                  }}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-4">
-                  <h3 className="text-base font-black text-white drop-shadow-md">{col.name}</h3>
-                  <p className="text-[10px] text-slate-300 mt-1 line-clamp-2 leading-relaxed opacity-0 group-hover:opacity-100 transition duration-300">
-                    {col.description}
-                  </p>
+                {/* Official Collection Poster */}
+                {col.poster_path ? (
+                  <img 
+                    src={`https://image.tmdb.org/t/p/w500${col.poster_path}`} 
+                    alt={col.name}
+                    className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-103"
+                  />
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                    <Film className="w-10 h-10 text-slate-700 mb-2" />
+                    <span className="text-xs text-slate-400 font-bold text-center">{col.name}</span>
+                  </div>
+                )}
+                
+                {/* Overlay details */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-4 z-10">
+                  <h3 className="text-xs font-black text-white drop-shadow-md leading-tight line-clamp-2">{col.name}</h3>
+                  <span className="text-[9px] font-bold text-blue-400 uppercase tracking-wider mt-1 block">
+                    {col.parts?.length || 0} Parts
+                  </span>
                 </div>
               </div>
             ))}

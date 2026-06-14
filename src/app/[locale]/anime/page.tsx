@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { PosterCard } from '@/components/cards/PosterCard';
-import { Tv, Loader } from 'lucide-react';
+import { Tv, Loader, SlidersHorizontal } from 'lucide-react';
 
 const ANIME_GENRES = [
   { id: '', name: 'All Genres' },
@@ -40,7 +40,8 @@ export default function AnimePage() {
           page: String(currentPage),
           sort_by: sortBy,
           with_genres: genresFilter,
-          with_original_language: 'ja'
+          with_original_language: 'ja',
+          include_adult: 'false' // Block adult content
         };
 
         if (selectedYear) {
@@ -65,8 +66,8 @@ export default function AnimePage() {
     <div className="min-h-screen py-10 px-4 md:px-8 bg-[var(--color-main)]">
       <div className="max-w-6xl mx-auto space-y-8">
         
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+        {/* Header and Modernized Unified Filters Bar */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-4 border-b border-slate-100 dark:border-slate-800/80">
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
               <Tv className="w-8 h-8 text-[#007bff]" />
@@ -75,12 +76,17 @@ export default function AnimePage() {
             <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Explore trending Japanese animation series</p>
           </div>
 
-          {/* Filters controls */}
-          <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-2.5 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm">
+          {/* Modern Unified Filters Panel */}
+          <div className="flex flex-wrap items-center gap-3 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-3 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-lg">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-1.5 border-r border-slate-100 dark:border-slate-800">
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Filters</span>
+            </div>
+
             <select
               value={selectedGenre}
               onChange={(e) => { setSelectedGenre(e.target.value); setCurrentPage(1); }}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-bold focus:outline-none focus:border-blue-500 transition shadow-sm"
+              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:border-blue-500 transition shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50"
             >
               {ANIME_GENRES.map(g => (
                 <option key={g.id} value={g.id}>{g.name}</option>
@@ -90,7 +96,7 @@ export default function AnimePage() {
             <select
               value={selectedYear}
               onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-bold focus:outline-none focus:border-blue-500 transition shadow-sm"
+              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:border-blue-500 transition shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50"
             >
               <option value="">All Years</option>
               {YEARS.filter(Boolean).map(yr => (
@@ -101,7 +107,7 @@ export default function AnimePage() {
             <select
               value={sortBy}
               onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-              className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-bold focus:outline-none focus:border-blue-500 transition shadow-sm"
+              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:border-blue-500 transition shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50"
             >
               <option value="popularity.desc">Most Popular</option>
               <option value="vote_average.desc">Highest Rated</option>
@@ -126,6 +132,7 @@ export default function AnimePage() {
                   posterPath={item.poster_path}
                   rating={item.vote_average}
                   year={item.first_air_date ? item.first_air_date.split('-')[0] : ''}
+                  type="tv"
                 />
               ))}
             </div>

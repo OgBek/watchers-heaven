@@ -137,5 +137,9 @@ export const ApiGateway = {
 
   getTvRecommendations: async (id: string | number) => {
     return ApiGateway.fetchTmdb<any>(`/tv/${id}/recommendations`);
+  },
+
+  getTvSeasonDetails: async (tvId: string | number, seasonNumber: number) => {
+    return ApiGateway.fetchTmdb<any>(`/tv/${tvId}/season/${seasonNumber}`);
   }
 };

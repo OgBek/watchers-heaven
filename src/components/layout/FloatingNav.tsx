@@ -1,14 +1,12 @@
 'use client';
-import { useState } from 'react';
 import { 
-  Home, Search, MonitorPlay, Tv, Settings, Plus, Radio, Film, Compass
+  Home, Search, MonitorPlay, Tv, Settings, Radio, Film, Compass, Folder
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 export function FloatingNav() {
   const pathname = usePathname() || '/';
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   // Extract locale from pathname (e.g., /en/settings -> en)
   const segments = pathname.split('/').filter(Boolean);
@@ -24,11 +22,10 @@ export function FloatingNav() {
     { icon: Radio, path: '/live', label: 'Live TV' },
     { icon: Film, path: '/k-drama', label: 'K-Drama' },
     { icon: Compass, path: '/anime', label: 'Anime' },
-    { icon: Compass, path: '/collections', label: 'Collections' },
+    { icon: Folder, path: '/collections', label: 'Collections' },
   ];
 
   const bottomItems = [
-    { icon: Plus, path: '/add', label: 'Add' },
     { icon: Settings, path: '/settings', label: 'Settings' },
   ];
 
@@ -52,8 +49,6 @@ export function FloatingNav() {
                 key={item.label} 
                 href={localePath(item.path)}
                 className="relative group flex justify-center flex-shrink-0"
-                onMouseEnter={() => setHoveredItem(item.label)}
-                onMouseLeave={() => setHoveredItem(null)}
               >
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
@@ -63,12 +58,10 @@ export function FloatingNav() {
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
                 
-                {/* Hover Tooltip */}
-                {hoveredItem === item.label && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-850 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl pointer-events-none border border-slate-700/50 dark:border-slate-800/50">
-                    {item.label}
-                  </div>
-                )}
+                {/* CSS Group Hover Tooltip */}
+                <div className="absolute opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-850 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl border border-slate-700/50 dark:border-slate-800/50">
+                  {item.label}
+                </div>
               </Link>
             );
           })}
@@ -86,8 +79,6 @@ export function FloatingNav() {
                 key={item.label}
                 href={localePath(item.path)}
                 className="relative group flex justify-center flex-shrink-0"
-                onMouseEnter={() => setHoveredItem(item.label)}
-                onMouseLeave={() => setHoveredItem(null)}
               >
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
@@ -97,12 +88,10 @@ export function FloatingNav() {
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
                 
-                {/* Hover Tooltip */}
-                {hoveredItem === item.label && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-850 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl pointer-events-none border border-slate-700/50 dark:border-slate-800/50">
-                    {item.label}
-                  </div>
-                )}
+                {/* CSS Group Hover Tooltip */}
+                <div className="absolute opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-850 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl border border-slate-700/50 dark:border-slate-800/50">
+                  {item.label}
+                </div>
               </Link>
             );
           })}
