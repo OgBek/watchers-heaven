@@ -1,6 +1,6 @@
 'use client';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { BalancedText } from '../typography/BalancedText';
+import { motion } from 'framer-motion';
+import { Play, Info, Bookmark, RotateCw, Image as ImageIcon } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
 
 interface HeroFeatureProps {
@@ -11,66 +11,62 @@ interface HeroFeatureProps {
   genres: string[];
 }
 
-export function HeroFeature({ tmdbId, title, synopsis, backdropPath, genres }: HeroFeatureProps) {
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 500], [0, 150]);
-  const opacity = useTransform(scrollY, [0, 300], [1, 0]);
-
+export function HeroFeature({ tmdbId, title, backdropPath }: HeroFeatureProps) {
   return (
-    <section className="relative w-full h-[85vh] min-h-[600px] flex items-end pb-24 overflow-hidden">
-      {/* Background Parallax */}
-      <motion.div 
-        style={{ y, opacity }}
-        className="absolute inset-0 z-0"
-      >
-        <img 
-          src={`https://image.tmdb.org/t/p/original${backdropPath}`} 
-          alt={title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-main)] via-[rgba(7,11,20,0.4)] to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-main)] via-[rgba(7,11,20,0.6)] to-transparent" />
-      </motion.div>
-
-      {/* Content */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-6 lg:px-12 flex justify-between items-end">
-        <div className="max-w-2xl">
-          <div className="flex gap-3 mb-4">
-            {genres.map(g => (
-              <span key={g} className="px-3 py-1 rounded-full glass text-[var(--color-text-secondary)] text-sm font-medium tracking-wide">
-                {g}
-              </span>
-            ))}
-          </div>
+    <section className="relative w-full px-4 lg:px-8 pt-6 pb-24">
+      {/* Large Rounded Artwork Card */}
+      <div className="relative w-full h-[60vh] min-h-[450px] max-h-[700px] rounded-[2rem] overflow-visible bg-white shadow-sm border border-[var(--color-border-subtle)]">
+        
+        {/* Fallback & Image */}
+        <div className="absolute inset-0 rounded-[2rem] overflow-hidden flex items-center justify-center bg-[var(--color-main)]">
+          <ImageIcon className="w-20 h-20 text-[var(--color-text-muted)] opacity-20" />
           
-          <BalancedText 
-            text={title} 
-            className="text-[length:var(--text-hero)] font-bold leading-[1.1] mb-6 text-[var(--color-text-primary)] tracking-tight drop-shadow-2xl" 
+          <img 
+            src={`https://image.tmdb.org/t/p/original${backdropPath}`} 
+            alt={title}
+            className="absolute inset-0 z-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000"
+            onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
+            onError={(e) => { e.currentTarget.style.opacity = '0'; }}
           />
-          
-          <p className="text-[length:var(--text-body-lg)] text-[var(--color-text-secondary)] line-clamp-3 mb-8 max-w-xl leading-relaxed">
-            {synopsis}
-          </p>
+          {/* Subtle overlay to ensure text contrast if needed, but the original is very clean */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+        </div>
 
-          <div className="flex gap-4">
-            <button className="px-8 py-4 rounded-[var(--radius-md)] bg-[var(--color-accent-blue)] text-white font-semibold text-lg hover:bg-blue-400 smooth-transition shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-deep)]">
-              Play Trailer
-            </button>
-            <button className="px-8 py-4 rounded-[var(--radius-md)] glass text-white font-semibold text-lg hover:bg-[var(--color-surface-secondary)] smooth-transition">
-              More Info
-            </button>
+        {/* Floating Bottom Pill Panel */}
+        <div className="absolute -bottom-16 left-1/2 -translate-x-1/2 bg-white rounded-[2rem] shadow-[var(--shadow-deep)] border border-slate-100 flex overflow-hidden z-20 w-[90%] max-w-[450px]">
+          
+          {/* Vertical Label */}
+          <div className="w-12 bg-white flex items-center justify-center border-r border-slate-100">
+            <span className="text-[10px] font-bold text-slate-400 tracking-[0.2em] -rotate-90 whitespace-nowrap">
+              MOVIE
+            </span>
+          </div>
+
+          {/* Controls Area */}
+          <div className="flex-1 px-6 py-4 flex flex-col items-center justify-center bg-white">
+            <h2 className="text-2xl font-bold text-[var(--color-text-primary)] mb-3 line-clamp-1">{title}</h2>
+            
+            <div className="flex items-center gap-2">
+              <button className="flex items-center gap-1.5 bg-[var(--color-accent-blue)] text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-600 smooth-transition shadow-sm">
+                <Play className="w-4 h-4 fill-white" />
+                Watch
+              </button>
+              
+              <button className="flex items-center gap-1.5 bg-[var(--color-accent-blue)] text-white px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-blue-600 smooth-transition shadow-sm">
+                Details
+              </button>
+              
+              <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg smooth-transition">
+                <Bookmark className="w-5 h-5" />
+              </button>
+              
+              <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg smooth-transition">
+                <RotateCw className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Floating Trailer Preview */}
-        <div className="hidden lg:block w-80 h-48 cutout-card bg-[var(--color-surface-primary)] border border-[var(--color-border-subtle)] shadow-[var(--shadow-deep)] p-2">
-          <iframe 
-            src={ApiGateway.getMovieEmbedUrl(tmdbId)}
-            className="w-full h-full rounded-[var(--radius-sm)]"
-            allowFullScreen
-            title="Trailer Preview"
-          />
-        </div>
       </div>
     </section>
   );

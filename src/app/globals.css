@@ -1,21 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-main: #070b14;
-  --color-secondary: #0f1724;
-  --color-tertiary: #121826;
+  --color-main: #f4f7fb;
+  --color-secondary: #e2e8f0;
+  --color-tertiary: #cbd5e1;
 
-  --color-surface-primary: rgba(18,24,38,.72);
-  --color-surface-secondary: rgba(255,255,255,.05);
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f8fafc;
 
-  --color-border-subtle: rgba(255,255,255,.08);
-  --color-border-medium: rgba(255,255,255,.12);
+  --color-border-subtle: #e2e8f0;
+  --color-border-medium: #cbd5e1;
 
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted: #94a3b8;
 
-  --color-accent-blue: #3b82f6;
+  --color-accent-blue: #007bff;
   --color-accent-purple: #8b5cf6;
   --color-accent-cyan: #06b6d4;
 
@@ -23,11 +23,8 @@
   --color-success: #22c55e;
   --color-warning: #f59e0b;
 
-  --shadow-soft: 0 10px 40px rgba(0,0,0,.25);
-  --shadow-deep: 0 20px 80px rgba(0,0,0,.45);
-
-  --color-glow-blue: rgba(59,130,246,.25);
-  --color-glow-purple: rgba(139,92,246,.2);
+  --shadow-soft: 0 4px 20px rgba(0,0,0,.05);
+  --shadow-deep: 0 10px 40px rgba(0,0,0,.1);
 
   --font-sans: "Bricolage Grotesque", "Noto Sans Ethiopic", "Inter", system-ui, sans-serif;
   --font-mono: "Roboto Mono", monospace;
@@ -42,19 +39,10 @@
   --text-body: 1rem;
   --text-body-sm: 0.875rem;
 
-  /* Spacing */
-  --spacing-xs: 4px;
-  --spacing-sm: 8px;
-  --spacing-md: 16px;
-  --spacing-lg: 24px;
-  --spacing-xl: 48px;
-  --spacing-2xl: 72px;
-  --spacing-3xl: 120px;
-
   /* Radius */
   --radius-sm: 6px;
   --radius-md: 12px;
-  --radius-lg: 20px;
+  --radius-lg: 24px;
   --radius-xl: 32px;
   --radius-full: 9999px;
 }
@@ -73,35 +61,20 @@ body {
 
 /* Glassmorphism */
 .glass {
-  background: rgba(255,255,255,.06);
+  background: rgba(255,255,255,.7);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid rgba(255,255,255,.8);
 }
 
 /* Cutout Surfaces */
 .cutout-card {
-  mask-image: radial-gradient(
-    circle at top right,
-    transparent 0 40px,
-    black 42px
-  );
+  mask-image: none;
 }
 
 /* Mesh Backgrounds */
 .mesh-bg {
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(59,130,246,.15),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at bottom right,
-      rgba(139,92,246,.12),
-      transparent 30%
-    ),
-    var(--color-main);
+  background: var(--color-main);
 }
 
 /* Edge Fade Carousels */
@@ -131,5 +104,5 @@ body {
 
 /* Motion System Defaults */
 .smooth-transition {
-  transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s ease, filter .3s ease;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s ease, filter .3s ease, background-color .25s ease;
 }
