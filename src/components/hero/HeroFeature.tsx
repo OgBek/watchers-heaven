@@ -89,7 +89,7 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
   if (!currentMovie) return null;
 
   return (
-    <section className="relative w-full px-2 pt-3 pb-4">
+    <section className="relative w-full px-2 pt-6 pb-4">
       {/* 
         Wrapper: relative container that does NOT clip overflow.
         The image card clips, but the badge overflows out of this wrapper.

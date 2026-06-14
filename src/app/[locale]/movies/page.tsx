@@ -1,25 +1,39 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { PosterCard } from '@/components/cards/PosterCard';
-import { Film, Loader, SlidersHorizontal } from 'lucide-react';
+import { Film, Loader, Search, X, ChevronDown, SlidersHorizontal, ArrowLeft, ArrowRight } from 'lucide-react';
 
 const MOVIE_GENRES = [
-  { id: '', name: 'All Genres' },
   { id: '28', name: 'Action' },
   { id: '12', name: 'Adventure' },
   { id: '16', name: 'Animation' },
   { id: '35', name: 'Comedy' },
   { id: '80', name: 'Crime' },
+  { id: '99', name: 'Documentary' },
   { id: '18', name: 'Drama' },
+  { id: '10751', name: 'Family' },
   { id: '14', name: 'Fantasy' },
+  { id: '36', name: 'History' },
   { id: '27', name: 'Horror' },
+  { id: '10402', name: 'Music' },
+  { id: '9648', name: 'Mystery' },
   { id: '878', name: 'Sci-Fi' },
   { id: '53', name: 'Thriller' },
-  { id: '10749', name: 'Romance' }
+  { id: '10749', name: 'Romance' },
+  { id: '10752', name: 'War' },
+  { id: '37', name: 'Western' },
 ];
 
-const YEARS = ['', '2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018'];
+const YEARS = ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015'];
+const SORT_OPTIONS = [
+  { value: 'popularity.desc', label: 'Most Popular' },
+  { value: 'vote_average.desc', label: 'Highest Rated' },
+  { value: 'primary_release_date.desc', label: 'Latest Releases' },
+  { value: 'revenue.desc', label: 'Highest Revenue' },
+];
+
+const ITEMS_PER_PAGE = 18;
 
 export default function MoviesPage() {
   const [movies, setMovies] = useState<any[]>([]);
@@ -28,97 +42,249 @@ export default function MoviesPage() {
   const [totalPages, setTotalPages] = useState(1);
   
   // Filters
-  const [selectedGenre, setSelectedGenre] = useState('');
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState('');
   const [sortBy, setSortBy] = useState('popularity.desc');
+  
+  // Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  
+  // UI
+  const [showFilters, setShowFilters] = useState(false);
 
-  useEffect(() => {
-    async function loadMovies() {
-      setLoading(true);
-      try {
+  const toggleGenre = (genreId: string) => {
+    setSelectedGenres(prev => 
+      prev.includes(genreId) 
+        ? prev.filter(g => g !== genreId) 
+        : [...prev, genreId]
+    );
+    setCurrentPage(1);
+  };
+
+  const clearFilters = () => {
+    setSelectedGenres([]);
+    setSelectedYear('');
+    setSortBy('popularity.desc');
+    setSearchQuery('');
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = selectedGenres.length > 0 || selectedYear || sortBy !== 'popularity.desc' || searchQuery;
+
+  const loadMovies = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (searchQuery.trim()) {
+        // Search mode
+        const data = await ApiGateway.fetchTmdb<any>('/search/movie', {
+          query: searchQuery.trim(),
+          page: String(currentPage),
+          include_adult: 'false',
+        });
+        if (data.results) {
+          setMovies(data.results.slice(0, ITEMS_PER_PAGE));
+          setTotalPages(Math.min(data.total_pages || 1, 500));
+        }
+      } else {
+        // Discover mode
         const params: Record<string, string> = {
           page: String(currentPage),
           sort_by: sortBy,
-          include_adult: 'false' // Block adult content
+          include_adult: 'false',
         };
 
-        if (selectedGenre) {
-          params.with_genres = selectedGenre;
+        if (selectedGenres.length > 0) {
+          params.with_genres = selectedGenres.join(',');
         }
         if (selectedYear) {
           params.primary_release_year = selectedYear;
         }
+        // For highest rated, require a minimum vote count
+        if (sortBy === 'vote_average.desc') {
+          params['vote_count.gte'] = '200';
+        }
 
         const data = await ApiGateway.fetchTmdb<any>('/discover/movie', params);
         if (data.results) {
-          setMovies(data.results);
-          setTotalPages(Math.min(data.total_pages || 1, 500)); // TMDB discover caps at 500 pages
+          setMovies(data.results.slice(0, ITEMS_PER_PAGE));
+          setTotalPages(Math.min(data.total_pages || 1, 500));
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  }, [currentPage, selectedGenres, selectedYear, sortBy, searchQuery]);
+
+  useEffect(() => {
     loadMovies();
-  }, [currentPage, selectedGenre, selectedYear, sortBy]);
+  }, [loadMovies]);
+
+  // Debounced search
+  useEffect(() => {
+    if (!searchQuery) return;
+    setIsSearching(true);
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      setIsSearching(false);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   return (
     <div className="min-h-screen py-10 px-4 md:px-8 bg-[var(--color-main)]">
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* Header and Modernized Unified Filters Bar */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-4 border-b border-slate-100 dark:border-slate-800/80">
-          <div>
-            <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
-              <Film className="w-8 h-8 text-accent-blue" />
-              Movies
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Explore all movies with real-time filters</p>
+        {/* Header */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+                <Film className="w-8 h-8 text-accent-blue" />
+                Movies
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
+                Explore all movies with real-time filters
+              </p>
+            </div>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-300 border shadow-sm ${
+                showFilters 
+                  ? 'bg-accent-blue text-white border-transparent shadow-accent-blue/20' 
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-accent-blue/50'
+              }`}
+            >
+              <SlidersHorizontal className="w-4 h-4" />
+              Filters
+              {hasActiveFilters && (
+                <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
+              )}
+            </button>
           </div>
 
-          {/* Modern Unified Filters Panel */}
-          <div className="flex flex-wrap items-center gap-3 bg-white/70 dark:bg-slate-900/60 backdrop-blur-md p-3 rounded-2xl border border-slate-100 dark:border-slate-800/80 shadow-lg">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider pr-1.5 border-r border-slate-100 dark:border-slate-800">
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Filters</span>
-            </div>
-
-            {/* Genre Selector */}
-            <select
-              value={selectedGenre}
-              onChange={(e) => { setSelectedGenre(e.target.value); setCurrentPage(1); }}
-              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:border-blue-500 transition shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50"
-            >
-              {MOVIE_GENRES.map(g => (
-                <option key={g.id} value={g.id}>{g.name}</option>
-              ))}
-            </select>
-
-            {/* Year Selector */}
-            <select
-              value={selectedYear}
-              onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
-              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:border-blue-500 transition shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50"
-            >
-              <option value="">All Years</option>
-              {YEARS.filter(Boolean).map(yr => (
-                <option key={yr} value={yr}>{yr}</option>
-              ))}
-            </select>
-
-            {/* Sort Selector */}
-            <select
-              value={sortBy}
-              onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-              className="px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:border-blue-500 transition shadow-sm hover:bg-slate-50 dark:hover:bg-slate-800/50"
-            >
-              <option value="popularity.desc">Most Popular</option>
-              <option value="vote_average.desc">Highest Rated</option>
-              <option value="primary_release_date.desc">Latest Releases</option>
-            </select>
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 dark:text-slate-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search movies by title..."
+              className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue/50 transition-all shadow-sm backdrop-blur-md"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => { setSearchQuery(''); setCurrentPage(1); }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            {isSearching && (
+              <Loader className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-accent-blue" />
+            )}
           </div>
         </div>
+
+        {/* Modern Filters Panel */}
+        {showFilters && (
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-xl p-5 space-y-5 animate-fade-in">
+            
+            {/* Genres — Interactive Chips */}
+            <div className="space-y-2.5">
+              <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">Genre</h3>
+              <div className="flex flex-wrap gap-2">
+                {MOVIE_GENRES.map(g => (
+                  <button
+                    key={g.id}
+                    onClick={() => toggleGenre(g.id)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+                      selectedGenres.includes(g.id)
+                        ? 'bg-accent-blue text-white border-transparent shadow-md shadow-accent-blue/20 scale-105'
+                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:border-accent-blue/40 hover:text-accent-blue'
+                    }`}
+                  >
+                    {g.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Year & Sort Row */}
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">Year</label>
+                <div className="relative">
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
+                    className="appearance-none px-4 py-2.5 pr-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent-blue/30 transition shadow-sm cursor-pointer min-w-[120px]"
+                  >
+                    <option value="">All Years</option>
+                    {YEARS.map(yr => (
+                      <option key={yr} value={yr}>{yr}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+              
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">Sort By</label>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+                    className="appearance-none px-4 py-2.5 pr-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent-blue/30 transition shadow-sm cursor-pointer min-w-[160px]"
+                  >
+                    {SORT_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
+                </div>
+              </div>
+
+              {hasActiveFilters && (
+                <button
+                  onClick={clearFilters}
+                  className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/40 hover:bg-red-100 dark:hover:bg-red-950/50 transition"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  Clear All
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Active filters summary chips */}
+        {(selectedGenres.length > 0 || selectedYear) && !showFilters && (
+          <div className="flex flex-wrap items-center gap-2">
+            {selectedGenres.map(gId => {
+              const genre = MOVIE_GENRES.find(g => g.id === gId);
+              return (
+                <span key={gId} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent-blue/10 text-accent-blue text-[11px] font-bold border border-accent-blue/20">
+                  {genre?.name}
+                  <button onClick={() => toggleGenre(gId)} className="hover:text-red-500">
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              );
+            })}
+            {selectedYear && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-accent-blue/10 text-accent-blue text-[11px] font-bold border border-accent-blue/20">
+                {selectedYear}
+                <button onClick={() => setSelectedYear('')} className="hover:text-red-500">
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Content grid */}
         {loading ? (
@@ -141,24 +307,53 @@ export default function MoviesPage() {
               ))}
             </div>
 
-            {/* Pagination */}
-            <div className="flex items-center justify-center gap-4 pt-6">
+            {/* Modern Pagination */}
+            <div className="flex items-center justify-center gap-3 pt-6">
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1 || loading}
-                className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-50 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-40 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
               >
+                <ArrowLeft className="w-3.5 h-3.5" />
                 Previous
               </button>
-              <span className="text-xs font-black text-slate-500 dark:text-slate-400">
-                Page {currentPage} of {totalPages}
-              </span>
+
+              {/* Page number indicators */}
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum: number;
+                  if (totalPages <= 5) {
+                    pageNum = i + 1;
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1;
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i;
+                  } else {
+                    pageNum = currentPage - 2 + i;
+                  }
+                  return (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-9 h-9 rounded-xl text-xs font-bold transition-all ${
+                        pageNum === currentPage
+                          ? 'bg-accent-blue text-white shadow-md shadow-accent-blue/20'
+                          : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  );
+                })}
+              </div>
+              
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages || loading}
-                className="px-4 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-50 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-40 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
               >
                 Next
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>

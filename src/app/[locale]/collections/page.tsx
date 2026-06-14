@@ -4,7 +4,30 @@ import { ApiGateway } from '@/lib/api/gateway';
 import { Folder, ArrowLeft, Loader, Star, Film } from 'lucide-react';
 import { PosterCard } from '@/components/cards/PosterCard';
 
-const COLLECTION_IDS = [10, 1241, 86311, 119, 263, 9481, 531241, 10194, 328, 121938, 131635, 9485, 295, 8650];
+const COLLECTION_IDS = [
+  10,      // Star Wars
+  1241,    // Harry Potter
+  86311,   // The Avengers
+  119,     // Lord of the Rings
+  263,     // The Dark Knight
+  9481,    // The Godfather
+  531241,  // Spider-Man (MCU)
+  10194,   // Toy Story
+  328,     // Jurassic Park
+  121938,  // The Hobbit
+  131635,  // The Hunger Games
+  9485,    // Fast & Furious
+  295,     // Pirates of the Caribbean
+  8650,    // Transformers
+  87359,   // Mission: Impossible
+  84892,   // Indiana Jones
+  2150,    // Shrek
+  33514,   // Twilight
+  86066,   // Despicable Me
+  77816,   // Kung Fu Panda
+  14740,   // Madagascar
+  8354,    // Ice Age
+];
 
 export default function CollectionsPage() {
   const [collections, setCollections] = useState<any[]>([]);

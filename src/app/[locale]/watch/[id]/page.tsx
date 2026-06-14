@@ -1,6 +1,6 @@
 'use client';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Maximize2, Minimize2, Info, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Maximize2, Minimize2, Info, RefreshCw, SkipForward, ArrowLeftCircle } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
@@ -25,6 +25,12 @@ export default function WatchPage() {
   const [initialProgressApplied, setInitialProgressApplied] = useState(false);
   const [accentColor, setAccentColor] = useState<string>('007bff');
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // Next episode auto-play state
+  const [showNextEpisodePopup, setShowNextEpisodePopup] = useState(false);
+  const [nextEpisodeCountdown, setNextEpisodeCountdown] = useState(15);
+  const nextEpisodeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const hasTriggeredNextRef = useRef(false);
 
   // Generate storage key
   const storageKey = `watch-progress:${id}:${season || 0}:${episode || 0}`;
@@ -58,6 +64,16 @@ export default function WatchPage() {
     }
   }, [storageKey]);
 
+  // Reset next episode trigger when episode changes
+  useEffect(() => {
+    hasTriggeredNextRef.current = false;
+    setShowNextEpisodePopup(false);
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+  }, [season, episode]);
+
   const saveProgress = useCallback((currentTime: number, duration: number) => {
     if (duration <= 0) return;
     const progressPercent = (currentTime / duration) * 100;
@@ -73,7 +89,46 @@ export default function WatchPage() {
       updatedAt: Date.now(),
     };
     localStorage.setItem(storageKey, JSON.stringify(data));
-  }, [id, isTv, season, episode, storageKey]);
+
+    // Auto-play next episode detection: trigger when >95% complete
+    if (isTv && progressPercent > 95 && !hasTriggeredNextRef.current && !showNextEpisodePopup) {
+      hasTriggeredNextRef.current = true;
+      setShowNextEpisodePopup(true);
+      setNextEpisodeCountdown(15);
+
+      // Start countdown
+      nextEpisodeTimerRef.current = setInterval(() => {
+        setNextEpisodeCountdown(prev => {
+          if (prev <= 1) {
+            // Auto-navigate to next episode
+            if (nextEpisodeTimerRef.current) clearInterval(nextEpisodeTimerRef.current);
+            goToNextEpisode();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  }, [id, isTv, season, episode, storageKey, showNextEpisodePopup]);
+
+  const goToNextEpisode = useCallback(() => {
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+    setShowNextEpisodePopup(false);
+    const nextEp = (episode || 1) + 1;
+    router.push(`/${locale}/watch/${id}?s=${season || 1}&e=${nextEp}`);
+  }, [episode, id, locale, router, season]);
+
+  const goBackToShow = useCallback(() => {
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+    setShowNextEpisodePopup(false);
+    router.push(`/${locale}/tv/${id}`);
+  }, [id, locale, router]);
 
   // Listen for progress events from player iframes
   useEffect(() => {
@@ -188,7 +243,7 @@ export default function WatchPage() {
             secondaryColor: '121212',
             iconColor: accentColor,
             autoplay: true,
-            nextButton: true,
+            nextButton: false, // We handle next episode ourselves
             title: true,
           }
         );
@@ -216,7 +271,7 @@ export default function WatchPage() {
           { 
             color: accentColor, 
             autoPlay: true, 
-            nextEpisode: true, 
+            nextEpisode: false, // We handle next episode ourselves
             episodeSelector: true,
             progress: startProgress > 0 ? startProgress : undefined
           }
@@ -250,6 +305,9 @@ export default function WatchPage() {
     { id: 'toustream', name: 'TouStream', quality: '720p / Backup' },
     { id: 'rivestream', name: 'RiveStream', quality: '1080p / Torrent' }
   ];
+
+  // Determine if this is Rivestream (apply sandbox restrictions)
+  const isRivestream = provider === 'rivestream';
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col text-slate-100 font-sans">
@@ -323,8 +381,9 @@ export default function WatchPage() {
         </div>
       </div>
 
-      {/* Main Video Frame & Resume Overlay */}
+      {/* Main Video Frame & Overlays */}
       <div className="flex-1 flex items-center justify-center relative bg-black">
+        {/* Resume Watching Prompt */}
         {showResumePrompt && (
           <div className="absolute inset-0 bg-slate-950/90 z-20 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
             <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm shadow-2xl flex flex-col items-center">
@@ -352,12 +411,63 @@ export default function WatchPage() {
           </div>
         )}
 
+        {/* Next Episode Auto-play Popup */}
+        {showNextEpisodePopup && isTv && (
+          <div className="absolute inset-0 bg-slate-950/85 z-30 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
+            <div className="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-md shadow-2xl flex flex-col items-center space-y-5">
+              <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30">
+                <SkipForward className="w-8 h-8 text-white fill-white" />
+              </div>
+              
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1">Episode Finished</h3>
+                <p className="text-slate-400 text-sm">
+                  Playing next episode in <span className="text-white font-bold text-lg">{nextEpisodeCountdown}</span> seconds...
+                </p>
+                <p className="text-slate-500 text-xs mt-1">
+                  S{season}E{(episode || 1) + 1}
+                </p>
+              </div>
+
+              {/* Countdown progress ring */}
+              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div 
+                  className="h-full rounded-full transition-all duration-1000 ease-linear"
+                  style={{ 
+                    width: `${((15 - nextEpisodeCountdown) / 15) * 100}%`,
+                    backgroundColor: `#${accentColor}`
+                  }}
+                />
+              </div>
+              
+              <div className="flex gap-3 w-full">
+                <button
+                  onClick={goToNextEpisode}
+                  className="flex-1 flex items-center justify-center gap-2 hover:brightness-110 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md"
+                  style={{ backgroundColor: `#${accentColor}` }}
+                >
+                  <SkipForward className="w-4 h-4" />
+                  Next Episode
+                </button>
+                <button
+                  onClick={goBackToShow}
+                  className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 px-4 rounded-xl text-sm transition-colors"
+                >
+                  <ArrowLeftCircle className="w-4 h-4" />
+                  Go Back
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <iframe
           ref={iframeRef}
           src={getEmbedUrl()}
           className="w-full h-full min-h-[75vh]"
           allowFullScreen
           allow="autoplay; fullscreen; picture-in-picture"
+          {...(isRivestream ? { sandbox: "allow-scripts allow-same-origin allow-forms allow-popups" } : {})}
           title="Watchers Heaven Stream Player"
           style={{ border: 'none' }}
         />

@@ -201,8 +201,8 @@ export default function MovieDetailPage() {
           onMouseEnter={() => setHoveredSection('right')}
           onMouseLeave={() => setHoveredSection(null)}
         >
-          {/* Main Backdrop Banner Card */}
-          <div className="relative w-full h-[40vh] min-h-[300px] max-h-[500px] rounded-[2rem] overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800">
+          {/* Main Backdrop Banner Card — hidden on mobile to avoid duplicate images */}
+          <div className="hidden lg:block relative w-full h-[40vh] min-h-[300px] max-h-[500px] rounded-[2rem] overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800">
             {movie.backdrop_path ? (
               <img 
                 src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`} 

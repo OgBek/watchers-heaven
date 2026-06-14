@@ -140,8 +140,16 @@ export function Footer() {
           </div>
         )}
         
+        {/* Legal Disclaimer */}
+        <div className="text-center text-[10px] text-slate-400 dark:text-slate-500 border-t border-slate-50 dark:border-slate-900 pt-4 pb-2">
+          <p className="max-w-xl mx-auto leading-relaxed">
+            <span className="font-bold uppercase tracking-wider text-[9px]">Disclaimer:</span>{' '}
+            Watchers Heaven does not store, host, or distribute any content. We only aggregate and link to media that is already publicly available from third-party sources. All trademarks and copyrights belong to their respective owners.
+          </p>
+        </div>
+
         {/* Footer Bottom copyright */}
-        <div className="text-center text-[10px] text-slate-400 dark:text-slate-600 border-t border-slate-50 dark:border-slate-900 pt-4">
+        <div className="text-center text-[10px] text-slate-400 dark:text-slate-600 pt-2">
           &copy; {new Date().getFullYear()} Watchers Heaven. Built with extreme passion.
         </div>
       </div>
