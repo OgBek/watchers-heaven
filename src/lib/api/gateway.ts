@@ -90,17 +90,40 @@ export const ApiGateway = {
   },
 
   // --- TMDB API ---
-  fetchTmdb: async <T>(endpoint: string, apiKey: string, params: Record<string, string> = {}): Promise<T> => {
-    const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
-    url.searchParams.append('api_key', apiKey);
-    Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+  fetchTmdb: async <T>(endpoint: string, params: Record<string, string> = {}): Promise<T> => {
+    const isBrowser = typeof window !== 'undefined';
+    let urlString = '';
+    
+    if (isBrowser) {
+      const url = new URL(`${window.location.origin}/api/tmdb${endpoint}`);
+      Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+      urlString = url.toString();
+    } else {
+      const apiKey = process.env.TMDB_API_KEY || '9d12b6b90ce72ac7663cd7cb98428a6a';
+      const url = new URL(`${TMDB_BASE_URL}${endpoint}`);
+      url.searchParams.append('api_key', apiKey);
+      Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
+      urlString = url.toString();
+    }
 
     return tmdbCircuitBreaker.execute(() => 
-      withRetries(() => fetchClient(url.toString(), {
+      withRetries(() => fetchClient(urlString, {
         headers: {
           'Accept': 'application/json'
         }
       }))
     );
+  },
+
+  getMovieDetails: async (id: string | number) => {
+    return ApiGateway.fetchTmdb<any>(`/movie/${id}`);
+  },
+
+  getMovieCredits: async (id: string | number) => {
+    return ApiGateway.fetchTmdb<any>(`/movie/${id}/credits`);
+  },
+
+  getMovieRecommendations: async (id: string | number) => {
+    return ApiGateway.fetchTmdb<any>(`/movie/${id}/recommendations`);
   }
 };

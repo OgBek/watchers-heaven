@@ -43,11 +43,11 @@ export function FloatingNav() {
   const localePath = (path: string) => `/${locale}${path === '/' ? '' : path}`;
 
   return (
-    <nav className="fixed left-0 top-0 bottom-0 w-14 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-md border border-slate-100 flex flex-col items-center py-3 my-4 mx-1 h-[calc(100vh-32px)] max-h-[720px]">
+    <nav className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex items-center justify-center">
+      <div className="bg-white rounded-3xl shadow-lg border border-slate-100 flex flex-col items-center py-4 px-1 w-14 h-auto max-h-[85vh] gap-1.5">
         
         {/* Main nav icons */}
-        <div className="flex-1 flex flex-col items-center gap-0.5 w-full px-1.5 overflow-y-auto scrollbar-none">
+        <div className="flex flex-col items-center gap-1 w-full px-1 overflow-y-auto scrollbar-none">
           {navItems.map((item) => {
             const isActive = isItemActive(item.path);
             return (
@@ -58,7 +58,7 @@ export function FloatingNav() {
                 onMouseEnter={() => setHoveredItem(item.label)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                <div className={`p-2.5 rounded-xl smooth-transition ${
+                <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
                     ? 'bg-blue-50 text-[#007bff]' 
                     : 'text-slate-400 hover:bg-slate-50 hover:text-slate-500'
@@ -78,10 +78,10 @@ export function FloatingNav() {
         </div>
         
         {/* Divider */}
-        <div className="w-6 h-px bg-slate-100 my-2" />
+        <div className="w-6 h-px bg-slate-100 my-1 shrink-0" />
 
         {/* Bottom icons */}
-        <div className="flex flex-col items-center gap-0.5 w-full px-1.5">
+        <div className="flex flex-col items-center gap-1 w-full px-1 shrink-0">
           {bottomItems.map((item) => {
             const isActive = isItemActive(item.path);
             return (
@@ -92,7 +92,7 @@ export function FloatingNav() {
                 onMouseEnter={() => setHoveredItem(item.label)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
-                <div className={`p-2.5 rounded-xl smooth-transition ${
+                <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
                     ? 'bg-blue-50 text-[#007bff]' 
                     : 'text-slate-400 hover:bg-slate-50 hover:text-slate-500'

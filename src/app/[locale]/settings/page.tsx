@@ -1,170 +1,189 @@
 'use client';
-import { ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Settings, Check, Sun, Moon, Palette, Type } from 'lucide-react';
 
-function SectionTitle({ children }: { children: React.ReactNode }) {
-  return (
-    <h2 className="text-xl font-bold text-[var(--color-text-primary)] mb-5 pb-2 border-b border-slate-100">
-      {children}
-    </h2>
-  );
-}
+const FONTS = [
+  { id: 'bricolage', name: 'Bricolage Grotesque', value: '"Bricolage Grotesque", sans-serif' },
+  { id: 'ethiopic', name: 'Noto Sans Ethiopic', value: '"Noto Sans Ethiopic", sans-serif' },
+  { id: 'system', name: 'System Default', value: 'system-ui, sans-serif' }
+];
 
-function SelectControl({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between py-3">
-      <span className="text-[var(--color-text-secondary)] text-sm font-medium max-w-[220px]">{label}</span>
-      <div className="flex items-center justify-between px-4 py-2.5 w-44 rounded-xl border border-slate-200 bg-transparent text-sm text-[var(--color-text-secondary)] hover:bg-slate-50 cursor-pointer smooth-transition">
-        <span>{value}</span>
-        <ChevronDown className="w-4 h-4 opacity-40" />
-      </div>
-    </div>
-  );
-}
-
-function ButtonControl({ label, actionText }: { label: string; actionText: string }) {
-  return (
-    <div className="flex items-center justify-between py-3">
-      <span className="text-[var(--color-text-secondary)] text-sm font-medium max-w-[220px]">{label}</span>
-      <button className="px-6 py-2.5 w-44 rounded-xl border border-slate-200 bg-transparent text-sm font-semibold text-[var(--color-text-primary)] hover:bg-slate-50 smooth-transition">
-        {actionText}
-      </button>
-    </div>
-  );
-}
-
-function TextLink({ children }: { children: React.ReactNode }) {
-  return (
-    <button className="text-[var(--color-accent-blue)] text-sm font-medium hover:underline block py-1">
-      {children}
-    </button>
-  );
-}
+const ACCENTS = [
+  { name: 'Classic Blue', hex: '#007bff' },
+  { name: 'Vibrant Red', hex: '#e8232a' },
+  { name: 'Forest Green', hex: '#10b981' },
+  { name: 'Royal Purple', hex: '#8b5cf6' },
+  { name: 'Sunset Amber', hex: '#f59e0b' }
+];
 
 export default function SettingsPage() {
+  const [themeMode, setThemeMode] = useState('light');
+  const [accentColor, setAccentColor] = useState('#007bff');
+  const [fontFamily, setFontFamily] = useState('bricolage');
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const mode = localStorage.getItem('setting-theme-mode') || 'light';
+      const accent = localStorage.getItem('setting-accent-color') || '#007bff';
+      const font = localStorage.getItem('setting-font-family') || 'bricolage';
+
+      setThemeMode(mode);
+      setAccentColor(accent);
+      setFontFamily(font);
+
+      applyTheme(mode);
+      applyAccent(accent);
+      applyFont(font);
+    }
+  }, []);
+
+  const applyTheme = (mode: string) => {
+    setThemeMode(mode);
+    localStorage.setItem('setting-theme-mode', mode);
+    if (mode === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  };
+
+  const applyAccent = (color: string) => {
+    setAccentColor(color);
+    localStorage.setItem('setting-accent-color', color);
+    document.documentElement.style.setProperty('--color-accent-blue', color);
+  };
+
+  const applyFont = (fontId: string) => {
+    setFontFamily(fontId);
+    localStorage.setItem('setting-font-family', fontId);
+    const selected = FONTS.find(f => f.id === fontId);
+    if (selected) {
+      document.documentElement.style.setProperty('--font-sans', selected.value);
+    }
+  };
+
+  const clearAllData = () => {
+    localStorage.clear();
+    // Reset defaults
+    applyTheme('light');
+    applyAccent('#007bff');
+    applyFont('bricolage');
+    alert('All site cache and local preferences have been cleared.');
+  };
+
   return (
-    <div className="min-h-screen pt-10 pb-32 px-6 lg:px-14">
-      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-16">
-        
-        {/* Left Side: Settings Sections */}
-        <div className="flex-1 space-y-12 max-w-xl">
-          
-          {/* Account */}
-          <section>
-            <SectionTitle>Account</SectionTitle>
-            <div className="space-y-1 pl-2">
-              <TextLink>Login</TextLink>
-              <TextLink>Signup</TextLink>
-            </div>
-          </section>
-
-          {/* Appearance */}
-          <section>
-            <SectionTitle>Appearance</SectionTitle>
-            <div className="space-y-0">
-              <SelectControl label="Mode" value="System" />
-              <SelectControl label="Ascent Color" value="Blue" />
-              <SelectControl label="System Font Family" value="Bricolage Grotesque" />
-            </div>
-          </section>
-
-          {/* Subtitle */}
-          <section>
-            <SectionTitle>Subtitle</SectionTitle>
-            <div className="space-y-0">
-              <SelectControl label="Subtitle Font Family" value="Bricolage Grotesque" />
-              <SelectControl label="Subtitle Font Size" value="100%" />
-              <SelectControl label="Subtitle Font Color" value="Blue" />
-              <SelectControl label="Subtitle Background Color" value="Transparent" />
-              <SelectControl label="Subtitle Background Blurness" value="0%" />
-              <SelectControl label="Subtitle Opacity" value="100%" />
-              <SelectControl label="Subtitle Margin" value="4%" />
-            </div>
-          </section>
-
-          {/* Player Center */}
-          <section>
-            <SectionTitle>Player Center</SectionTitle>
-            <div className="space-y-0">
-              <SelectControl label="Player's metadata placement" value="Auto" />
-              <SelectControl label="Automatic Subtitle" value="Enable" />
-              <SelectControl label="Media Player" value="ArtPlayer" />
-            </div>
-          </section>
-
-          {/* Developer Center */}
-          <section>
-            <SectionTitle>Developer Center</SectionTitle>
-            <div className="space-y-0">
-              <SelectControl label="Fetch Mode" value="Client-side" />
-              <SelectControl label="Proxy Mode (api)" value="No Proxy" />
-            </div>
-          </section>
-
-          {/* Miscellaneous Center */}
-          <section>
-            <SectionTitle>Miscellaneous Center</SectionTitle>
-            <div className="space-y-0">
-              <SelectControl label="Mini Progress Bar in Non-Embed Mode" value="Disable" />
-              <SelectControl label="Continue Watching: Delete Option" value="Disable" />
-              <SelectControl label="Session Resume" value="Disable" />
-              <SelectControl label="Infinite Scroll" value="Disable" />
-              <SelectControl label="Recommendation on Home Page" value="Enable" />
-              <SelectControl label="Continue Watching on Home Page" value="Enable" />
-              <SelectControl label="Rive Ads" value="Enable" />
-            </div>
-          </section>
-
-          {/* Notification Center */}
-          <section>
-            <SectionTitle>Notification Center</SectionTitle>
-            <ButtonControl label="Notification preferences" actionText="customize" />
-          </section>
-
-          {/* Features */}
-          <section>
-            <SectionTitle>Features</SectionTitle>
-            <SelectControl label="Sync Progress and Continue Watching" value="Enable" />
-          </section>
-
-          {/* Site-Data Center */}
-          <section>
-            <SectionTitle>Site-Data Center</SectionTitle>
-            <div className="space-y-0">
-              <ButtonControl label="All site data" actionText="clear" />
-              <ButtonControl label="Cookies" actionText="clear" />
-              <ButtonControl label="Cache storage" actionText="clear" />
-              <ButtonControl label="Local storage" actionText="clear" />
-              <ButtonControl label="Service-Worker cache" actionText="clear" />
-              <ButtonControl label="Clear Current Radio" actionText="clear" />
-            </div>
-          </section>
-
-          {/* App Center */}
-          <section>
-            <SectionTitle>App Center</SectionTitle>
-            <div className="pl-2">
-              <TextLink>AI</TextLink>
-            </div>
-          </section>
+    <div className="min-h-screen py-10 px-4 md:px-8 bg-[var(--color-main)]">
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
+            <Settings className="w-8 h-8 text-[#007bff]" />
+            Preferences Center
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Configure your personalized streaming player environment</p>
         </div>
 
-        {/* Right Side: Logo & Branding */}
-        <div className="hidden lg:flex flex-col items-center justify-start pt-40 w-[340px] sticky top-0 self-start h-screen">
-          <div className="flex items-end text-[#b0bec5]">
-            <span className="text-[130px] font-black leading-none tracking-tighter" style={{ fontFamily: 'var(--font-sans)' }}>R</span>
-            <div className="relative -ml-6">
-              <span className="text-[110px] font-black leading-none tracking-tighter" style={{ fontFamily: 'var(--font-sans)' }}>V</span>
-            </div>
-            <div className="flex flex-col gap-2 ml-1 pb-5">
-              <div className="w-7 h-3 bg-[#b0bec5] rounded-full" />
-              <div className="w-9 h-3 bg-[#b0bec5] rounded-full" />
-              <div className="w-12 h-3 bg-[#b0bec5] rounded-full" />
-              <div className="w-16 h-3 bg-[#b0bec5] rounded-full" />
+        {/* Settings Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          
+          {/* Card: Theme mode */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <Sun className="w-5 h-5 text-[#007bff]" />
+              Appearance Mode
+            </h2>
+            <p className="text-xs text-slate-400">Switch between light and dark display modes</p>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                onClick={() => applyTheme('light')}
+                className={`py-3 rounded-xl border font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                  themeMode === 'light'
+                    ? 'border-blue-500 bg-blue-50/50 text-[#007bff] dark:text-blue-400'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Sun className="w-4 h-4" />
+                Light
+              </button>
+              <button
+                onClick={() => applyTheme('dark')}
+                className={`py-3 rounded-xl border font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+                  themeMode === 'dark'
+                    ? 'border-blue-500 bg-blue-50/50 text-[#007bff] dark:text-blue-400'
+                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                }`}
+              >
+                <Moon className="w-4 h-4" />
+                Dark
+              </button>
             </div>
           </div>
-          <p className="text-[#b0bec5] text-sm font-medium tracking-wide mt-2">
-            Your Personal Streaming Oasis
-          </p>
+
+          {/* Card: Accent Color */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <Palette className="w-5 h-5 text-[#007bff]" />
+              Accent Theme Color
+            </h2>
+            <p className="text-xs text-slate-400">Choose custom colors for buttons and links</p>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {ACCENTS.map((acc) => (
+                <button
+                  key={acc.hex}
+                  onClick={() => applyAccent(acc.hex)}
+                  style={{ backgroundColor: acc.hex }}
+                  className="w-10 h-10 rounded-full relative hover:scale-105 transition-transform flex items-center justify-center shadow-sm"
+                  title={acc.name}
+                >
+                  {accentColor === acc.hex && (
+                    <Check className="w-5 h-5 text-white drop-shadow" />
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Card: Font Styles */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+              <Type className="w-5 h-5 text-[#007bff]" />
+              Typography Family
+            </h2>
+            <p className="text-xs text-slate-400">Configure global layout display fonts</p>
+            <div className="flex flex-col gap-2 pt-2">
+              {FONTS.map((font) => (
+                <button
+                  key={font.id}
+                  onClick={() => applyFont(font.id)}
+                  className={`w-full py-2.5 px-4 rounded-xl border text-left text-sm font-medium transition-all flex items-center justify-between ${
+                    fontFamily === font.id
+                      ? 'border-blue-500 bg-blue-50/50 text-[#007bff] dark:text-blue-400'
+                      : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <span>{font.name}</span>
+                  {fontFamily === font.id && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Card: Site Data Operations */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 p-6 shadow-sm space-y-4 md:col-span-2 lg:col-span-3">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-2">
+              Danger Zone
+            </h2>
+            <p className="text-xs text-slate-400">Reset configurations or wipe watch history saved in this browser</p>
+            <div className="pt-2">
+              <button
+                onClick={clearAllData}
+                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
+              >
+                Clear All Local Cache & Reset
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
