@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { 
   Home, Search, MonitorPlay, Tv, Calendar, BookOpen, Eye, 
-  Drama, FolderOpen, Settings, BarChart2, Plus
+  Drama, FolderOpen, Settings, BarChart2, Plus, Radio
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -22,6 +22,7 @@ export function FloatingNav() {
     { icon: Search, path: '/search', label: 'Search' },
     { icon: MonitorPlay, path: '/movies', label: 'Movies' },
     { icon: Tv, path: '/tv', label: 'TV Shows' },
+    { icon: Radio, path: '/live', label: 'Live TV' },
     { icon: Calendar, path: '/schedule', label: 'Schedule' },
     { icon: BookOpen, path: '/library', label: 'Library' },
     { icon: Drama, path: '/theater', label: 'Theater' },
@@ -43,32 +44,32 @@ export function FloatingNav() {
   const localePath = (path: string) => `/${locale}${path === '/' ? '' : path}`;
 
   return (
-    <nav className="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex items-center justify-center">
-      <div className="bg-white rounded-3xl shadow-lg border border-slate-100 flex flex-col items-center py-4 px-1 w-14 h-auto max-h-[85vh] gap-1.5">
+    <nav className="fixed bottom-3 left-3 right-3 lg:bottom-auto lg:left-4 lg:right-auto lg:top-1/2 lg:-translate-y-1/2 z-50 flex items-center justify-center">
+      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800/80 flex flex-row lg:flex-col items-center py-2 px-3 lg:py-4 lg:px-1 w-full lg:w-14 h-14 lg:h-auto lg:max-h-[85vh] gap-1.5 justify-between lg:justify-start">
         
         {/* Main nav icons */}
-        <div className="flex flex-col items-center gap-1 w-full px-1 overflow-y-auto scrollbar-none">
+        <div className="flex flex-row lg:flex-col items-center gap-1 w-full lg:w-auto px-1 overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto scrollbar-none flex-1 lg:flex-initial">
           {navItems.map((item) => {
             const isActive = isItemActive(item.path);
             return (
               <Link 
                 key={item.label} 
                 href={localePath(item.path)}
-                className="relative group w-full flex justify-center"
+                className="relative group flex justify-center flex-shrink-0"
                 onMouseEnter={() => setHoveredItem(item.label)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
-                    ? 'bg-blue-50 text-[#007bff]' 
-                    : 'text-slate-400 hover:bg-slate-50 hover:text-slate-500'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 text-[#007bff] dark:text-blue-400' 
+                    : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-650 dark:hover:text-slate-350'
                 }`}>
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
                 
                 {/* Hover Tooltip */}
                 {hoveredItem === item.label && (
-                  <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-lg whitespace-nowrap z-[60] shadow-lg pointer-events-none">
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-800 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[60] shadow-lg pointer-events-none border border-slate-700/50 dark:border-slate-800/50">
                     {item.label}
                   </div>
                 )}
@@ -78,30 +79,31 @@ export function FloatingNav() {
         </div>
         
         {/* Divider */}
-        <div className="w-6 h-px bg-slate-100 my-1 shrink-0" />
+        <div className="w-px h-6 lg:w-6 lg:h-px bg-slate-100 dark:bg-slate-800/80 my-0 mx-2 lg:my-1 lg:mx-0 shrink-0" />
 
         {/* Bottom icons */}
-        <div className="flex flex-col items-center gap-1 w-full px-1 shrink-0">
+        <div className="flex flex-row lg:flex-col items-center gap-1 shrink-0 px-1">
           {bottomItems.map((item) => {
             const isActive = isItemActive(item.path);
             return (
               <Link 
                 key={item.label}
                 href={localePath(item.path)}
-                className="relative group w-full flex justify-center"
+                className="relative group flex justify-center flex-shrink-0"
                 onMouseEnter={() => setHoveredItem(item.label)}
                 onMouseLeave={() => setHoveredItem(null)}
               >
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
-                    ? 'bg-blue-50 text-[#007bff]' 
-                    : 'text-slate-400 hover:bg-slate-50 hover:text-slate-500'
+                    ? 'bg-blue-50 dark:bg-blue-950/60 text-[#007bff] dark:text-blue-400' 
+                    : 'text-slate-400 dark:text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800/50 hover:text-slate-650 dark:hover:text-slate-350'
                 }`}>
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
                 
+                {/* Hover Tooltip */}
                 {hoveredItem === item.label && (
-                  <div className="absolute left-full top-1/2 -translate-y-1/2 ml-3 px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-lg whitespace-nowrap z-[60] shadow-lg pointer-events-none">
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-800 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[60] shadow-lg pointer-events-none border border-slate-700/50 dark:border-slate-800/50">
                     {item.label}
                   </div>
                 )}

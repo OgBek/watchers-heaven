@@ -15,8 +15,10 @@ export default function MovieDetailPage() {
   const [credits, setCredits] = useState<any>(null);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'casts' | 'reviews' | 'related'>('overview');
   const [isBookmarked, setIsBookmarked] = useState(false);
+  
+  // Track hovered section: 'left' | 'right' | null for dynamic column expansion
+  const [hoveredSection, setHoveredSection] = useState<'left' | 'right' | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -101,224 +103,240 @@ export default function MovieDetailPage() {
   const runtimeHours = movie.runtime ? Math.floor(movie.runtime / 60) : 0;
   const runtimeMins = movie.runtime ? movie.runtime % 60 : 0;
 
+  // Compute dynamic column widths based on hovered section
+  let leftColWidth = 'lg:w-[32%]';
+  let rightColWidth = 'lg:w-[68%]';
+
+  if (hoveredSection === 'left') {
+    leftColWidth = 'lg:w-[45%]';
+    rightColWidth = 'lg:w-[55%]';
+  } else if (hoveredSection === 'right') {
+    leftColWidth = 'lg:w-[22%]';
+    rightColWidth = 'lg:w-[78%]';
+  }
+
   return (
-    <div className="min-h-screen pb-20 bg-[var(--color-main)] text-slate-800 dark:text-slate-100 transition-colors duration-300">
+    <div className="min-h-screen pb-24 bg-[var(--color-main)] text-slate-800 dark:text-slate-100 transition-colors duration-300">
       
-      {/* Container - Expanded to max-w-7xl for a bigger view scale */}
-      <div className="max-w-7xl mx-auto pt-6 px-4 md:px-8 flex flex-col lg:flex-row gap-8">
+      {/* Back navigation header */}
+      <div className="max-w-7xl mx-auto px-4 md:px-8 pt-4">
+        <button 
+          onClick={() => router.back()}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-350 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back
+        </button>
+      </div>
+
+      {/* Main Responsive Grid Layout with hover transitions */}
+      <div className="max-w-7xl mx-auto pt-4 px-4 md:px-8 flex flex-col lg:flex-row gap-8 items-start">
         
-        {/* LEFT COLUMN: Large Backdrop Card & Actions */}
-        <div className="lg:w-[65%] space-y-6">
-          <div className="relative w-full h-[60vh] min-h-[400px] max-h-[650px] rounded-[2.5rem] overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-md">
-            
-            {/* Fallback backdrop */}
-            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900">
-              <ImageIcon className="w-20 h-20 text-slate-400 dark:text-slate-600" />
-            </div>
-
-            {/* Backdrop Image */}
-            {movie.backdrop_path && (
+        {/* LEFT COLUMN: Poster & Cast List */}
+        <div 
+          className={`${leftColWidth} w-full space-y-6 transition-all duration-500 ease-in-out`}
+          onMouseEnter={() => setHoveredSection('left')}
+          onMouseLeave={() => setHoveredSection(null)}
+        >
+          {/* Dynamic Movie Poster */}
+          <div className="group relative w-full aspect-[2/3] rounded-[2rem] overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-2xl border border-slate-100 dark:border-slate-800/60 transition-transform duration-500">
+            {movie.poster_path ? (
               <img 
-                src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`} 
+                src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} 
                 alt={movie.title}
-                className="absolute inset-0 z-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000"
-                onLoad={(e) => { e.currentTarget.style.opacity = '1'; }}
-                onError={(e) => { e.currentTarget.style.opacity = '0'; }}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-slate-100 dark:bg-slate-950">
+                <ImageIcon className="w-16 h-16 text-slate-300 dark:text-slate-700 mb-2" />
+                <span className="text-xs text-slate-400 text-center font-bold">{movie.title}</span>
+              </div>
             )}
-
-            {/* Back Button */}
-            <button 
-              onClick={() => router.back()}
-              className="absolute top-6 left-6 z-30 flex items-center gap-2 px-3 py-2 rounded-xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm text-slate-700 dark:text-slate-200 text-xs font-bold hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              Back
-            </button>
-
-            {/* Poster Card Absolute Overlapping (Left cutout bottom-left area) */}
-            <div className="absolute left-6 bottom-0 z-20 w-[120px] md:w-[135px] aspect-[2/3] rounded-2xl overflow-hidden bg-slate-200 dark:bg-slate-950 shadow-xl border-2 border-white dark:border-slate-800 translate-y-2">
-              <img 
-                src={`https://image.tmdb.org/t/p/w342${movie.poster_path}`} 
-                alt={movie.title}
-                className="w-full h-full object-cover"
-              />
-              <div className="absolute top-2 right-2 bg-white/90 dark:bg-slate-900/90 text-slate-800 dark:text-slate-100 text-[10px] font-bold px-1.5 py-0.5 rounded-lg flex items-center gap-0.5 shadow-sm border border-slate-100 dark:border-slate-800">
-                <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
-                {voteAverage}
-              </div>
+            
+            {/* Rating Indicator */}
+            <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md text-white text-xs font-extrabold px-2.5 py-1 rounded-xl flex items-center gap-1 border border-white/10 shadow-md">
+              <Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />
+              <span>{voteAverage}</span>
             </div>
+          </div>
 
-            {/* Action Card Next to Poster utilizing the box shadow Inverted Corner Cutouts */}
-            <div className="absolute left-[154px] md:left-[175px] bottom-0 z-20 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 border-b-0 rounded-t-[24px] py-4 px-5 flex items-center gap-4 w-[50%] min-w-[240px] max-w-[320px] shadow-lg">
-              
-              {/* Left Inverted Corner */}
-              <div className="v-cutout-tr right-full bottom-0" />
-              
-              {/* Right Inverted Corner */}
-              <div className="v-cutout-bl left-full bottom-0" />
-
-              {/* MOVIE tag vertical strip */}
-              <div className="w-8 flex-shrink-0 flex items-center justify-center border-r border-slate-100 dark:border-slate-800 h-8">
-                <span className="text-[8px] font-extrabold text-slate-400 dark:text-slate-500 tracking-[0.2em] uppercase -rotate-90 whitespace-nowrap select-none">
-                  MOVIE
-                </span>
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <h2 className="text-sm font-extrabold text-slate-850 dark:text-white truncate mb-2">{movie.title}</h2>
-                <div className="flex items-center gap-1.5">
-                  <button 
-                    onClick={() => router.push(`/${locale}/watch/${id}`)}
-                    className="flex items-center gap-1 bg-[#007bff] hover:bg-blue-600 text-white px-3 py-1.5 rounded-xl text-[10px] font-bold transition-all shadow-sm"
-                  >
-                    <Play className="w-3 h-3 fill-white text-white" />
-                    Watch
-                  </button>
-                  <button 
-                    onClick={toggleBookmark}
-                    className={`p-1.5 rounded-xl border transition-all ${
-                      isBookmarked 
-                        ? 'bg-blue-50 border-blue-100 text-[#007bff] dark:bg-blue-950 dark:border-blue-900' 
-                        : 'border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-655'
-                    }`}
-                    title="Bookmark"
-                  >
-                    <Bookmark className={`w-3 h-3 ${isBookmarked ? 'fill-[#007bff]' : ''}`} />
-                  </button>
-                  <button 
-                    onClick={() => router.refresh()}
-                    className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-655 hover:bg-slate-50 transition-all"
-                  >
-                    <RefreshCw className="w-3 h-3" />
-                  </button>
+          {/* Cast Members (Positioned under the poster) */}
+          <div className="space-y-3 pt-2">
+            <h3 className="text-[10px] font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase select-none">
+              Cast & Crew
+            </h3>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {credits?.cast?.slice(0, 8).map((actor: any) => (
+                <div key={actor.id} className="flex items-center gap-3 bg-white dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-2xl shadow-sm hover:shadow-md transition">
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
+                    {actor.profile_path ? (
+                      <img 
+                        src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`} 
+                        alt={actor.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-[9px] font-bold">
+                        N/A
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs font-black text-slate-800 dark:text-slate-150 truncate leading-tight">{actor.name}</p>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{actor.character}</p>
+                  </div>
                 </div>
-              </div>
+              ))}
+              {(!credits?.cast || credits.cast.length === 0) && (
+                <p className="text-xs text-slate-400 col-span-2">No cast information available.</p>
+              )}
             </div>
-
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Metadata & Tab details */}
-        <div className="flex-1 space-y-6 lg:pt-4">
-          {/* Tabs */}
-          <div className="flex border-b border-slate-100 dark:border-slate-800">
-            {['overview', 'casts', 'related'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab as any)}
-                className={`py-2.5 px-4 font-bold text-sm border-b-2 capitalize transition-all ${
-                  activeTab === tab
-                    ? 'border-[#007bff] text-[#007bff] dark:text-blue-400'
-                    : 'border-transparent text-slate-400 hover:text-slate-650'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
+        {/* RIGHT COLUMN: Backdrop Banner, Overview & Related */}
+        <div 
+          className={`${rightColWidth} w-full space-y-8 transition-all duration-500 ease-in-out`}
+          onMouseEnter={() => setHoveredSection('right')}
+          onMouseLeave={() => setHoveredSection(null)}
+        >
+          {/* Main Backdrop Banner Card */}
+          <div className="relative w-full h-[40vh] min-h-[300px] max-h-[500px] rounded-[2rem] overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-xl border border-slate-100 dark:border-slate-800">
+            {movie.backdrop_path ? (
+              <img 
+                src={`https://image.tmdb.org/t/p/original${movie.backdrop_path}`} 
+                alt={movie.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900 flex items-center justify-center">
+                <ImageIcon className="w-20 h-20 text-slate-400 dark:text-slate-600" />
+              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/25 to-transparent z-[1]" />
           </div>
 
-          {/* Tab Content */}
-          <div className="space-y-6 min-h-[220px]">
-            {activeTab === 'overview' && (
-              <div className="space-y-4">
-                {movie.tagline && (
-                  <p className="text-base font-extrabold text-slate-700 dark:text-slate-350 italic">
-                    &ldquo;{movie.tagline}&rdquo;
-                  </p>
-                )}
-                <p className="text-sm leading-relaxed text-slate-650 dark:text-slate-400">
-                  {movie.overview || 'No description available.'}
-                </p>
+          {/* Title Header & Play Actions Bar */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-6">
+            <div>
+              <h1 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white leading-tight mb-2">
+                {movie.title}
+              </h1>
+              
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-400 dark:text-slate-500 font-semibold uppercase tracking-wider">
+                <span>{releaseYear}</span>
+                <span>•</span>
+                <span>{movie.runtime ? `${runtimeHours}h ${runtimeMins}m` : 'N/A'}</span>
+                <span>•</span>
+                <span>{movie.genres ? movie.genres.slice(0, 3).map((g: any) => g.name).join(', ') : 'N/A'}</span>
+              </div>
+            </div>
 
-                {/* Attributes List */}
-                <div className="space-y-3 pt-4 border-t border-slate-100 dark:border-slate-800 text-xs">
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Release</span>
-                    <span className="col-span-2 text-slate-700 dark:text-slate-350 font-medium">
-                      {movie.release_date ? new Date(movie.release_date).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Runtime</span>
-                    <span className="col-span-2 text-slate-700 dark:text-slate-350 font-medium">
-                      {movie.runtime ? `${runtimeHours}hr ${runtimeMins}min` : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Genre</span>
-                    <span className="col-span-2 text-slate-700 dark:text-slate-350 font-medium">
-                      {movie.genres ? movie.genres.map((g: any) => g.name).join(', ') : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Spoken Languages</span>
-                    <span className="col-span-2 text-slate-700 dark:text-slate-350 font-medium">
-                      {movie.spoken_languages ? movie.spoken_languages.map((l: any) => l.english_name).join(', ') : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider">Production Countries</span>
-                    <span className="col-span-2 text-slate-700 dark:text-slate-350 font-medium">
-                      {movie.production_countries ? movie.production_countries.map((c: any) => c.name).join(', ') : 'N/A'}
-                    </span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 col-span-3">
-                    <span className="text-slate-400 font-bold uppercase tracking-wider block mb-1">Production Companies</span>
-                    <span className="col-span-3 text-slate-650 dark:text-slate-400 font-medium leading-relaxed block pl-1">
-                      {movie.production_companies ? movie.production_companies.map((c: any) => c.name).join(', ') : 'N/A'}
-                    </span>
-                  </div>
+            {/* Quick Actions Panel */}
+            <div className="flex items-center gap-2">
+              <button 
+                onClick={() => router.push(`/${locale}/watch/${id}`)}
+                className="flex items-center gap-2 bg-[#007bff] hover:bg-blue-600 text-white px-5 py-3 rounded-2xl text-xs font-bold transition shadow-md"
+              >
+                <Play className="w-4 h-4 fill-white text-white" />
+                Watch Now
+              </button>
+              
+              <button 
+                onClick={toggleBookmark}
+                className={`p-3 rounded-2xl border transition ${
+                  isBookmarked 
+                    ? 'bg-blue-50 border-blue-100 text-[#007bff] dark:bg-blue-950 dark:border-blue-900' 
+                    : 'border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                }`}
+                title="Add to watchlist"
+              >
+                <Bookmark className={`w-4 h-4 ${isBookmarked ? 'fill-[#007bff]' : ''}`} />
+              </button>
+
+              <button 
+                onClick={() => router.refresh()}
+                className="p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+              >
+                <RefreshCw className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Overview & Metadata Block */}
+          <div className="space-y-4 bg-white dark:bg-slate-900/30 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800/60 shadow-sm">
+            <h3 className="text-xs font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase select-none">
+              Overview
+            </h3>
+            
+            {movie.tagline && (
+              <p className="text-base font-extrabold text-slate-700 dark:text-slate-350 italic">
+                &ldquo;{movie.tagline}&rdquo;
+              </p>
+            )}
+            
+            <p className="text-sm leading-relaxed text-slate-650 dark:text-slate-400">
+              {movie.overview || 'No description available.'}
+            </p>
+
+            {/* Extended Attributes Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-slate-100 dark:border-slate-800/80 text-xs">
+              <div className="space-y-2.5">
+                <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
+                  <span className="text-slate-400 font-bold uppercase tracking-wider">Release Date</span>
+                  <span className="text-slate-750 dark:text-slate-300 font-medium">
+                    {movie.release_date ? new Date(movie.release_date).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
+                  <span className="text-slate-400 font-bold uppercase tracking-wider">Spoken Languages</span>
+                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.spoken_languages ? movie.spoken_languages.map((l: any) => l.english_name).join(', ') : 'N/A'}>
+                    {movie.spoken_languages ? movie.spoken_languages.map((l: any) => l.english_name).join(', ') : 'N/A'}
+                  </span>
                 </div>
               </div>
-            )}
 
-            {activeTab === 'casts' && (
-              <div className="grid grid-cols-2 gap-4">
-                {credits?.cast?.slice(0, 8).map((actor: any) => (
-                  <div key={actor.id} className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2.5 rounded-2xl shadow-sm">
-                    <div className="w-10 h-10 rounded-full overflow-hidden bg-slate-100 shrink-0">
-                      {actor.profile_path ? (
-                        <img 
-                          src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`} 
-                          alt={actor.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400 text-[10px] font-bold">
-                          N/A
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-850 dark:text-slate-100 truncate">{actor.name}</p>
-                      <p className="text-[10px] text-slate-450 truncate">{actor.character}</p>
-                    </div>
-                  </div>
-                ))}
-                {(!credits?.cast || credits.cast.length === 0) && (
-                  <p className="text-xs text-slate-400 col-span-2">No cast information available.</p>
-                )}
-              </div>
-            )}
+              <div className="space-y-2.5">
+                <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
+                  <span className="text-slate-400 font-bold uppercase tracking-wider">Production Countries</span>
+                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.production_countries ? movie.production_countries.map((c: any) => c.name).join(', ') : 'N/A'}>
+                    {movie.production_countries ? movie.production_countries.map((c: any) => c.name).join(', ') : 'N/A'}
+                  </span>
+                </div>
 
-            {activeTab === 'related' && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {recommendations.slice(0, 6).map((rec: any) => (
-                  <PosterCard
-                    key={rec.id}
-                    id={rec.id}
-                    title={rec.title}
-                    posterPath={rec.poster_path}
-                    rating={rec.vote_average}
-                    year={rec.release_date ? rec.release_date.split('-')[0] : ''}
-                  />
-                ))}
-                {recommendations.length === 0 && (
-                  <p className="text-xs text-slate-400 col-span-3">No recommendation matches found.</p>
-                )}
+                <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
+                  <span className="text-slate-400 font-bold uppercase tracking-wider">Production Companies</span>
+                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.production_companies ? movie.production_companies.map((c: any) => c.name).join(', ') : 'N/A'}>
+                    {movie.production_companies ? movie.production_companies.map((c: any) => c.name).join(', ') : 'N/A'}
+                  </span>
+                </div>
               </div>
-            )}
+            </div>
+          </div>
+
+          {/* Related / Recommendations Slider/Grid */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase select-none">
+              Recommendations
+            </h3>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+              {recommendations.slice(0, 8).map((rec: any) => (
+                <PosterCard
+                  key={rec.id}
+                  id={rec.id}
+                  title={rec.title}
+                  posterPath={rec.poster_path}
+                  rating={rec.vote_average}
+                  year={rec.release_date ? rec.release_date.split('-')[0] : ''}
+                />
+              ))}
+              {recommendations.length === 0 && (
+                <p className="text-xs text-slate-400 col-span-4 py-4">No recommendation matches found.</p>
+              )}
+            </div>
           </div>
         </div>
 
