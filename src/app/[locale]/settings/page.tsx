@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Settings, Check, Sun, Moon, Palette, Type } from 'lucide-react';
+import { Settings, Check, Sun, Moon, Palette, Type, Globe } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 
 const FONTS = [
   { id: 'bricolage', name: 'Bricolage Grotesque', value: '"Bricolage Grotesque", sans-serif' },
@@ -16,10 +17,29 @@ const ACCENTS = [
   { name: 'Sunset Amber', hex: '#f59e0b' }
 ];
 
+const LANGUAGES = [
+  { code: 'en', name: 'English' },
+  { code: 'am', name: 'አማርኛ (Amharic)' },
+  { code: 'om', name: 'Afaan Oromoo (Oromo)' },
+  { code: 'ti', name: 'ትግርኛ (Tigrinya)' },
+  { code: 'so', name: 'Af-Soomaali (Somali)' }
+];
+
 export default function SettingsPage() {
+  const router = useRouter();
+  const pathname = usePathname() || '';
+  const currentLocale = pathname.split('/')[1] || 'en';
+
   const [themeMode, setThemeMode] = useState('light');
   const [accentColor, setAccentColor] = useState('#007bff');
   const [fontFamily, setFontFamily] = useState('bricolage');
+
+  const changeLanguage = (newLocale: string) => {
+    const segments = pathname.split('/');
+    segments[1] = newLocale;
+    const newPath = segments.join('/');
+    router.push(newPath);
+  };
 
   // Load settings from localStorage on mount
   useEffect(() => {
@@ -163,6 +183,31 @@ export default function SettingsPage() {
                 >
                   <span>{font.name}</span>
                   {fontFamily === font.id && <Check className="w-4 h-4" />}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Card: Preferred Language */}
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+              <Globe className="w-5 h-5 text-accent-blue" />
+              Preferred Language
+            </h2>
+            <p className="text-xs text-slate-400 dark:text-slate-555">Choose your preferred site language</p>
+            <div className="flex flex-col gap-2 pt-2">
+              {LANGUAGES.map((lang) => (
+                <button
+                  key={lang.code}
+                  onClick={() => changeLanguage(lang.code)}
+                  className={`w-full py-2.5 px-4 rounded-xl border text-left text-sm font-medium transition-all flex items-center justify-between ${
+                    currentLocale === lang.code
+                      ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-455'
+                      : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-850/50'
+                  }`}
+                >
+                  <span>{lang.name}</span>
+                  {currentLocale === lang.code && <Check className="w-4 h-4" />}
                 </button>
               ))}
             </div>

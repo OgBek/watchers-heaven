@@ -10,7 +10,7 @@ const COLLECTION_IDS = [
   86311,   // The Avengers
   119,     // Lord of the Rings
   263,     // The Dark Knight
-  9481,    // The Godfather
+  265,     // The Godfather
   531241,  // Spider-Man (MCU) -> Intercepted to merge Tobey, Andrew & Spider-Verse!
   10194,   // Toy Story
   328,     // Jurassic Park
@@ -20,7 +20,7 @@ const COLLECTION_IDS = [
   295,     // Pirates of the Caribbean
   8650,    // Transformers
   87359,   // Mission: Impossible
-  84892,   // Indiana Jones
+  84,      // Indiana Jones
   2150,    // Shrek
   33514,   // Twilight
   86066,   // Despicable Me
@@ -29,14 +29,14 @@ const COLLECTION_IDS = [
   131296,  // Iron Man Collection
   131292,  // Captain America Collection
   131295,  // Thor Collection
-  10227,   // The Matrix Collection
-  2344,    // The Terminator Collection
-  12228,   // Die Hard Collection
-  91425,   // John Wick Collection
-  9715,    // Alien Collection
-  101375,  // Kingsman Collection
-  8608,    // The Mummy Collection
-  1570,    // Rocky Collection
+  2344,    // The Matrix Collection
+  528,     // The Terminator Collection
+  1570,    // Die Hard Collection
+  40016,   // John Wick Collection
+  8091,    // Alien Collection
+  333339,  // Kingsman Collection
+  9028,    // The Mummy Collection
+  1575,    // Rocky Collection
 ].filter(Boolean);
 
 export default function CollectionsPage() {
@@ -62,13 +62,13 @@ export default function CollectionsPage() {
           COLLECTION_IDS.map(async (id) => {
             try {
               if (id === 531241) {
-                // Intercept Spider-Man and merge Tobey (9483), Andrew (189196), Tom (531241), and Spider-Verse (558216)
-                const [mcu, tobey, andrew, verse] = await Promise.all([
-                  ApiGateway.fetchTmdb<any>('/collection/531241').catch(() => null),
-                  ApiGateway.fetchTmdb<any>('/collection/9483').catch(() => null),
-                  ApiGateway.fetchTmdb<any>('/collection/189196').catch(() => null),
-                  ApiGateway.fetchTmdb<any>('/collection/558216').catch(() => null),
-                ]);
+                 // Intercept Spider-Man and merge Tobey (556), Andrew (125574), Tom (531241), and Spider-Verse (558216)
+                 const [mcu, tobey, andrew, verse] = await Promise.all([
+                   ApiGateway.fetchTmdb<any>('/collection/531241').catch(() => null),
+                   ApiGateway.fetchTmdb<any>('/collection/556').catch(() => null),
+                   ApiGateway.fetchTmdb<any>('/collection/125574').catch(() => null),
+                   ApiGateway.fetchTmdb<any>('/collection/558216').catch(() => null),
+                 ]);
                 
                 const allParts = [
                   ...(tobey?.parts || []),

@@ -150,3 +150,12 @@ body {
   background: var(--color-main);
 }
 
+.hero-card-cutout {
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 110' preserveAspectRatio='none'%3E%3Cpath d='M0,110 L420,110 L420,32 C390,32 388,0 356,0 L64,0 C32,0 30,32 0,32 Z' fill='black'/%3E%3C/svg%3E");
+  mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 110' preserveAspectRatio='none'%3E%3Cpath d='M0,110 L420,110 L420,32 C390,32 388,0 356,0 L64,0 C32,0 30,32 0,32 Z' fill='black'/%3E%3C/svg%3E");
+  -webkit-mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+}
+

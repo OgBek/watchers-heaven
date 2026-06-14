@@ -44,6 +44,7 @@ export default function MoviesPage() {
   // Filters
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState('');
+  const [selectedIndustry, setSelectedIndustry] = useState(''); // '', 'hollywood', 'bollywood'
   const [sortBy, setSortBy] = useState('popularity.desc');
   
   // Search
@@ -65,12 +66,13 @@ export default function MoviesPage() {
   const clearFilters = () => {
     setSelectedGenres([]);
     setSelectedYear('');
+    setSelectedIndustry('');
     setSortBy('popularity.desc');
     setSearchQuery('');
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = selectedGenres.length > 0 || selectedYear || sortBy !== 'popularity.desc' || searchQuery;
+  const hasActiveFilters = selectedGenres.length > 0 || selectedYear || selectedIndustry || sortBy !== 'popularity.desc' || searchQuery;
 
   const loadMovies = useCallback(async () => {
     setLoading(true);
@@ -83,7 +85,13 @@ export default function MoviesPage() {
           include_adult: 'false',
         });
         if (data.results) {
-          setMovies(data.results.slice(0, ITEMS_PER_PAGE));
+          let results = data.results || [];
+          if (selectedIndustry === 'hollywood') {
+            results = results.filter((r: any) => r.original_language === 'en');
+          } else if (selectedIndustry === 'bollywood') {
+            results = results.filter((r: any) => r.original_language === 'hi');
+          }
+          setMovies(results.slice(0, ITEMS_PER_PAGE));
           setTotalPages(Math.min(data.total_pages || 1, 500));
         }
       } else {
@@ -99,6 +107,11 @@ export default function MoviesPage() {
         }
         if (selectedYear) {
           params.primary_release_year = selectedYear;
+        }
+        if (selectedIndustry === 'hollywood') {
+          params.with_original_language = 'en';
+        } else if (selectedIndustry === 'bollywood') {
+          params.with_original_language = 'hi';
         }
         // For highest rated, require a minimum vote count
         if (sortBy === 'vote_average.desc') {
@@ -116,7 +129,7 @@ export default function MoviesPage() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, selectedGenres, selectedYear, sortBy, searchQuery]);
+  }, [currentPage, selectedGenres, selectedYear, sortBy, searchQuery, selectedIndustry]);
 
   useEffect(() => {
     loadMovies();
@@ -208,6 +221,30 @@ export default function MoviesPage() {
                     }`}
                   >
                     {g.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Industry — Chips */}
+            <div className="space-y-2.5">
+              <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-550 uppercase">Industry</h3>
+              <div className="flex gap-2">
+                {[
+                  { id: '', name: 'All Industries' },
+                  { id: 'hollywood', name: 'Hollywood' },
+                  { id: 'bollywood', name: 'Bollywood' }
+                ].map(ind => (
+                  <button
+                    key={ind.id}
+                    onClick={() => { setSelectedIndustry(ind.id); setCurrentPage(1); }}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
+                      selectedIndustry === ind.id
+                        ? 'bg-accent-blue text-white border-transparent shadow-md shadow-accent-blue/20 scale-105'
+                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:border-accent-blue/40 hover:text-accent-blue'
+                    }`}
+                  >
+                    {ind.name}
                   </button>
                 ))}
               </div>

@@ -1,14 +1,35 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { ApiGateway } from '@/lib/api/gateway';
-import { Search, Loader } from 'lucide-react';
+import { Search, Loader, AlertCircle } from 'lucide-react';
 import { PosterCard } from '@/components/cards/PosterCard';
+
+const normalizeString = (str: string) => {
+  return str.toLowerCase().replace(/[^a-z0-9]/g, '');
+};
+
+const getQueryVariations = (q: string): string[] => {
+  const normalized = q.trim();
+  if (!normalized) return [];
+  const variations = [normalized];
+  
+  // If no space, split common prefixes
+  if (!normalized.includes(' ')) {
+    const splitPattern = /^(spider|iron|bat|super|star|dark|john|die|fast|tom|x)(.+)$/i;
+    const match = normalized.match(splitPattern);
+    if (match) {
+      variations.push(`${match[1]} ${match[2]}`);
+    }
+  }
+  return [...new Set(variations)];
+};
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const [trending, setTrending] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Load trending movies as default preview
   useEffect(() => {
@@ -19,7 +40,8 @@ export default function SearchPage() {
           setTrending(data.results.slice(0, 12));
         }
       } catch (err) {
-        console.error(err);
+        // Log simple error to avoid dev server error overlays
+        console.warn('Trending fetch failed:', err instanceof Error ? err.message : err);
       }
     }
     loadTrending();
@@ -28,18 +50,48 @@ export default function SearchPage() {
   useEffect(() => {
     if (!query.trim()) {
       setResults([]);
+      setError(null);
       return;
     }
     const timer = setTimeout(async () => {
       setLoading(true);
+      setError(null);
       try {
-        const data = await ApiGateway.fetchTmdb<any>('/search/multi', { query });
-        if (data.results) {
-          // Filter results with poster paths
-          setResults(data.results.filter((r: any) => r.poster_path));
-        }
+        const variations = getQueryVariations(query);
+        const fetches = variations.map(v => 
+          ApiGateway.fetchTmdb<any>('/search/multi', { query: v }).catch(() => ({ results: [] }))
+        );
+        const responses = await Promise.all(fetches);
+        
+        // Merge results
+        const allResults = responses.flatMap(res => res.results || []);
+        
+        // Remove duplicates
+        const uniqueResultsMap = new Map();
+        allResults.forEach(item => {
+          if (item && item.id) {
+            uniqueResultsMap.set(item.id, item);
+          }
+        });
+        let merged = Array.from(uniqueResultsMap.values());
+
+        // Client-side fuzzy/substring filtering for precision
+        const normQuery = normalizeString(query);
+        merged = merged.filter((item: any) => {
+          const title = item.title || item.name || '';
+          const originalTitle = item.original_title || item.original_name || '';
+          return (
+            item.poster_path && (
+              normalizeString(title).includes(normQuery) ||
+              normalizeString(originalTitle).includes(normQuery)
+            )
+          );
+        });
+
+        setResults(merged);
       } catch (err) {
-        console.error(err);
+        console.warn('Search query failed:', err instanceof Error ? err.message : err);
+        setError('Connection timed out or returned an error. Please adjust your query or check your connection.');
       } finally {
         setLoading(false);
       }
@@ -68,6 +120,23 @@ export default function SearchPage() {
           />
         </div>
 
+        {error && (
+          <div className="flex items-center gap-3 p-4 bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/50 rounded-2xl text-red-650 dark:text-red-400 text-sm">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <div className="flex-1">{error}</div>
+            <button
+              onClick={() => {
+                const current = query;
+                setQuery('');
+                setTimeout(() => setQuery(current), 50);
+              }}
+              className="px-3 py-1.5 bg-red-100 dark:bg-red-900/40 hover:bg-red-200 dark:hover:bg-red-900/60 rounded-xl text-xs font-bold transition"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-20">
             <Loader className="w-8 h-8 animate-spin text-accent-blue" />
@@ -86,11 +155,11 @@ export default function SearchPage() {
               />
             ))}
           </div>
-        ) : query.trim() ? (
+        ) : query.trim() && !error ? (
           <div className="text-center py-20 text-slate-400">
             No results found for &ldquo;{query}&rdquo;.
           </div>
-        ) : (
+        ) : !error && (
           <div className="space-y-5">
             <h2 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
               Trending Movies & Series

@@ -155,12 +155,9 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
           </div>
         </div>
 
-        {/* Cutout shape mask — follows card shape with a gap */}
-        <div className="badge-cutout-mask z-30" />
-
-        {/* Floating Info Card — positioned inside the cutout */}
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-40 w-[92%] sm:w-auto flex justify-center pb-3">
-          <div className="w-full max-w-[380px] flex items-center gap-3 bg-[var(--color-surface-primary)] dark:bg-[var(--color-surface-secondary)] rounded-[20px] p-3.5 shadow-xl border border-slate-100 dark:border-slate-800/80">
+        {/* Floating Info Card — fills the cutout space perfectly */}
+        <div className="absolute bottom-[-1px] left-1/2 -translate-x-1/2 z-40 w-full sm:w-[420px] h-[110px] flex justify-center">
+          <div className="w-full h-full flex items-center gap-3 bg-[var(--color-surface-primary)] dark:bg-[var(--color-surface-secondary)] shadow-xl px-5 pt-8 pb-3.5 hero-card-cutout">
             
             {/* Left Side: Vertical Category Marker */}
             <div className="flex items-center justify-center border-r border-slate-200/60 dark:border-slate-700/60 pr-3 select-none">
@@ -171,7 +168,7 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
 
             {/* Right Side: Title & Fluid Layout Interactive Triggers */}
             <div className="flex flex-col flex-1 min-w-0">
-              <h2 className="text-base sm:text-lg font-extrabold text-slate-800 dark:text-white mb-2.5 truncate">
+              <h2 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white mb-1.5 truncate">
                 {currentMovie.title || currentMovie.name || "Loading Title..."}
               </h2>
               
