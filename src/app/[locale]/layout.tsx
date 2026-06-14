@@ -26,7 +26,7 @@ export default function RootLayout({
           <CinemaModeProvider>
             <div className="flex min-h-screen">
               <FloatingNav />
-              <main className="flex-1 pl-16 lg:pl-20 w-full relative">
+              <main className="flex-1 pl-14 w-full relative">
                 {children}
               </main>
             </div>

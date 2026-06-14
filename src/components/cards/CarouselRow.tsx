@@ -1,7 +1,6 @@
 'use client';
 import { useRef } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { cn } from '../typography/BalancedText';
+import { ChevronLeft, ChevronRight, Link2 } from 'lucide-react';
 
 interface CarouselRowProps {
   title: string;
@@ -20,32 +19,36 @@ export function CarouselRow({ title, children, className }: CarouselRowProps) {
   };
 
   return (
-    <section className={cn("w-full py-8", className)}>
-      <div className="flex items-center justify-between mb-4 px-6 lg:px-12">
-        <h2 className="text-[length:var(--text-h2)] font-semibold text-[var(--color-text-primary)]">{title}</h2>
-        <div className="flex gap-2">
+    <section className={`w-full py-6 ${className || ''}`}>
+      <div className="flex items-center justify-between mb-4 px-4 lg:px-8">
+        <div className="flex items-center gap-2">
+          <h2 className="text-xl font-bold text-[var(--color-text-primary)]">{title}</h2>
+          <Link2 className="w-4 h-4 text-slate-400" />
+        </div>
+        <div className="flex items-center gap-1 text-sm text-slate-400 font-medium select-none">
           <button 
             onClick={() => scroll('left')}
-            className="w-10 h-10 rounded-full glass flex items-center justify-center text-white hover:bg-[var(--color-surface-primary)] smooth-transition"
+            className="hover:text-slate-600 smooth-transition px-1"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="w-5 h-5" />
+            &lt;
           </button>
+          <span>swipe</span>
           <button 
             onClick={() => scroll('right')}
-            className="w-10 h-10 rounded-full glass flex items-center justify-center text-white hover:bg-[var(--color-surface-primary)] smooth-transition"
+            className="hover:text-slate-600 smooth-transition px-1"
             aria-label="Scroll right"
           >
-            <ChevronRight className="w-5 h-5" />
+            &gt;
           </button>
         </div>
       </div>
       
       {/* Carousel Container */}
-      <div className="relative w-full carousel-mask">
+      <div className="relative w-full">
         <div 
           ref={scrollRef}
-          className="carousel flex gap-4 overflow-x-auto px-6 lg:px-12 pb-8 pt-2"
+          className="carousel flex gap-3 overflow-x-auto px-4 lg:px-8 pb-4 pt-1"
         >
           {children}
         </div>
