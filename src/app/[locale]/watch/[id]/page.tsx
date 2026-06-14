@@ -2,9 +2,9 @@
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Maximize2, Minimize2, Info, RefreshCw } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 
-type Provider = 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
+type Provider = 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
 
 export default function WatchPage() {
   const params = useParams();
@@ -18,15 +18,27 @@ export default function WatchPage() {
   const episode = searchParams.get('e') ? parseInt(searchParams.get('e')!) : undefined;
   const isTv = season !== undefined || episode !== undefined;
 
-  const [provider, setProvider] = useState<Provider>('vidking');
+  const [provider, setProvider] = useState<Provider>('vidlink');
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [savedProgress, setSavedProgress] = useState<number>(0);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [initialProgressApplied, setInitialProgressApplied] = useState(false);
+  const [accentColor, setAccentColor] = useState<string>('007bff');
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   // Generate storage key
   const storageKey = `watch-progress:${id}:${season || 0}:${episode || 0}`;
+
+  // Load accent color from settings
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('setting-accent-color');
+      if (stored) {
+        // Strip # if present
+        setAccentColor(stored.replace('#', ''));
+      }
+    }
+  }, []);
 
   // Load saved progress from localStorage
   useEffect(() => {
@@ -46,52 +58,10 @@ export default function WatchPage() {
     }
   }, [storageKey]);
 
-  // Listen for progress events from the player iframes
-  useEffect(() => {
-    const handlePlayerMessage = (event: MessageEvent) => {
-      // Validate origin if possible, but streaming sites can have multiple domains/CDNs.
-      // We parse safely.
-      let eventData: any = null;
-
-      // 1. Try parsing JSON (VidKing sends stringified JSON)
-      if (typeof event.data === 'string') {
-        try {
-          eventData = JSON.parse(event.data);
-        } catch (e) {
-          // Not JSON, ignore
-        }
-      } else if (typeof event.data === 'object' && event.data !== null) {
-        eventData = event.data;
-      }
-
-      if (!eventData) return;
-
-      // --- VidKing Player Events ---
-      if (eventData.type === 'PLAYER_EVENT' && eventData.data) {
-        const { event: playerEvent, currentTime, duration } = eventData.data;
-        if (currentTime !== undefined && duration !== undefined) {
-          saveProgress(currentTime, duration);
-        }
-      }
-
-      // --- ScreenScape Watch History Response / Event ---
-      if (eventData.type === 'SCREENSCAPE_WATCH_HISTORY_WITH_PROGRESS_RESPONSE') {
-        // ScreenScape postMessage API
-        console.log('ScreenScape History:', eventData.watchHistory);
-      }
-    };
-
-    window.addEventListener('message', handlePlayerMessage);
-    return () => {
-      window.removeEventListener('message', handlePlayerMessage);
-    };
-  }, [id, season, episode, storageKey]);
-
-  const saveProgress = (currentTime: number, duration: number) => {
+  const saveProgress = useCallback((currentTime: number, duration: number) => {
     if (duration <= 0) return;
     const progressPercent = (currentTime / duration) * 100;
     
-    // Save to localStorage
     const data = {
       id,
       type: isTv ? 'tv' : 'movie',
@@ -103,7 +73,83 @@ export default function WatchPage() {
       updatedAt: Date.now(),
     };
     localStorage.setItem(storageKey, JSON.stringify(data));
-  };
+  }, [id, isTv, season, episode, storageKey]);
+
+  // Listen for progress events from player iframes
+  useEffect(() => {
+    const handlePlayerMessage = (event: MessageEvent) => {
+      let eventData: any = null;
+
+      // Try parsing JSON (some providers send stringified JSON)
+      if (typeof event.data === 'string') {
+        try {
+          eventData = JSON.parse(event.data);
+        } catch {
+          // Not JSON, ignore
+        }
+      } else if (typeof event.data === 'object' && event.data !== null) {
+        eventData = event.data;
+      }
+
+      if (!eventData) return;
+
+      // --- VidLink PLAYER_EVENT (live playback updates) ---
+      // VidLink sends: { type: 'PLAYER_EVENT', data: { event, currentTime, duration } }
+      if (eventData.type === 'PLAYER_EVENT' && eventData.data) {
+        const { currentTime, duration } = eventData.data;
+        if (currentTime !== undefined && duration !== undefined) {
+          saveProgress(currentTime, duration);
+        }
+      }
+
+      // --- VidLink MEDIA_DATA (media metadata & continue watching info) ---
+      // VidLink sends: { type: 'MEDIA_DATA', data: { id, title, poster, ... } }
+      if (eventData.type === 'MEDIA_DATA' && eventData.data) {
+        const mediaData = eventData.data;
+        // Store metadata for Continue Watching list
+        const continueWatchingKey = `continue-watching`;
+        try {
+          const existing = localStorage.getItem(continueWatchingKey);
+          const list = existing ? JSON.parse(existing) : [];
+          // Update or insert this item
+          const idx = list.findIndex((item: any) => item.id === id && item.season === (season || 0) && item.episode === (episode || 0));
+          const entry = {
+            id,
+            type: isTv ? 'tv' : 'movie',
+            season: season || 0,
+            episode: episode || 0,
+            title: mediaData.title || `#${id}`,
+            poster: mediaData.poster || '',
+            updatedAt: Date.now(),
+          };
+          if (idx >= 0) {
+            list[idx] = entry;
+          } else {
+            list.unshift(entry);
+          }
+          // Keep only last 50 entries
+          localStorage.setItem(continueWatchingKey, JSON.stringify(list.slice(0, 50)));
+        } catch (e) {
+          console.error('Error saving continue watching data', e);
+        }
+      }
+
+      // --- VidKing Player Events (legacy) ---
+      if (eventData.type === 'PLAYER_EVENT' && eventData.data && !eventData.data.event) {
+        // VidKing uses a slightly different format, already handled above
+      }
+
+      // --- ScreenScape Watch History Response ---
+      if (eventData.type === 'SCREENSCAPE_WATCH_HISTORY_WITH_PROGRESS_RESPONSE') {
+        console.log('ScreenScape History:', eventData.watchHistory);
+      }
+    };
+
+    window.addEventListener('message', handlePlayerMessage);
+    return () => {
+      window.removeEventListener('message', handlePlayerMessage);
+    };
+  }, [id, season, episode, storageKey, isTv, saveProgress]);
 
   const handleResume = () => {
     setInitialProgressApplied(true);
@@ -128,10 +174,39 @@ export default function WatchPage() {
 
   // Generate correct URLs based on current provider
   const getEmbedUrl = () => {
-    // If we have saved progress and applied it, pass it
     const startProgress = initialProgressApplied ? savedProgress : 0;
 
     switch (provider) {
+      case 'vidlink':
+        return ApiGateway.getVidLinkUrl(
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode,
+          {
+            primaryColor: accentColor,
+            secondaryColor: '121212',
+            iconColor: accentColor,
+            autoplay: true,
+            nextButton: true,
+            title: true,
+          }
+        );
+      case 'vidsrc':
+        return ApiGateway.getVidsrcEmbedUrl(
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode,
+          { autoplay: true }
+        );
+      case 'vidsrcto':
+        return ApiGateway.getVidsrcToUrl(
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode
+        );
       case 'vidking':
         return ApiGateway.getVidKingUrl(
           id, 
@@ -139,7 +214,7 @@ export default function WatchPage() {
           season, 
           episode, 
           { 
-            color: '007bff', 
+            color: accentColor, 
             autoPlay: true, 
             nextEpisode: true, 
             episodeSelector: true,
@@ -155,9 +230,8 @@ export default function WatchPage() {
           'eng'
         );
       case 'toustream':
-        // TouStream only has movie embed or live player slug in the provided specs
         return isTv 
-          ? ApiGateway.getTvEmbedUrl(id, season || 1, episode || 1) // fallback to Rive for TV on TouStream
+          ? ApiGateway.getTvEmbedUrl(id, season || 1, episode || 1) 
           : ApiGateway.getTouStreamMovieUrl(id);
       case 'rivestream':
       default:
@@ -167,8 +241,11 @@ export default function WatchPage() {
     }
   };
 
-  const providersList: { id: Provider; name: string; quality: string }[] = [
-    { id: 'vidking', name: 'VidKing (Multi)', quality: '1080p / Auto' },
+  const providersList: { id: Provider; name: string; quality: string; badge?: string }[] = [
+    { id: 'vidlink', name: 'VidLink', quality: '1080p / HLS', badge: '⭐' },
+    { id: 'vidsrc', name: 'Vidsrc', quality: '1080p / Multi' },
+    { id: 'vidsrcto', name: 'Vidsrc.to', quality: '1080p / Multi' },
+    { id: 'vidking', name: 'VidKing', quality: '1080p / Auto' },
     { id: 'screenscape', name: 'ScreenScape', quality: '1080p / English' },
     { id: 'toustream', name: 'TouStream', quality: '720p / Backup' },
     { id: 'rivestream', name: 'RiveStream', quality: '1080p / Torrent' }
@@ -197,26 +274,26 @@ export default function WatchPage() {
         </div>
 
         {/* Center: Server Selector */}
-        <div className="flex flex-wrap items-center gap-1.5 bg-slate-950/80 p-1 rounded-2xl border border-slate-800">
+        <div className="flex flex-wrap items-center gap-1 bg-slate-950/80 p-1 rounded-2xl border border-slate-800">
           {providersList.map((p) => (
             <button
               key={p.id}
               onClick={() => {
                 setProvider(p.id);
-                // Prompt again for progress if switching provider
                 if (savedProgress > 0) {
                   setShowResumePrompt(true);
                   setInitialProgressApplied(false);
                 }
               }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all duration-300 flex flex-col items-center ${
+              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-300 flex flex-col items-center ${
                 provider === p.id 
-                  ? 'bg-blue-600 text-white shadow-md' 
+                  ? 'text-white shadow-md' 
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
+              style={provider === p.id ? { backgroundColor: `#${accentColor}` } : {}}
             >
-              <span>{p.name}</span>
-              <span className={`text-[8px] mt-0.5 opacity-80 ${provider === p.id ? 'text-blue-100' : 'text-slate-500'}`}>
+              <span>{p.badge ? `${p.badge} ${p.name}` : p.name}</span>
+              <span className={`text-[8px] mt-0.5 opacity-80 ${provider === p.id ? 'text-white/80' : 'text-slate-500'}`}>
                 {p.quality}
               </span>
             </button>
@@ -259,7 +336,8 @@ export default function WatchPage() {
               <div className="flex gap-3 w-full">
                 <button
                   onClick={handleResume}
-                  className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors"
+                  className="flex-1 hover:brightness-110 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all"
+                  style={{ backgroundColor: `#${accentColor}` }}
                 >
                   Yes, Resume
                 </button>

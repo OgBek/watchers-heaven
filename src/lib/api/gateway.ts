@@ -89,6 +89,44 @@ export const ApiGateway = {
     return url;
   },
 
+  // --- Vidsrc (vidsrc-embed.ru) API ---
+  getVidsrcEmbedUrl: (id: string | number, type: 'movie' | 'tv', season?: number, episode?: number, options?: { subUrl?: string; dsLang?: string; autoplay?: boolean }) => {
+    const base = 'https://vidsrc-embed.ru/embed';
+    let url = type === 'movie'
+      ? `${base}/movie/${id}`
+      : `${base}/tv/${id}/${season || 1}-${episode || 1}`;
+    const params: string[] = [];
+    if (options?.subUrl) params.push(`sub_url=${encodeURIComponent(options.subUrl)}`);
+    if (options?.dsLang) params.push(`ds_lang=${options.dsLang}`);
+    if (options?.autoplay !== undefined) params.push(`autoplay=${options.autoplay ? 1 : 0}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    return url;
+  },
+
+  // --- VidLink (vidlink.pro) API ---
+  getVidLinkUrl: (id: string | number, type: 'movie' | 'tv', season?: number, episode?: number, options?: { primaryColor?: string; secondaryColor?: string; iconColor?: string; autoplay?: boolean; nextButton?: boolean; title?: boolean }) => {
+    let url = type === 'movie'
+      ? `https://vidlink.pro/movie/${id}`
+      : `https://vidlink.pro/tv/${id}/${season || 1}/${episode || 1}`;
+    const params: string[] = [];
+    if (options?.primaryColor) params.push(`primaryColor=${options.primaryColor}`);
+    if (options?.secondaryColor) params.push(`secondaryColor=${options.secondaryColor}`);
+    if (options?.iconColor) params.push(`iconColor=${options.iconColor}`);
+    if (options?.autoplay !== undefined) params.push(`autoplay=${options.autoplay}`);
+    if (options?.nextButton !== undefined) params.push(`nextButton=${options.nextButton}`);
+    if (options?.title !== undefined) params.push(`title=${options.title}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    return url;
+  },
+
+  // --- Vidsrc.to API ---
+  getVidsrcToUrl: (id: string | number, type: 'movie' | 'tv', season?: number, episode?: number) => {
+    const base = 'https://vidsrc.to/embed';
+    return type === 'movie'
+      ? `${base}/movie/${id}`
+      : `${base}/tv/${id}/${season || 1}/${episode || 1}`;
+  },
+
   // --- TMDB API ---
   fetchTmdb: async <T>(endpoint: string, params: Record<string, string> = {}): Promise<T> => {
     const isBrowser = typeof window !== 'undefined';

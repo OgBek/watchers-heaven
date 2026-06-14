@@ -13,6 +13,7 @@ async function fetchFromTmdb(endpoint: string, params: Record<string, string> = 
   const apiKey = process.env.TMDB_API_KEY || '9d12b6b90ce72ac7663cd7cb98428a6a';
   const url = new URL(`https://api.themoviedb.org/3${endpoint}`);
   url.searchParams.append('api_key', apiKey);
+  url.searchParams.append('include_adult', 'false'); // Persistently filter adult content
   Object.entries(params).forEach(([key, value]) => url.searchParams.append(key, value));
   
   try {
@@ -65,7 +66,7 @@ export default async function Home() {
     <main className="min-h-screen pb-20 bg-[var(--color-main)] text-slate-800 dark:text-white transition-colors duration-300">
       <HeroFeature movies={trendingList} />
       
-      <div className="mt-8 space-y-4">
+      <div className="mt-8 space-y-4 animate-fadeIn">
         <CarouselRow title="Recommendation">
           {getList(trendingMovies, fallbackRecommendation).map((movie: any) => (
             <PosterCard 
@@ -75,6 +76,7 @@ export default async function Home() {
               posterPath={movie.poster_path}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : (movie.first_air_date ? movie.first_air_date.split('-')[0] : '')}
+              type="movie"
             />
           ))}
         </CarouselRow>
@@ -88,6 +90,7 @@ export default async function Home() {
               posterPath={show.poster_path}
               rating={show.vote_average}
               year={show.first_air_date ? show.first_air_date.split('-')[0] : ''}
+              type="tv"
             />
           ))}
         </CarouselRow>
@@ -101,6 +104,7 @@ export default async function Home() {
               posterPath={movie.poster_path}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : ''}
+              type="movie"
             />
           ))}
         </CarouselRow>
@@ -114,6 +118,7 @@ export default async function Home() {
               posterPath={movie.poster_path}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : ''}
+              type="movie"
             />
           ))}
         </CarouselRow>
@@ -127,6 +132,7 @@ export default async function Home() {
               posterPath={movie.poster_path}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : ''}
+              type="movie"
             />
           ))}
         </CarouselRow>
@@ -140,6 +146,7 @@ export default async function Home() {
               posterPath={show.poster_path}
               rating={show.vote_average}
               year={show.first_air_date ? show.first_air_date.split('-')[0] : ''}
+              type="tv"
             />
           ))}
         </CarouselRow>
@@ -153,6 +160,7 @@ export default async function Home() {
               posterPath={movie.poster_path}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : ''}
+              type="movie"
             />
           ))}
         </CarouselRow>
