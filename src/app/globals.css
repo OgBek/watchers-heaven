@@ -29,7 +29,7 @@
   --color-glow-blue: rgba(59,130,246,.25);
   --color-glow-purple: rgba(139,92,246,.2);
 
-  --font-sans: "Bricolage Grotesque", "Noto Sans Ethiopic", "Inter", system-ui, sans-serif;
+  --font-sans: var(--font-bricolage), var(--font-noto-ethiopic), "Inter", system-ui, sans-serif;
   --font-mono: "Roboto Mono", monospace;
 
   /* Typography Scale */
