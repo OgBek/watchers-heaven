@@ -4,22 +4,18 @@ import { ApiGateway } from '@/lib/api/gateway';
 import { PosterCard } from '@/components/cards/PosterCard';
 import { Tv, Loader } from 'lucide-react';
 
-const TV_GENRES = [
+const ANIME_GENRES = [
   { id: '', name: 'All Genres' },
   { id: '10759', name: 'Action & Adventure' },
-  { id: '16', name: 'Animation' },
   { id: '35', name: 'Comedy' },
-  { id: '80', name: 'Crime' },
-  { id: '99', name: 'Documentary' },
   { id: '18', name: 'Drama' },
-  { id: '10751', name: 'Family' },
-  { id: '9628', name: 'Mystery' },
-  { id: '10765', name: 'Sci-Fi & Fantasy' }
+  { id: '10765', name: 'Sci-Fi & Fantasy' },
+  { id: '9628', name: 'Mystery' }
 ];
 
 const YEARS = ['', '2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018'];
 
-export default function TvShowsPage() {
+export default function AnimePage() {
   const [shows, setShows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,17 +27,22 @@ export default function TvShowsPage() {
   const [sortBy, setSortBy] = useState('popularity.desc');
 
   useEffect(() => {
-    async function loadShows() {
+    async function loadAnime() {
       setLoading(true);
       try {
+        // Animation (16) and Original Language Japanese (ja) to discover Anime
+        let genresFilter = '16';
+        if (selectedGenre) {
+          genresFilter += `,${selectedGenre}`;
+        }
+
         const params: Record<string, string> = {
           page: String(currentPage),
-          sort_by: sortBy
+          sort_by: sortBy,
+          with_genres: genresFilter,
+          with_original_language: 'ja'
         };
 
-        if (selectedGenre) {
-          params.with_genres = selectedGenre;
-        }
         if (selectedYear) {
           params.first_air_date_year = selectedYear;
         }
@@ -57,7 +58,7 @@ export default function TvShowsPage() {
         setLoading(false);
       }
     }
-    loadShows();
+    loadAnime();
   }, [currentPage, selectedGenre, selectedYear, sortBy]);
 
   return (
@@ -69,9 +70,9 @@ export default function TvShowsPage() {
           <div>
             <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
               <Tv className="w-8 h-8 text-[#007bff]" />
-              TV Shows
+              Anime
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Discover popular television series with filter options</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Explore trending Japanese animation series</p>
           </div>
 
           {/* Filters controls */}
@@ -81,7 +82,7 @@ export default function TvShowsPage() {
               onChange={(e) => { setSelectedGenre(e.target.value); setCurrentPage(1); }}
               className="px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-200 text-xs font-bold focus:outline-none focus:border-blue-500 transition shadow-sm"
             >
-              {TV_GENRES.map(g => (
+              {ANIME_GENRES.map(g => (
                 <option key={g.id} value={g.id}>{g.name}</option>
               ))}
             </select>
@@ -152,7 +153,7 @@ export default function TvShowsPage() {
           </div>
         ) : (
           <div className="text-center py-20 text-slate-400 dark:text-slate-600">
-            No TV shows found matching these filters.
+            No Anime found matching these filters.
           </div>
         )}
       </div>

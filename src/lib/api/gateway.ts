@@ -125,5 +125,17 @@ export const ApiGateway = {
 
   getMovieRecommendations: async (id: string | number) => {
     return ApiGateway.fetchTmdb<any>(`/movie/${id}/recommendations`);
+  },
+
+  getTvDetails: async (id: string | number) => {
+    return ApiGateway.fetchTmdb<any>(`/tv/${id}`);
+  },
+
+  getTvCredits: async (id: string | number) => {
+    return ApiGateway.fetchTmdb<any>(`/tv/${id}/credits`);
+  },
+
+  getTvRecommendations: async (id: string | number) => {
+    return ApiGateway.fetchTmdb<any>(`/tv/${id}/recommendations`);
   }
 };

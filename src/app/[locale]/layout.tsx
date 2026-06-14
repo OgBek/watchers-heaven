@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { FloatingNav } from "@/components/layout/FloatingNav";
 import { CinemaModeProvider } from "@/components/effects/CinemaModeProvider";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
+import Script from "next/script";
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -20,7 +21,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Noto+Sans+Ethiopic:wght@400..700&display=swap" rel="stylesheet" />
-        <script dangerouslySetInnerHTML={{ __html: `
+        <Script id="theme-loader" strategy="beforeInteractive" dangerouslySetInnerHTML={{ __html: `
           try {
             const mode = localStorage.getItem('setting-theme-mode');
             if (mode === 'dark') document.documentElement.classList.add('dark');
