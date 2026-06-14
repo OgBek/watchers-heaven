@@ -42,7 +42,7 @@ export function FloatingNav() {
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800/80 flex flex-row lg:flex-col items-center py-2 px-3 lg:py-4 lg:px-1 w-full lg:w-14 h-14 lg:h-auto lg:max-h-[85vh] gap-1.5 justify-between lg:justify-start lg:overflow-visible">
         
         {/* Main nav icons */}
-        <div className="flex flex-row lg:flex-col items-center gap-1 w-full lg:w-auto px-1 overflow-x-auto lg:overflow-visible scrollbar-none flex-1 lg:flex-initial lg:max-h-[70vh] lg:overflow-y-auto">
+        <div className="flex flex-row lg:flex-col items-center gap-1 w-full lg:w-auto px-1 overflow-x-auto lg:overflow-visible scrollbar-none flex-1 lg:flex-initial">
           {navItems.map((item) => {
             const isActive = isItemActive(item.path);
             return (
@@ -54,13 +54,13 @@ export function FloatingNav() {
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
                     ? 'bg-blue-50 dark:bg-blue-950/60 text-accent-blue dark:text-blue-400' 
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-105/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}>
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
                 
                 {/* CSS Group Hover Tooltip */}
-                <div className="absolute hidden lg:block opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-900 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl border border-slate-705/50 dark:border-slate-800/50">
+                <div className="absolute hidden lg:block opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 transition-all duration-200 bottom-full left-1/2 -translate-x-1/2 mb-3 lg:bottom-auto lg:top-1/2 lg:-translate-y-1/2 lg:left-full lg:translate-x-0 lg:ml-3 px-3 py-1.5 bg-slate-900 dark:bg-slate-950 text-white text-xs font-semibold rounded-lg whitespace-nowrap z-[100] shadow-xl border border-slate-700/50 dark:border-slate-800/50">
                   {item.label}
                 </div>
               </Link>
@@ -84,7 +84,7 @@ export function FloatingNav() {
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
                     ? 'bg-blue-50 dark:bg-blue-950/60 text-accent-blue dark:text-blue-400' 
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-105/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
+                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
                 }`}>
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>

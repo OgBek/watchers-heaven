@@ -1,3 +1,9 @@
+/* 
+ * VS Code Tailwind CSS v4 Lint Warning Resolution:
+ * If VS Code shows warnings for unknown at-rules like `@import "tailwindcss"`, `@theme`, or `@variant`,
+ * you can safely ignore them, or disable them in VS Code settings by adding:
+ * "css.lint.unknownAtRules": "ignore"
+ */
 @import "tailwindcss";
 @variant dark (&:where(.dark, .dark *));
 

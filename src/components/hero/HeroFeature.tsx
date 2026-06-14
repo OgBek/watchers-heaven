@@ -8,7 +8,9 @@ interface Movie {
   title?: string;
   name?: string;
   backdrop_path?: string;
+  poster_path?: string;
   overview?: string;
+  media_type?: string;
 }
 
 interface HeroFeatureProps {
@@ -26,6 +28,7 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const currentMovie = movies[activeIndex] || movies[0];
+  const isTV = currentMovie?.media_type === 'tv';
 
   // Auto-slide effect
   useEffect(() => {
@@ -78,12 +81,20 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
 
   const handleWatch = () => {
     if (!currentMovie) return;
-    router.push(`/${locale}/watch/${currentMovie.id}`);
+    if (isTV) {
+      router.push(`/${locale}/watch/${currentMovie.id}?s=1&e=1`);
+    } else {
+      router.push(`/${locale}/watch/${currentMovie.id}`);
+    }
   };
 
   const handleDetails = () => {
     if (!currentMovie) return;
-    router.push(`/${locale}/movie/${currentMovie.id}`);
+    if (isTV) {
+      router.push(`/${locale}/tv/${currentMovie.id}`);
+    } else {
+      router.push(`/${locale}/movie/${currentMovie.id}`);
+    }
   };
 
   if (!currentMovie) return null;
@@ -144,15 +155,17 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
           </div>
         </div>
 
-        {/* Unified Responsive Cutout Shape Mask Container */}
-        <div className="badge-cutout-mask w-[92%] sm:w-full flex items-end justify-center px-4 pb-3 z-30">
-          {/* Inner Layout Content - Placed cleanly inside masked safety boundaries with custom background & shadow to float */}
-          <div className="w-full max-w-[370px] flex items-center gap-3 bg-[var(--color-surface-primary)] dark:bg-[var(--color-surface-secondary)] rounded-[20px] p-3.5 shadow-xl border border-slate-100 dark:border-slate-800/80">
+        {/* Cutout shape mask — follows card shape with a gap */}
+        <div className="badge-cutout-mask z-30" />
+
+        {/* Floating Info Card — positioned inside the cutout */}
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 z-40 w-[92%] sm:w-auto flex justify-center pb-3">
+          <div className="w-full max-w-[380px] flex items-center gap-3 bg-[var(--color-surface-primary)] dark:bg-[var(--color-surface-secondary)] rounded-[20px] p-3.5 shadow-xl border border-slate-100 dark:border-slate-800/80">
             
             {/* Left Side: Vertical Category Marker */}
             <div className="flex items-center justify-center border-r border-slate-200/60 dark:border-slate-700/60 pr-3 select-none">
               <span className="text-[9px] font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 [writing-mode:vertical-lr] rotate-180">
-                MOVIE
+                {isTV ? 'TV SHOW' : 'MOVIE'}
               </span>
             </div>
 

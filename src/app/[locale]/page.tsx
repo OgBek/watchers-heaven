@@ -60,11 +60,18 @@ export default async function Home() {
     return apiResult?.results?.length ? apiResult.results : fallback;
   };
 
-  const trendingList = getList(trendingMovies, fallbackRecommendation).slice(0, 5);
+  // Mix trending movies + TV shows for the hero slider
+  const heroMovies = getList(trendingMovies, fallbackRecommendation)
+    .slice(0, 3)
+    .map((item: any) => ({ ...item, media_type: 'movie' }));
+  const heroTv = getList(trendingTv, [])
+    .slice(0, 3)
+    .map((item: any) => ({ ...item, media_type: 'tv' }));
+  const heroSlides = [...heroMovies, ...heroTv].filter((item: any) => item.backdrop_path);
 
   return (
     <main className="min-h-screen pb-20 bg-[var(--color-main)] text-slate-800 dark:text-white transition-colors duration-300">
-      <HeroFeature movies={trendingList} />
+      <HeroFeature movies={heroSlides} />
       
       <div className="mt-8 space-y-4 animate-fadeIn">
         <CarouselRow title="Recommendation">
