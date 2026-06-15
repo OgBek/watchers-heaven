@@ -1,12 +1,24 @@
 # 🎬 Watchers Heaven
 
-![Watchers Heaven Banner](https://image.tmdb.org/t/p/original/1pdfLvkbY9ohJlCjQH2JGqqUT1e.jpg)
-
 **Watchers Heaven** is a beautifully designed, modern movie and TV show exploration application built with **Next.js 15 (App Router)**, **React**, and **Tailwind CSS**. It leverages the powerful **TMDB API** to fetch the latest trending movies, top-rated shows, detailed cast information, and beautifully curated cinematic collections.
 
 Designed with a premium, sleek UI, Watchers Heaven features fluid micro-animations, glassmorphism elements, dynamic image masking, and full internationalization support.
 
 ---
+![Uploading Screenshot 2026-06-16 001259.png…]()
+![Uploading Screenshot 2026-06-16 001342.png…]()
+![Uploading Screenshot 2026-06-16 001418.png…]()
+![Uploading Screenshot 2026-06-16 001458.png…]()
+<img width="1920" height="984" alt="Screenshot 2026-06-16 001913" src="https://github.com/user-attachments/assets/2cdf4fb1-5098-4ed3-8302-dc2daee5ed13" />
+<img width="1920" height="973" alt="Screenshot 2026-06-16 002110" src="https://github.com/user-attachments/assets/d1ff34c1-62c3-4a79-bffa-2e4382e71422" />
+![Uploading Screenshot 2026-06-16 002158.png…]()
+![Uploading Screenshot 2026-06-16 002731.png…]()
+![Uploading Screenshot 2026-06-16 002856.png…]()
+
+
+
+
+
 
 ## ✨ Features
 
