@@ -101,14 +101,22 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
 
   return (
     <section className="relative w-full px-2 pt-6 pb-4">
-      {/* 
-        Wrapper: relative container that does NOT clip overflow.
-        The image card clips, but the badge overflows out of this wrapper.
-      */}
       <div className="relative w-full">
 
-        {/* Image Card — THIS one clips overflow */}
-        <div className="relative w-full h-[70vh] min-h-[500px] max-h-[750px] rounded-[2rem] overflow-hidden bg-slate-100 dark:bg-slate-950 shadow-md">
+        {/* Image Card — simple rounded rectangle, no clip-path */}
+        <div 
+          className="relative w-full h-[70vh] min-h-[500px] max-h-[750px] overflow-hidden bg-slate-100 dark:bg-slate-950"
+          style={{
+            maskImage:
+              "url(\"data:image/svg+xml,%3Csvg width='221' height='122' viewBox='0 0 221 122' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fillRule='evenodd' clipRule='evenodd' d='M183 4C183 1.79086 184.791 0 187 0H217C219.209 0 221 1.79086 221 4V14V28V99C221 101.209 219.209 103 217 103H182C179.791 103 178 104.791 178 107V118C178 120.209 176.209 122 174 122H28C25.7909 122 24 120.209 24 118V103V94V46C24 43.7909 22.2091 42 20 42H4C1.79086 42 0 40.2091 0 38V18C0 15.7909 1.79086 14 4 14H24H43H179C181.209 14 183 12.2091 183 10V4Z' fill='%23D9D9D9'/%3E%3C/svg%3E%0A\")",
+            WebkitMaskImage:
+              "url(\"data:image/svg+xml,%3Csvg width='221' height='122' viewBox='0 0 221 122' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath fillRule='evenodd' clipRule='evenodd' d='M183 4C183 1.79086 184.791 0 187 0H217C219.209 0 221 1.79086 221 4V14V28V99C221 101.209 219.209 103 217 103H182C179.791 103 178 104.791 178 107V118C178 120.209 176.209 122 174 122H28C25.7909 122 24 120.209 24 118V103V94V46C24 43.7909 22.2091 42 20 42H4C1.79086 42 0 40.2091 0 38V18C0 15.7909 1.79086 14 4 14H24H43H179C181.209 14 183 12.2091 183 10V4Z' fill='%23D9D9D9'/%3E%3C/svg%3E%0A\")",
+            maskRepeat: 'no-repeat',
+            WebkitMaskRepeat: 'no-repeat',
+            maskSize: '100% 100%',
+            WebkitMaskSize: '100% 100%',
+          }}
+        >
           
           {/* Fallback */}
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-950">
@@ -129,10 +137,10 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
             />
           ))}
 
-          {/* Subtle bottom gradient so text card reads clearly */}
+          {/* Bottom gradient for text readability */}
           <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-black/30 to-transparent z-[1]" />
 
-          {/* Dynamic Indicator Dots */}
+          {/* Indicator Dots */}
           <div className="absolute top-6 right-8 z-30 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10">
             {movies.map((_, idx) => (
               <button
@@ -155,9 +163,12 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
           </div>
         </div>
 
-        {/* Floating Info Card — fills the cutout space perfectly */}
+        {/* Background cutout mask — punches the page-bg colored inverse-curve shape behind the card */}
+        <div className="badge-cutout-mask z-30" />
+
+        {/* Floating Info Card */}
         <div className="absolute bottom-[-1px] left-1/2 -translate-x-1/2 z-40 w-full sm:w-[420px] h-[110px] flex justify-center">
-          <div className="w-full h-full flex items-center gap-3 bg-[var(--color-surface-primary)] dark:bg-[var(--color-surface-secondary)] shadow-xl px-5 pt-8 pb-3.5 hero-card-cutout">
+          <div className="w-full h-full flex items-center gap-3 bg-[var(--color-surface-primary)] dark:bg-[var(--color-surface-secondary)] px-5 pt-8 pb-3.5 hero-card-cutout">
             
             {/* Left Side: Vertical Category Marker */}
             <div className="flex items-center justify-center border-r border-slate-200/60 dark:border-slate-700/60 pr-3 select-none">
@@ -166,7 +177,7 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
               </span>
             </div>
 
-            {/* Right Side: Title & Fluid Layout Interactive Triggers */}
+            {/* Right Side: Title & Actions */}
             <div className="flex flex-col flex-1 min-w-0">
               <h2 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white mb-1.5 truncate">
                 {currentMovie.title || currentMovie.name || "Loading Title..."}

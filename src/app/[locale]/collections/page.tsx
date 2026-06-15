@@ -11,7 +11,7 @@ const COLLECTION_IDS = [
   119,     // Lord of the Rings
   263,     // The Dark Knight
   265,     // The Godfather
-  531241,  // Spider-Man (MCU) -> Intercepted to merge Tobey, Andrew & Spider-Verse!
+  531241,  // Spider-Man (MCU)
   10194,   // Toy Story
   328,     // Jurassic Park
   121938,  // The Hobbit
@@ -37,6 +37,50 @@ const COLLECTION_IDS = [
   333339,  // Kingsman Collection
   9028,    // The Mummy Collection
   1575,    // Rocky Collection
+  17042,   // Planet of the Apes
+  748,     // X-Men
+  137,     // Back to the Future
+  87096,   // Avatar
+  155103,  // Jason Bourne
+  151,     // Star Trek
+  304,     // Ocean's
+  115570,  // Star Trek Reboot
+  94032,   // The Hangover
+  955,     // Men in Black
+  468222,  // Venom
+  126125,  // The Conjuring Universe
+  1709,    // Predator
+  284433,  // Fifty Shades
+  134444,  // How to Train Your Dragon
+  102225,  // The Chronicles of Narnia
+  60599,   // Night at the Museum
+  323208,  // The Purge
+  103233,  // Maze Runner
+  228446,  // Divergent
+  14890,   // The Chronicles of Riddick
+  5514,    // Ghostbusters
+  401981,  // Fantastic Beasts
+  420,     // Mad Max
+  157336,  // Rambo
+  30514,   // Resident Evil
+  9134,    // Underworld
+  106093,  // Step Up
+  515243,  // The Equalizer
+  87118,   // Scary Movie
+  529892,  // Godzilla (MonsterVerse)
+  91361,   // The Expendables
+  176166,  // The Smurfs
+  2831,    // The Mighty Ducks
+  144571,  // The Croods
+  254881,  // The Boss Baby
+  356860,  // Trolls
+  416560,  // Sing
+  436573,  // The Secret Life of Pets
+  473187,  // The Incredibles
+  9086,    // Madagascar
+  61168,   // Cars
+  86121,   // Monsters, Inc.
+  459636,  // Hotel Transylvania
 ].filter(Boolean);
 
 export default function CollectionsPage() {

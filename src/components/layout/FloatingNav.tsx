@@ -4,9 +4,11 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export function FloatingNav() {
   const pathname = usePathname() || '/';
+  const t = useTranslations('Navigation');
 
   // Extract locale from pathname (e.g., /en/settings -> en)
   const segments = pathname.split('/').filter(Boolean);
@@ -15,19 +17,19 @@ export function FloatingNav() {
   const currentPath = '/' + segments.slice(1).join('/');
 
   const navItems = [
-    { icon: Home, path: '/', label: 'Home' },
-    { icon: Search, path: '/search', label: 'Search' },
-    { icon: MonitorPlay, path: '/movies', label: 'Movies' },
-    { icon: Tv, path: '/tv', label: 'TV Shows' },
-    { icon: Radio, path: '/live', label: 'Live TV' },
-    { icon: Film, path: '/k-drama', label: 'K-Drama' },
-    { icon: Compass, path: '/anime', label: 'Anime' },
-    { icon: Bookmark, path: '/watchlist', label: 'Watchlist' },
-    { icon: Folder, path: '/collections', label: 'Collections' },
+    { icon: Home, path: '/', label: t('home') },
+    { icon: Search, path: '/search', label: t('search') },
+    { icon: MonitorPlay, path: '/movies', label: t('movies') },
+    { icon: Tv, path: '/tv', label: t('tvShows') },
+    { icon: Radio, path: '/live', label: t('live') },
+    { icon: Film, path: '/k-drama', label: t('kDrama') },
+    { icon: Compass, path: '/anime', label: t('anime') },
+    { icon: Bookmark, path: '/watchlist', label: t('watchlist') },
+    { icon: Folder, path: '/collections', label: t('collections') },
   ];
 
   const bottomItems = [
-    { icon: Settings, path: '/settings', label: 'Settings' },
+    { icon: Settings, path: '/settings', label: t('settings') },
   ];
 
   const isItemActive = (path: string) => {

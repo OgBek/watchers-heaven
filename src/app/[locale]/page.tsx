@@ -130,20 +130,6 @@ export default async function Home() {
           ))}
         </CarouselRow>
 
-        <CarouselRow title="Upcoming Releases">
-          {getList(upcoming, []).map((movie: any) => (
-            <PosterCard 
-              key={movie.id}
-              id={movie.id}
-              title={movie.title}
-              posterPath={movie.poster_path}
-              rating={movie.vote_average}
-              year={movie.release_date ? movie.release_date.split('-')[0] : ''}
-              type="movie"
-            />
-          ))}
-        </CarouselRow>
-
         <CarouselRow title="Popular Anime">
           {getList(anime, []).map((show: any) => (
             <PosterCard 
