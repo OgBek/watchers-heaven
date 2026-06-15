@@ -10,5 +10,37 @@
     "watchlist": "የሚታዩ ዝርዝር",
     "collections": "ስብስቦች",
     "settings": "ቅንብሮች"
+  },
+  "Settings": {
+    "title": "የምርጫ ማዕከል",
+    "subtitle": "የእርስዎን ግላዊ የዥረት ማጫወቻ አካባቢ ያዋቅሩ",
+    "appearance": "የገጽታ ሁነታ",
+    "appearanceDesc": "በብርሃን እና በጨለማ ማሳያ ሁነታዎች መካከል ይቀያይሩ",
+    "light": "ብርሃን",
+    "dark": "ጨለማ",
+    "accent": "የገጽታ ቀለም",
+    "accentDesc": "ለአዝራሮች እና አገናኞች ብጁ ቀለሞችን ይምረጡ",
+    "typography": "የጽሑፍ ቤተሰብ",
+    "typographyDesc": "የአለምአቀፍ አቀማመጥ ማሳያ ቅርጸ-ቁምፊዎችን ያዋቅሩ",
+    "language": "የተመረጠ ቋንቋ",
+    "languageDesc": "የመረጡትን የጣቢያ ቋንቋ ይምረጡ",
+    "dangerZone": "አደገኛ ዞን",
+    "dangerDesc": "ውቅሮችን ዳግም ያስጀምሩ ወይም በዚህ አሳሽ ውስጥ የተቀመጠውን የእይታ ታሪክ ያጽዱ",
+    "clearAll": "ሁሉንም የአካባቢ መሸጎጫ ያጽዱ እና ዳግም ያስጀምሩ"
+  },
+  "Search": {
+    "title": "የፍለጋ ቤተ-መጽሐፍት",
+    "subtitle": "ፊልሞችን፣ የቲቪ ትዕይንቶችን፣ አኒሜሽን እና ሌሎችንም ያስሱ",
+    "placeholder": "ስም፣ ዘውግ፣ ወይም የተለቀቀበትን ዓመት ይተይቡ...",
+    "trending": "በመታየት ላይ ያሉ ፊልሞች እና ተከታታዮች",
+    "noResults": "ለ \"{query}\" ምንም ውጤት አልተገኘም."
+  },
+  "Categories": {
+    "moviesTitle": "የፊልም ስብስብ",
+    "tvTitle": "የቲቪ ትዕይንቶች ስብስብ",
+    "animeTitle": "የአኒም ስብስብ",
+    "kdramaTitle": "የ K-Drama ስብስብ",
+    "collectionsTitle": "የተመረጡ ስብስቦች",
+    "subtitle": "ሰፊ የፕሪሚየም መዝናኛ ቤተ-መጽሐፍትን ያስሱ"
   }
 }

@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Settings, Check, Sun, Moon, Palette, Type, Globe } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 const FONTS = [
   { id: 'bricolage', name: 'Bricolage Grotesque', value: '"Bricolage Grotesque", sans-serif' },
@@ -29,6 +30,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const pathname = usePathname() || '';
   const currentLocale = pathname.split('/')[1] || 'en';
+  const t = useTranslations('Settings');
 
   const [themeMode, setThemeMode] = useState('light');
   const [accentColor, setAccentColor] = useState('#007bff');
@@ -89,7 +91,7 @@ export default function SettingsPage() {
     applyTheme('light');
     applyAccent('#007bff');
     applyFont('bricolage');
-    alert('All site cache and local preferences have been cleared.');
+    alert(t('clearAll'));
   };
 
   return (
@@ -98,9 +100,9 @@ export default function SettingsPage() {
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
             <Settings className="w-8 h-8 text-accent-blue" />
-            Preferences Center
+            {t('title')}
           </h1>
-          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">Configure your personalized streaming player environment</p>
+          <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">{t('subtitle')}</p>
         </div>
 
         {/* Settings Grid */}
@@ -110,9 +112,9 @@ export default function SettingsPage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
               <Sun className="w-5 h-5 text-accent-blue" />
-              Appearance Mode
+              {t('appearance')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-550">Switch between light and dark display modes</p>
+            <p className="text-xs text-slate-400 dark:text-slate-550">{t('appearanceDesc')}</p>
             <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={() => applyTheme('light')}
@@ -123,7 +125,7 @@ export default function SettingsPage() {
                 }`}
               >
                 <Sun className="w-4 h-4" />
-                Light
+                {t('light')}
               </button>
               <button
                 onClick={() => applyTheme('dark')}
@@ -134,7 +136,7 @@ export default function SettingsPage() {
                 }`}
               >
                 <Moon className="w-4 h-4" />
-                Dark
+                {t('dark')}
               </button>
             </div>
           </div>
@@ -143,9 +145,9 @@ export default function SettingsPage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
               <Palette className="w-5 h-5 text-accent-blue" />
-              Accent Theme Color
+              {t('accent')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-555">Choose custom colors for buttons and links</p>
+            <p className="text-xs text-slate-400 dark:text-slate-555">{t('accentDesc')}</p>
             <div className="flex flex-wrap gap-2 pt-2">
               {ACCENTS.map((acc) => (
                 <button
@@ -167,9 +169,9 @@ export default function SettingsPage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
               <Type className="w-5 h-5 text-accent-blue" />
-              Typography Family
+              {t('typography')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-555">Configure global layout display fonts</p>
+            <p className="text-xs text-slate-400 dark:text-slate-555">{t('typographyDesc')}</p>
             <div className="flex flex-col gap-2 pt-2">
               {FONTS.map((font) => (
                 <button
@@ -192,9 +194,9 @@ export default function SettingsPage() {
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
             <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
               <Globe className="w-5 h-5 text-accent-blue" />
-              Preferred Language
+              {t('language')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-555">Choose your preferred site language</p>
+            <p className="text-xs text-slate-400 dark:text-slate-555">{t('languageDesc')}</p>
             <div className="flex flex-col gap-2 pt-2">
               {LANGUAGES.map((lang) => (
                 <button
@@ -216,15 +218,15 @@ export default function SettingsPage() {
           {/* Card: Site Data Operations */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4 md:col-span-2 lg:col-span-3">
             <h2 className="text-lg font-bold text-slate-850 dark:text-white border-b border-slate-100 dark:border-slate-800/80 pb-2">
-              Danger Zone
+              {t('dangerZone')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500">Reset configurations or wipe watch history saved in this browser</p>
+            <p className="text-xs text-slate-400 dark:text-slate-500">{t('dangerDesc')}</p>
             <div className="pt-2">
               <button
                 onClick={clearAllData}
                 className="px-6 py-3 bg-red-500 hover:bg-red-650 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
               >
-                Clear All Local Cache & Reset
+                {t('clearAll')}
               </button>
             </div>
           </div>

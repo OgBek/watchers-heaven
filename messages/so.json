@@ -10,5 +10,37 @@
     "watchlist": "Liiska Daawashada",
     "collections": "Uruurinta",
     "settings": "Dejinta"
+  },
+  "Settings": {
+    "title": "Xarunta Xulashada",
+    "subtitle": "Hagaaji deegaankaaga daawashada gaarka ah",
+    "appearance": "Habka Muuqaalka",
+    "appearanceDesc": "Beddel inta u dhaxaysa iftiinka iyo mugdiga",
+    "light": "Iftiin",
+    "dark": "Mugdi",
+    "accent": "Midabka Dulucda",
+    "accentDesc": "Dooro midabyo gaar ah badhamada iyo xiriirada",
+    "typography": "Qoyska Qoraalka",
+    "typographyDesc": "Hagaaji noocyada qoraalka ee guud",
+    "language": "Luqadda La Doorbiday",
+    "languageDesc": "Dooro luqadda aad doorbidayso",
+    "dangerZone": "Aagga Khatarta ah",
+    "dangerDesc": "Dib u deji qaabeynta ama tirtir taariikhda daawashada ee browser-kan ku kaydsan",
+    "clearAll": "Tirtir Dhammaan Kaydka Gudaha & Dib u deji"
+  },
+  "Search": {
+    "title": "Raadi Maktabadda",
+    "subtitle": "Sahami filimada, bandhigyada TV-ga, anime iyo in ka badan",
+    "placeholder": "Ku qor magaca, nooca, ama sanadka bixitaanka...",
+    "trending": "Filimada & Taxanaha Soo Kordhaya",
+    "noResults": "Wax natiijo ah looma helin \"{query}\"."
+  },
+  "Categories": {
+    "moviesTitle": "Uruurinta Filimada",
+    "tvTitle": "Uruurinta Bandhigyada TV-ga",
+    "animeTitle": "Uruurinta Anime",
+    "kdramaTitle": "Uruurinta K-Drama",
+    "collectionsTitle": "Uruurinta La Xushay",
+    "subtitle": "Sahami maktabad ballaaran oo ah madadaalo sare"
   }
 }

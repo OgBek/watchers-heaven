@@ -10,5 +10,37 @@
     "watchlist": "Watchlist",
     "collections": "Collections",
     "settings": "Settings"
+  },
+  "Settings": {
+    "title": "Preferences Center",
+    "subtitle": "Configure your personalized streaming player environment",
+    "appearance": "Appearance Mode",
+    "appearanceDesc": "Switch between light and dark display modes",
+    "light": "Light",
+    "dark": "Dark",
+    "accent": "Accent Theme Color",
+    "accentDesc": "Choose custom colors for buttons and links",
+    "typography": "Typography Family",
+    "typographyDesc": "Configure global layout display fonts",
+    "language": "Preferred Language",
+    "languageDesc": "Choose your preferred site language",
+    "dangerZone": "Danger Zone",
+    "dangerDesc": "Reset configurations or wipe watch history saved in this browser",
+    "clearAll": "Clear All Local Cache & Reset"
+  },
+  "Search": {
+    "title": "Search Library",
+    "subtitle": "Explore movies, TV shows, anime and more",
+    "placeholder": "Type name, genre, or release year...",
+    "trending": "Trending Movies & Series",
+    "noResults": "No results found for \"{query}\"."
+  },
+  "Categories": {
+    "moviesTitle": "Movies Collection",
+    "tvTitle": "TV Shows Collection",
+    "animeTitle": "Anime Collection",
+    "kdramaTitle": "K-Drama Collection",
+    "collectionsTitle": "Curated Collections",
+    "subtitle": "Explore an extensive library of premium entertainment"
   }
 }

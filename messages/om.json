@@ -8,7 +8,39 @@
     "kDrama": "K-Drama",
     "anime": "Anime",
     "watchlist": "Tarree Daawwannaa",
-    "collections": "Kuusaalee",
-    "settings": "Qindaa'inoota"
+    "collections": "Kuusaa",
+    "settings": "Sajoo"
+  },
+  "Settings": {
+    "title": "Giddugala Filannoo",
+    "subtitle": "Naannoo taphattuu isrtiriimii dhuunfaa keetii qindeesi",
+    "appearance": "Haala Mul'ataa",
+    "appearanceDesc": "Haala ifaafi dukkana gidduutti jijjiiri",
+    "light": "Ifa",
+    "dark": "Dukkana",
+    "accent": "Halluu Fakkii",
+    "accentDesc": "Qabattootaafi geessituuwaniif halluuwwan filadhu",
+    "typography": "Maatii Qubee",
+    "typographyDesc": "Qubee agarsiisa teessumaa addunyaa qindeesi",
+    "language": "Afaan Filatamaa",
+    "languageDesc": "Afaan marsariitii filattu filadhu",
+    "dangerZone": "Zoonii Balaa",
+    "dangerDesc": "Qindaa'inoota deebisii ykn seenaa ilaalaa baraawuzara kana keessatti kuufame haqii",
+    "clearAll": "Kashii Naannoo Hunda Haqii fi Deebisi"
+  },
+  "Search": {
+    "title": "Manni Kitaabaa Barbaadi",
+    "subtitle": "Fiilmiiwwan, agarsiisawwan TV, anime fi kanneen biroo qoradhu",
+    "placeholder": "Maqaa, gosa, ykn bara ba'iinsaa barreessi...",
+    "trending": "Fiilmiiwwan fi Sirnawwan Baay'ee Ilaalaman",
+    "noResults": "\"{query}\" tiif bu'aan hin argamne."
+  },
+  "Categories": {
+    "moviesTitle": "Kuusaa Fiilmii",
+    "tvTitle": "Kuusaa Agarsiisawwan TV",
+    "animeTitle": "Kuusaa Anime",
+    "kdramaTitle": "Kuusaa K-Drama",
+    "collectionsTitle": "Kuusaa Qophaa'e",
+    "subtitle": "Mana kitaabaa bashannanaa olaanaa ta'e bal'aa qoradhu"
   }
 }

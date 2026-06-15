@@ -9,6 +9,38 @@
     "anime": "ኣኒመ",
     "watchlist": "ዝርዝር ምርኣይ",
     "collections": "እኩባት",
-    "settings": "ስርዕታት"
+    "settings": "ቅጥዕታት"
+  },
+  "Settings": {
+    "title": "ማእከል ምርጫታት",
+    "subtitle": "ናይ ግልኹም መጻወቲ ማዕከን ኣዋድዱ",
+    "appearance": "ገጽታ ሁነታ",
+    "appearanceDesc": "ኣብ መንጎ ብርሃንን ጸልማትን ምርኢት ቀይሩ",
+    "light": "ብርሃን",
+    "dark": "ጸልማት",
+    "accent": "ናይ መልክዕ ሕብሪ",
+    "accentDesc": "ንመጥወቒታትን መራኸቢታትን ዝኸውን ፍሉይ ሕብሪ ምረጹ",
+    "typography": "ናይ ጽሑፍ ስድራ",
+    "typographyDesc": "ዓለምለኻዊ ኣቀማምጣ ጽሑፍ ኣዋድዱ",
+    "language": "ዝተመረጸ ቋንቋ",
+    "languageDesc": "ዝደለኹሞ ቋንቋ መርበብ ሓበሬታ ምረጹ",
+    "dangerZone": "ዞባ ሓደጋ",
+    "dangerDesc": "ውቅረታት ዳግማይ ኣጀምሩ ወይ ኣብዚ መርበብ ዝተዓቀበ ታሪኽ ምርኢት ደምስሱ",
+    "clearAll": "ኩሉ ናይ ከባቢ መኽዘን ደምስስን ዳግማይ ኣጀምርን"
+  },
+  "Search": {
+    "title": "ቤተ-መጻሕፍቲ ድለዩ",
+    "subtitle": "ፊልምታት፣ ናይ ቲቪ መደባት፣ ኣኒመይን ካልእን ዳህስሱ",
+    "placeholder": "ስም፣ ዓይነት፣ ወይ ዝወጸሉ ዓመት ጸሓፉ...",
+    "trending": "ኣብዚ እዋን ህቡባት ፊልምታትን ተኸታታሊ መደባትን",
+    "noResults": "ን \"{query}\" ዝኸውን ውጽኢት ኣይተረኽበን።"
+  },
+  "Categories": {
+    "moviesTitle": "እክባት ፊልምታት",
+    "tvTitle": "እክባት መደባት ቲቪ",
+    "animeTitle": "እክባት ኣኒመ",
+    "kdramaTitle": "እክባት K-Drama",
+    "collectionsTitle": "ዝተመርጹ እክባት",
+    "subtitle": "ሰፊሕ ቤተ-መጻሕፍቲ ብሉጽ መዘናግዒ ዳህስሱ"
   }
 }

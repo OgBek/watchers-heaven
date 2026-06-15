@@ -126,36 +126,42 @@ body {
   transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s ease, filter .3s ease, background-color .25s ease;
 }
 
-/* Responsive cutout masking shape */
-.badge-cutout-mask {
+/* Hero Section Cutout Tab styling */
+.hero-tab {
+  position: relative;
+  /* Top corners rounded */
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+}
+
+/* Inverted rounded corners matching background */
+.hero-tab::before,
+.hero-tab::after {
+  content: "";
   position: absolute;
-  bottom: -1px; /* Clips pixel gaps perfectly against the container base */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%;
-  max-width: 420px; /* Adapts cleanly down to small mobile width layouts */
-  height: 110px;    /* Matches your action badge container height metric */
-  background: var(--color-main);
-  
-  /* Responsive SVG paths mimicking inverse smooth-bezier corners */
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 110' preserveAspectRatio='none'%3E%3Cpath d='M0,110 L420,110 L420,32 C390,32 388,0 356,0 L64,0 C32,0 30,32 0,32 Z' fill='black'/%3E%3C/svg%3E");
-  mask-size: 100% 100%;
-  mask-repeat: no-repeat;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 110' preserveAspectRatio='none'%3E%3Cpath d='M0,110 L420,110 L420,32 C390,32 388,0 356,0 L64,0 C32,0 30,32 0,32 Z' fill='black'/%3E%3C/svg%3E");
-  -webkit-mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
+  bottom: 0;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+  pointer-events: none;
 }
 
-:root.dark .badge-cutout-mask {
-  background: var(--color-main);
+.hero-tab::before {
+  left: -24px;
+  border-bottom-right-radius: 24px;
+  box-shadow: 12px 0 0 0 var(--color-surface-primary);
 }
 
-.hero-card-cutout {
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 110' preserveAspectRatio='none'%3E%3Cpath d='M0,110 L420,110 L420,32 C390,32 388,0 356,0 L64,0 C32,0 30,32 0,32 Z' fill='black'/%3E%3C/svg%3E");
-  mask-size: 100% 100%;
-  mask-repeat: no-repeat;
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 420 110' preserveAspectRatio='none'%3E%3Cpath d='M0,110 L420,110 L420,32 C390,32 388,0 356,0 L64,0 C32,0 30,32 0,32 Z' fill='black'/%3E%3C/svg%3E");
-  -webkit-mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
+.hero-tab::after {
+  right: -24px;
+  border-bottom-left-radius: 24px;
+  box-shadow: -12px 0 0 0 var(--color-surface-primary);
 }
 
+:root.dark .hero-tab::before {
+  box-shadow: 12px 0 0 0 var(--color-surface-secondary);
+}
+
+:root.dark .hero-tab::after {
+  box-shadow: -12px 0 0 0 var(--color-surface-secondary);
+}

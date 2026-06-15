@@ -7,6 +7,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
+import { ThemeScript } from "@/components/effects/ThemeScript";
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -52,9 +53,9 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Noto+Sans+Ethiopic:wght@400..700&display=swap" rel="stylesheet" />
-        <script id="theme-script" dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="antialiased mesh-bg" suppressHydrationWarning>
+        <ThemeScript script={themeScript} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SmoothScroll>
             <CinemaModeProvider>
