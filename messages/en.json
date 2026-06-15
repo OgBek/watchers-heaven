@@ -42,5 +42,25 @@
     "kdramaTitle": "K-Drama Collection",
     "collectionsTitle": "Curated Collections",
     "subtitle": "Explore an extensive library of premium entertainment"
+  },
+  "Filters": {
+    "filtersBtn": "Filters",
+    "genre": "Genre",
+    "industry": "Industry",
+    "year": "Year",
+    "sortBy": "Sort By",
+    "clearAll": "Clear All",
+    "previous": "Previous",
+    "next": "Next",
+    "searchPlaceholder": "Search by title...",
+    "noResults": "No content found matching these filters.",
+    "allYears": "All Years",
+    "allIndustries": "All Industries",
+    "hollywood": "Hollywood",
+    "bollywood": "Bollywood",
+    "sortPopular": "Most Popular",
+    "sortRated": "Highest Rated",
+    "sortLatest": "Latest Releases",
+    "sortRevenue": "Highest Revenue"
   }
 }

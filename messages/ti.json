@@ -42,5 +42,25 @@
     "kdramaTitle": "እክባት K-Drama",
     "collectionsTitle": "ዝተመርጹ እክባት",
     "subtitle": "ሰፊሕ ቤተ-መጻሕፍቲ ብሉጽ መዘናግዒ ዳህስሱ"
+  },
+  "Filters": {
+    "filtersBtn": "መምረይታት",
+    "genre": "ዓይነት",
+    "industry": "ኢንዱስትሪ",
+    "year": "ዓመት",
+    "sortBy": "ብዓይነት ስራዕ",
+    "clearAll": "ኩሉ ኣጽሪ",
+    "previous": "ቅድሚት",
+    "next": "ቀጻሊ",
+    "searchPlaceholder": "ብኣርእስቲ ድለዩ...",
+    "noResults": "ምስዞም መምረይታት ዝሰማማዕ ትሕዝቶ ኣይተረኽበን።",
+    "allYears": "ኩሉ ዓመታት",
+    "allIndustries": "ኩሉ ኢንዱስትሪታት",
+    "hollywood": "ሆሊውድ",
+    "bollywood": "ቦሊውድ",
+    "sortPopular": "ብጣዕሚ ህቡብ",
+    "sortRated": "ዝለዓለ ደረጃ ዝተዋህቦ",
+    "sortLatest": "ቅርብ እዋን ዝወጸ",
+    "sortRevenue": "ዝለዓለ ኣታዊ"
   }
 }

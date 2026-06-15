@@ -42,5 +42,25 @@
     "kdramaTitle": "Uruurinta K-Drama",
     "collectionsTitle": "Uruurinta La Xushay",
     "subtitle": "Sahami maktabad ballaaran oo ah madadaalo sare"
+  },
+  "Filters": {
+    "filtersBtn": "Shaandheeyeyaasha",
+    "genre": "Nooca",
+    "industry": "Warshadaha",
+    "year": "Sanadka",
+    "sortBy": "U Kala Saar",
+    "clearAll": "Tirtir Dhammaan",
+    "previous": "Hore",
+    "next": "Xiga",
+    "searchPlaceholder": "Ku raadi cinwaanka...",
+    "noResults": "Wax ka kooban lama helin oo ku habboon shaandheeyeyaashan.",
+    "allYears": "Dhammaan Sanadaha",
+    "allIndustries": "Dhammaan Warshadaha",
+    "hollywood": "Hollywood",
+    "bollywood": "Bollywood",
+    "sortPopular": "Kuwa Ugu Caansan",
+    "sortRated": "Qiimeynta Ugu Sareysa",
+    "sortLatest": "Kii Ugu Dambeeyay",
+    "sortRevenue": "Dakhliga Ugu Badan"
   }
 }

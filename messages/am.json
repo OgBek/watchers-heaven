@@ -42,5 +42,25 @@
     "kdramaTitle": "የ K-Drama ስብስብ",
     "collectionsTitle": "የተመረጡ ስብስቦች",
     "subtitle": "ሰፊ የፕሪሚየም መዝናኛ ቤተ-መጽሐፍትን ያስሱ"
+  },
+  "Filters": {
+    "filtersBtn": "ማጣሪያዎች",
+    "genre": "ዘውግ",
+    "industry": "ኢንዱስትሪ",
+    "year": "ዓመት",
+    "sortBy": "በአይነት ደርድር",
+    "clearAll": "ሁሉንም አጽዳ",
+    "previous": "ቀዳሚ",
+    "next": "ቀጣይ",
+    "searchPlaceholder": "በርዕስ ይፈልጉ...",
+    "noResults": "ከእነዚህ ማጣሪያዎች ጋር የሚዛመድ ምንም ይዘት አልተገኘም።",
+    "allYears": "ሁሉም ዓመታት",
+    "allIndustries": "ሁሉም ኢንዱስትሪዎች",
+    "hollywood": "ሆሊውድ",
+    "bollywood": "ቦሊውድ",
+    "sortPopular": "በጣም ታዋቂ",
+    "sortRated": "ከፍተኛ ደረጃ የተሰጠው",
+    "sortLatest": "የቅርብ ጊዜ የተለቀቁ",
+    "sortRevenue": "ከፍተኛ ገቢ"
   }
 }

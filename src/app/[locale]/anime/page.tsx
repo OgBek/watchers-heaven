@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { PosterCard } from '@/components/cards/PosterCard';
 import { Tv, Loader, Search, X, ChevronDown, SlidersHorizontal, ArrowLeft, ArrowRight } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 const ANIME_GENRES = [
   { id: '10759', name: 'Action & Adventure' },
@@ -23,6 +24,9 @@ const SORT_OPTIONS = [
 const ITEMS_PER_PAGE = 18;
 
 export default function AnimePage() {
+  const tCat = useTranslations('Categories');
+  const tFil = useTranslations('Filters');
+
   const [shows, setShows] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -137,10 +141,10 @@ export default function AnimePage() {
             <div>
               <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
                 <Tv className="w-8 h-8 text-accent-blue" />
-                Anime
+                {tCat('animeTitle')}
               </h1>
               <p className="text-slate-500 dark:text-slate-400 text-sm mt-1">
-                Explore trending Japanese animation series
+                {tCat('subtitle')}
               </p>
             </div>
             <button
@@ -152,7 +156,7 @@ export default function AnimePage() {
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
-              Filters
+              {tFil('filtersBtn')}
               {hasActiveFilters && (
                 <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse" />
               )}
@@ -166,7 +170,7 @@ export default function AnimePage() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search anime by title..."
+              placeholder={tFil('searchPlaceholder')}
               className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue/50 transition-all shadow-sm backdrop-blur-md"
             />
             {searchQuery && (
@@ -189,7 +193,7 @@ export default function AnimePage() {
             
             {/* Genres — Interactive Chips */}
             <div className="space-y-2.5">
-              <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">Genre</h3>
+              <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">{tFil('genre')}</h3>
               <div className="flex flex-wrap gap-2">
                 {ANIME_GENRES.map(g => (
                   <button
@@ -210,14 +214,14 @@ export default function AnimePage() {
             {/* Year & Sort Row */}
             <div className="flex flex-wrap items-end gap-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">Year</label>
+                <label className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">{tFil('year')}</label>
                 <div className="relative">
                   <select
                     value={selectedYear}
                     onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
                     className="appearance-none px-4 py-2.5 pr-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent-blue/30 transition shadow-sm cursor-pointer min-w-[120px]"
                   >
-                    <option value="">All Years</option>
+                    <option value="">{tFil('allYears')}</option>
                     {YEARS.map(yr => (
                       <option key={yr} value={yr}>{yr}</option>
                     ))}
@@ -227,14 +231,18 @@ export default function AnimePage() {
               </div>
               
               <div className="space-y-1.5">
-                <label className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">Sort By</label>
+                <label className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-500 uppercase">{tFil('sortBy')}</label>
                 <div className="relative">
                   <select
                     value={sortBy}
                     onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
                     className="appearance-none px-4 py-2.5 pr-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent-blue/30 transition shadow-sm cursor-pointer min-w-[160px]"
                   >
-                    {SORT_OPTIONS.map(opt => (
+                    {[
+                      { value: 'popularity.desc', label: tFil('sortPopular') },
+                      { value: 'vote_average.desc', label: tFil('sortRated') },
+                      { value: 'first_air_date.desc', label: tFil('sortLatest') },
+                    ].map(opt => (
                       <option key={opt.value} value={opt.value}>{opt.label}</option>
                     ))}
                   </select>
@@ -248,7 +256,7 @@ export default function AnimePage() {
                   className="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/40 hover:bg-red-100 dark:hover:bg-red-950/50 transition"
                 >
                   <X className="w-3.5 h-3.5" />
-                  Clear All
+                  {tFil('clearAll')}
                 </button>
               )}
             </div>
@@ -309,7 +317,7 @@ export default function AnimePage() {
                 className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-40 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
-                Previous
+                {tFil('previous')}
               </button>
 
               <div className="flex items-center gap-1">
@@ -345,14 +353,14 @@ export default function AnimePage() {
                 disabled={currentPage === totalPages || loading}
                 className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-40 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
               >
-                Next
+                {tFil('next')}
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
         ) : (
           <div className="text-center py-20 text-slate-400 dark:text-slate-600">
-            No Anime found matching these filters.
+            {tFil('noResults')}
           </div>
         )}
       </div>

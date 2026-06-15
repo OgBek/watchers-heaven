@@ -42,5 +42,25 @@
     "kdramaTitle": "Kuusaa K-Drama",
     "collectionsTitle": "Kuusaa Qophaa'e",
     "subtitle": "Mana kitaabaa bashannanaa olaanaa ta'e bal'aa qoradhu"
+  },
+  "Filters": {
+    "filtersBtn": "Calayaa",
+    "genre": "Gosa",
+    "industry": "Indastirii",
+    "year": "Bara",
+    "sortBy": "Akkaataan Qindeessi",
+    "clearAll": "Hunda Haqii",
+    "previous": "Duraa",
+    "next": "Itti Aanu",
+    "searchPlaceholder": "Mata dureen barbaadi...",
+    "noResults": "Qabiyyeen calayaa kana wajjin walsimu hin argamne.",
+    "allYears": "Waggaa Hunda",
+    "allIndustries": "Indastirii Hunda",
+    "hollywood": "Hollywood",
+    "bollywood": "Bollywood",
+    "sortPopular": "Baay'ee Jaalatamaa",
+    "sortRated": "Sadarkaa Olaanaa",
+    "sortLatest": "Dhiyeenya Ba'an",
+    "sortRevenue": "Galii Olaanaa"
   }
 }
