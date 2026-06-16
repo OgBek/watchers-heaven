@@ -467,7 +467,7 @@ export default function CollectionsPage() {
               </div>
             )}
           </div>
-        ) : !loading && !loadingDetail && paginatedCollections.length > 0 ? (
+        ); })() : !loading && !loadingDetail && paginatedCollections.length > 0 ? (
           /* Collections Grid — all loaded from cache */
           <div className="space-y-8 animate-fadeIn">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
