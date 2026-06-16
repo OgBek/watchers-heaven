@@ -27,7 +27,7 @@ export function PosterCard({ id, title, posterPath, rating, year, className, typ
   return (
     <div 
       onClick={handleClick}
-      className={`card-snap group relative min-w-[130px] md:min-w-[155px] lg:min-w-[170px] aspect-[2/3] rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md smooth-transition bg-slate-100 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 hover:-translate-y-1 ${className || ''}`}
+      className={`card-snap group relative min-w-[130px] md:min-w-[155px] lg:min-w-[170px] aspect-[2/3] rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md smooth-transition bg-slate-100 dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 hover:-translate-y-1 ${className || ''}`}
     >
       {/* Persistent Top Badges */}
       <div className="absolute top-2 left-2 z-30 flex flex-col gap-1 pointer-events-none">
@@ -41,8 +41,8 @@ export function PosterCard({ id, title, posterPath, rating, year, className, typ
 
       {/* Fallback */}
       <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-800 dark:to-slate-900 p-3">
-        <ImageIcon className="w-8 h-8 text-slate-200 dark:text-slate-700 mb-2" />
-        <span className="text-[10px] text-slate-300 dark:text-slate-600 text-center line-clamp-2">{title}</span>
+        <ImageIcon className="w-8 h-8 text-slate-200 dark:text-slate-600 mb-2" />
+        <span className="text-[10px] text-slate-300 dark:text-slate-400 text-center line-clamp-2">{title}</span>
       </div>
 
       <img 

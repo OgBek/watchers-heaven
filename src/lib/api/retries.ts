@@ -1,3 +1,5 @@
+import { ApiError } from './client';
+
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const withRetries = async <T>(
@@ -11,6 +13,23 @@ export const withRetries = async <T>(
       return await fn();
     } catch (error) {
       attempt++;
+
+      // Special handling for 429 Too Many Requests:
+      // Respect the Retry-After header and don't burn through retries pointlessly
+      if (error instanceof ApiError && error.status === 429) {
+        const retryAfterSec = Number((error as any).retryAfter) || 0;
+        if (retryAfterSec > 10) {
+          // Server says wait too long — just throw immediately
+          throw error;
+        }
+        const waitMs = retryAfterSec > 0
+          ? retryAfterSec * 1000 + 200 // add small buffer
+          : baseDelay * Math.pow(2, attempt) + Math.random() * 500;
+        if (attempt >= retries) throw error;
+        await delay(waitMs);
+        continue;
+      }
+
       if (attempt >= retries) throw error;
       // Exponential backoff with jitter
       const jitter = Math.random() * 200;

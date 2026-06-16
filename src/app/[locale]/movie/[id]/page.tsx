@@ -4,6 +4,7 @@ import { ArrowLeft, Play, Bookmark, RefreshCw, Star, Loader, Image as ImageIcon 
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect } from 'react';
 import { PosterCard } from '@/components/cards/PosterCard';
+import { isInWatchlist, toggleWatchlistItem } from '@/lib/watchlist';
 
 export default function MovieDetailPage() {
   const params = useParams();
@@ -43,36 +44,15 @@ export default function MovieDetailPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('watchers-heaven-watchlist');
-      if (stored) {
-        try {
-          const ids: string[] = JSON.parse(stored);
-          setIsBookmarked(ids.includes(id));
-        } catch {}
-      }
+      setIsBookmarked(isInWatchlist(id));
     }
   }, [id]);
 
   const toggleBookmark = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (typeof window === 'undefined') return;
-
-    const stored = localStorage.getItem('watchers-heaven-watchlist');
-    let ids: string[] = [];
-    if (stored) {
-      try {
-        ids = JSON.parse(stored);
-      } catch {}
-    }
-
-    if (ids.includes(id)) {
-      ids = ids.filter(i => i !== id);
-      setIsBookmarked(false);
-    } else {
-      ids.push(id);
-      setIsBookmarked(true);
-    }
-    localStorage.setItem('watchers-heaven-watchlist', JSON.stringify(ids));
+    const added = toggleWatchlistItem(id, 'movie');
+    setIsBookmarked(added);
   };
 
   if (loading) {
@@ -122,7 +102,7 @@ export default function MovieDetailPage() {
       <div className="max-w-7xl mx-auto px-4 md:px-8 pt-4">
         <button 
           onClick={() => router.back()}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-350 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition shadow-sm"
         >
           <ArrowLeft className="w-3.5 h-3.5" />
           Back
@@ -273,12 +253,12 @@ export default function MovieDetailPage() {
             </h3>
             
             {movie.tagline && (
-              <p className="text-base font-extrabold text-slate-700 dark:text-slate-350 italic">
+              <p className="text-base font-extrabold text-slate-700 dark:text-slate-300 italic">
                 &ldquo;{movie.tagline}&rdquo;
               </p>
             )}
             
-            <p className="text-sm leading-relaxed text-slate-650 dark:text-slate-400">
+            <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
               {movie.overview || 'No description available.'}
             </p>
 
@@ -287,7 +267,7 @@ export default function MovieDetailPage() {
               <div className="space-y-2.5">
                 <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
                   <span className="text-slate-400 font-bold uppercase tracking-wider">Release Date</span>
-                  <span className="text-slate-750 dark:text-slate-300 font-medium">
+                  <span className="text-slate-700 dark:text-slate-300 font-medium">
                     {movie.release_date ? new Date(movie.release_date).toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' }) : 'N/A'}
                   </span>
                 </div>

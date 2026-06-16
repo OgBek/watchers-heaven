@@ -164,7 +164,7 @@ export default function TvShowsPage() {
               className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition-all duration-300 border shadow-sm ${
                 showFilters 
                   ? 'bg-accent-blue text-white border-transparent shadow-accent-blue/20' 
-                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-accent-blue/50'
+                  : 'bg-white dark:bg-slate-900/80 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-accent-blue/50'
               }`}
             >
               <SlidersHorizontal className="w-4 h-4" />
@@ -183,7 +183,7 @@ export default function TvShowsPage() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={tFil('searchPlaceholder')}
-              className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue/50 transition-all shadow-sm backdrop-blur-md"
+              className="w-full pl-11 pr-10 py-3.5 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue/50 transition-all shadow-sm backdrop-blur-md"
             />
             {searchQuery && (
               <button 
@@ -201,7 +201,7 @@ export default function TvShowsPage() {
 
         {/* Modern Filters Panel */}
         {showFilters && (
-          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-100 dark:border-slate-800/80 shadow-xl p-5 space-y-5 animate-fade-in">
+          <div className="bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl rounded-3xl border border-slate-100 dark:border-slate-700/80 shadow-xl p-5 space-y-5 animate-fade-in">
             
             {/* Genres — Interactive Chips */}
             <div className="space-y-2.5">
@@ -214,7 +214,7 @@ export default function TvShowsPage() {
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
                       selectedGenres.includes(g.id)
                         ? 'bg-accent-blue text-white border-transparent shadow-md shadow-accent-blue/20 scale-105'
-                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:border-accent-blue/40 hover:text-accent-blue'
+                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-accent-blue/40 hover:text-accent-blue'
                     }`}
                   >
                     {g.name}
@@ -225,7 +225,7 @@ export default function TvShowsPage() {
 
             {/* Industry — Chips */}
             <div className="space-y-2.5">
-              <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-550 uppercase">{tFil('industry')}</h3>
+              <h3 className="text-[10px] font-black tracking-[0.2em] text-slate-400 dark:text-slate-400 uppercase">{tFil('industry')}</h3>
               <div className="flex gap-2">
                 {[
                   { id: '', name: tFil('allIndustries') },
@@ -238,7 +238,7 @@ export default function TvShowsPage() {
                     className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold transition-all duration-200 border ${
                       selectedIndustry === ind.id
                         ? 'bg-accent-blue text-white border-transparent shadow-md shadow-accent-blue/20 scale-105'
-                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-800 hover:border-accent-blue/40 hover:text-accent-blue'
+                        : 'bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 border-slate-100 dark:border-slate-700 hover:border-accent-blue/40 hover:text-accent-blue'
                     }`}
                   >
                     {ind.name}
@@ -255,7 +255,7 @@ export default function TvShowsPage() {
                   <select
                     value={selectedYear}
                     onChange={(e) => { setSelectedYear(e.target.value); setCurrentPage(1); }}
-                    className="appearance-none px-4 py-2.5 pr-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent-blue/30 transition shadow-sm cursor-pointer min-w-[120px]"
+                    className="appearance-none px-4 py-2.5 pr-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent-blue/30 transition shadow-sm cursor-pointer min-w-[120px]"
                   >
                     <option value="">{tFil('allYears')}</option>
                     {YEARS.map(yr => (
@@ -272,7 +272,7 @@ export default function TvShowsPage() {
                   <select
                     value={sortBy}
                     onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-                    className="appearance-none px-4 py-2.5 pr-9 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent-blue/30 transition shadow-sm cursor-pointer min-w-[160px]"
+                    className="appearance-none px-4 py-2.5 pr-9 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/80 text-slate-700 dark:text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-accent-blue/30 transition shadow-sm cursor-pointer min-w-[160px]"
                   >
                     {[
                       { value: 'popularity.desc', label: tFil('sortPopular') },
@@ -350,7 +350,7 @@ export default function TvShowsPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                 disabled={currentPage === 1 || loading}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-40 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 disabled:opacity-40 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900/80"
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 {tFil('previous')}
@@ -387,7 +387,7 @@ export default function TvShowsPage() {
               <button
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                 disabled={currentPage === totalPages || loading}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-800/50 disabled:opacity-40 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60 disabled:opacity-40 disabled:pointer-events-none transition shadow-sm bg-white dark:bg-slate-900/80"
               >
                 {tFil('next')}
                 <ArrowRight className="w-3.5 h-3.5" />

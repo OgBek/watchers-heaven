@@ -2,6 +2,7 @@
 import { Play, Bookmark, RefreshCw, Image as ImageIcon } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
+import { isInWatchlist, toggleWatchlistItem } from '@/lib/watchlist';
 
 interface Movie {
   id: number;
@@ -46,13 +47,7 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
   // Load bookmark state
   useEffect(() => {
     if (typeof window !== 'undefined' && currentMovie) {
-      const stored = localStorage.getItem('watchers-heaven-watchlist');
-      if (stored) {
-        try {
-          const ids: string[] = JSON.parse(stored);
-          setIsBookmarked(ids.includes(currentMovie.id.toString()));
-        } catch {}
-      }
+      setIsBookmarked(isInWatchlist(currentMovie.id));
     }
   }, [currentMovie]);
 
@@ -60,23 +55,9 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
     e.stopPropagation();
     if (typeof window === 'undefined' || !currentMovie) return;
 
-    const tmdbId = currentMovie.id.toString();
-    const stored = localStorage.getItem('watchers-heaven-watchlist');
-    let ids: string[] = [];
-    if (stored) {
-      try {
-        ids = JSON.parse(stored);
-      } catch {}
-    }
-
-    if (ids.includes(tmdbId)) {
-      ids = ids.filter(i => i !== tmdbId);
-      setIsBookmarked(false);
-    } else {
-      ids.push(tmdbId);
-      setIsBookmarked(true);
-    }
-    localStorage.setItem('watchers-heaven-watchlist', JSON.stringify(ids));
+    const isTV = currentMovie.media_type === 'tv';
+    const added = toggleWatchlistItem(currentMovie.id, isTV ? 'tv' : 'movie');
+    setIsBookmarked(added);
   };
 
   const handleWatch = () => {

@@ -1,3 +1,5 @@
+import { ApiError } from './client';
+
 export enum CircuitState {
   CLOSED, // Requests pass normally
   OPEN,   // Requests block immediately
@@ -10,8 +12,8 @@ export class CircuitBreaker {
   private nextAttemptTime = 0;
 
   constructor(
-    private failureThreshold = 5,
-    private resetTimeoutMs = 10000
+    private failureThreshold = 10,
+    private resetTimeoutMs = 15_000
   ) {}
 
   async execute<T>(action: () => Promise<T>): Promise<T> {
@@ -30,6 +32,13 @@ export class CircuitBreaker {
       this.state = CircuitState.CLOSED;
       return result;
     } catch (error) {
+      // Only count genuine connectivity failures toward the threshold.
+      // 429 (rate limiting) and 5xx (server overload) are transient —
+      // they don't mean the upstream is down, so skip them.
+      if (error instanceof ApiError && error.status >= 400 && error.status < 600) {
+        throw error; // Propagate the error but don't trip the breaker
+      }
+
       this.failureCount++;
       if (this.failureCount >= this.failureThreshold) {
         this.state = CircuitState.OPEN;
@@ -40,4 +49,4 @@ export class CircuitBreaker {
   }
 }
 
-export const tmdbCircuitBreaker = new CircuitBreaker(3, 15000);
+export const tmdbCircuitBreaker = new CircuitBreaker(10, 15_000);

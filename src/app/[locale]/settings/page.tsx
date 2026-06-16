@@ -95,7 +95,7 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen py-10 px-4 md:px-8 bg-[var(--color-main)] dark:bg-slate-950 transition-colors duration-300">
+    <div className="min-h-screen py-10 px-4 md:px-8 bg-[var(--color-main)] transition-colors duration-300">
       <div className="max-w-5xl mx-auto space-y-8">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
@@ -109,19 +109,19 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           
           {/* Card: Theme mode */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+          <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-2">
               <Sun className="w-5 h-5 text-accent-blue" />
               {t('appearance')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-550">{t('appearanceDesc')}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-400">{t('appearanceDesc')}</p>
             <div className="grid grid-cols-2 gap-3 pt-2">
               <button
                 onClick={() => applyTheme('light')}
                 className={`py-3 rounded-xl border font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
                   themeMode === 'light'
-                    ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-450'
-                    : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-850/50'
+                    ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-400'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                 }`}
               >
                 <Sun className="w-4 h-4" />
@@ -131,8 +131,8 @@ export default function SettingsPage() {
                 onClick={() => applyTheme('dark')}
                 className={`py-3 rounded-xl border font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
                   themeMode === 'dark'
-                    ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-450'
-                    : 'border-slate-250 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-850/50'
+                    ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-400'
+                    : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                 }`}
               >
                 <Moon className="w-4 h-4" />
@@ -142,12 +142,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Card: Accent Color */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+          <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-2">
               <Palette className="w-5 h-5 text-accent-blue" />
               {t('accent')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-555">{t('accentDesc')}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-400">{t('accentDesc')}</p>
             <div className="flex flex-wrap gap-2 pt-2">
               {ACCENTS.map((acc) => (
                 <button
@@ -166,12 +166,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Card: Font Styles */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+          <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-2">
               <Type className="w-5 h-5 text-accent-blue" />
               {t('typography')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-555">{t('typographyDesc')}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-400">{t('typographyDesc')}</p>
             <div className="flex flex-col gap-2 pt-2">
               {FONTS.map((font) => (
                 <button
@@ -179,8 +179,8 @@ export default function SettingsPage() {
                   onClick={() => applyFont(font.id)}
                   className={`w-full py-2.5 px-4 rounded-xl border text-left text-sm font-medium transition-all flex items-center justify-between ${
                     fontFamily === font.id
-                      ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-455'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-850/50'
+                      ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-400'
+                      : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <span>{font.name}</span>
@@ -191,12 +191,12 @@ export default function SettingsPage() {
           </div>
 
           {/* Card: Preferred Language */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+          <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 p-6 shadow-sm space-y-4">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-700/60 pb-2">
               <Globe className="w-5 h-5 text-accent-blue" />
               {t('language')}
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-555">{t('languageDesc')}</p>
+            <p className="text-xs text-slate-400 dark:text-slate-400">{t('languageDesc')}</p>
             <div className="flex flex-col gap-2 pt-2">
               {LANGUAGES.map((lang) => (
                 <button
@@ -204,8 +204,8 @@ export default function SettingsPage() {
                   onClick={() => changeLanguage(lang.code)}
                   className={`w-full py-2.5 px-4 rounded-xl border text-left text-sm font-medium transition-all flex items-center justify-between ${
                     currentLocale === lang.code
-                      ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-455'
-                      : 'border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-350 hover:bg-slate-50 dark:hover:bg-slate-850/50'
+                      ? 'border-blue-500 bg-blue-50/50 text-accent-blue dark:text-blue-400'
+                      : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800/60'
                   }`}
                 >
                   <span>{lang.name}</span>
@@ -216,15 +216,15 @@ export default function SettingsPage() {
           </div>
 
           {/* Card: Site Data Operations */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800/80 p-6 shadow-sm space-y-4 md:col-span-2 lg:col-span-3">
-            <h2 className="text-lg font-bold text-slate-850 dark:text-white border-b border-slate-100 dark:border-slate-800/80 pb-2">
+          <div className="bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-100 dark:border-slate-700/60 p-6 shadow-sm space-y-4 md:col-span-2 lg:col-span-3">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-700/60 pb-2">
               {t('dangerZone')}
             </h2>
             <p className="text-xs text-slate-400 dark:text-slate-500">{t('dangerDesc')}</p>
             <div className="pt-2">
               <button
                 onClick={clearAllData}
-                className="px-6 py-3 bg-red-500 hover:bg-red-650 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
+                className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-colors shadow-sm"
               >
                 {t('clearAll')}
               </button>

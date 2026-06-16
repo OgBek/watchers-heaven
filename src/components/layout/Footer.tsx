@@ -60,7 +60,7 @@ export function Footer() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
               {/* Primary: VidLink */}
-              <div className="bg-slate-50/70 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-850 space-y-2">
+              <div className="bg-slate-50/70 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
                     <span className="bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-extrabold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">⭐ Primary</span>
@@ -78,10 +78,10 @@ export function Footer() {
               </div>
 
               {/* Vidsrc (vidsrc-embed.ru) */}
-              <div className="bg-slate-50/70 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-850 space-y-2">
+              <div className="bg-slate-50/70 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1.5">
-                    <span className="bg-green-105 dark:bg-green-950/60 text-green-700 dark:text-green-400 font-extrabold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">Active</span>
+                    <span className="bg-green-100 dark:bg-green-950/60 text-green-700 dark:text-green-400 font-extrabold px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wider">Active</span>
                     <span className="font-mono font-bold text-slate-700 dark:text-slate-300">Vidsrc</span>
                   </div>
                   <span className="text-[10px] text-slate-400 font-mono">vidsrc-embed.ru</span>
@@ -96,7 +96,7 @@ export function Footer() {
               </div>
 
               {/* Vidsrc.to */}
-              <div className="bg-slate-50/70 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-850 space-y-2">
+              <div className="bg-slate-50/70 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-mono font-bold text-slate-700 dark:text-slate-300">Vidsrc.to</span>
                   <span className="text-[10px] text-slate-400 font-mono">vidsrc.to</span>
@@ -110,7 +110,7 @@ export function Footer() {
               </div>
 
               {/* VidKing */}
-              <div className="bg-slate-50/70 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-850 space-y-2">
+              <div className="bg-slate-50/70 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-100 dark:border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="font-mono font-bold text-slate-700 dark:text-slate-300">VidKing</span>
                   <span className="text-[10px] text-slate-400 font-mono">vidking.net</span>
@@ -123,15 +123,15 @@ export function Footer() {
 
               {/* Compact row */}
               <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
-                <div className="bg-slate-50/50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-850">
+                <div className="bg-slate-50/50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                   <span className="font-mono font-bold text-slate-700 dark:text-slate-300 text-[10px] block mb-1">ScreenScape</span>
                   <code className="block font-mono text-[9px] text-accent-blue dark:text-blue-400 select-all truncate">screenscape.me/embed?tmdb=ID&type=movie</code>
                 </div>
-                <div className="bg-slate-50/50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-850">
+                <div className="bg-slate-50/50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                   <span className="font-mono font-bold text-slate-700 dark:text-slate-300 text-[10px] block mb-1">RiveStream</span>
                   <code className="block font-mono text-[9px] text-accent-blue dark:text-blue-400 select-all truncate">rivestream.ru/embed?type=movie&id=ID</code>
                 </div>
-                <div className="bg-slate-50/50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-850">
+                <div className="bg-slate-50/50 dark:bg-slate-950/40 p-3 rounded-xl border border-slate-100 dark:border-slate-800">
                   <span className="font-mono font-bold text-slate-700 dark:text-slate-300 text-[10px] block mb-1">TouStream</span>
                   <code className="block font-mono text-[9px] text-accent-blue dark:text-blue-400 select-all truncate">toustream.xyz/tou/movies/ID</code>
                 </div>

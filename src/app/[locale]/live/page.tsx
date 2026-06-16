@@ -54,7 +54,10 @@ export default function LiveTvPage() {
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 gap-3">
           <Loader className="w-8 h-8 animate-spin text-accent-blue" />
-          <span>Fetching Live Streams...</span>
+          <span className="text-sm font-semibold">Fetching Live Streams...</span>
+          <p className="text-xs text-slate-400 dark:text-slate-500 text-center max-w-xs">
+            Loading channels from an external provider. This may take a moment on the first visit — once loaded, channels are cached for fast access.
+          </p>
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -102,7 +105,7 @@ export default function LiveTvPage() {
                   setChannels(list);
                   setLoading(false);
                 }}
-                className="p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-650 dark:hover:text-slate-200 smooth-transition"
+                className="p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 smooth-transition"
                 title="Refresh Channel List"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
@@ -119,13 +122,12 @@ export default function LiveTvPage() {
                       onClick={() => setSelectedChannel(channel)}
                       className={`w-full flex items-center justify-between p-3.5 rounded-xl transition-all duration-300 text-left border ${
                         isActive
-                          ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-100/50 dark:border-blue-900/50 text-accent-blue dark:text-blue-450'
-                          : 'bg-transparent border-transparent text-slate-600 dark:text-slate-350 hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
+                          ? 'bg-blue-50/80 dark:bg-blue-950/40 border-blue-100/50 dark:border-blue-900/50 text-accent-blue dark:text-blue-400'
+                          : 'bg-transparent border-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-50/70 dark:hover:bg-slate-800/40'
                       }`}
                     >
                       <div className="flex-1 min-w-0 pr-2">
                         <span className="font-semibold text-sm truncate block">{channel.name}</span>
-                        <span className="text-[10px] text-slate-400 dark:text-slate-500 truncate block">Slug: {channel.slug}</span>
                       </div>
                       {isActive && (
                         <Play className="w-4 h-4 fill-accent-blue dark:fill-blue-400 text-accent-blue dark:text-blue-400 shrink-0" />

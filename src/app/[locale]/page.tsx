@@ -10,7 +10,8 @@ const fallbackRecommendation = [
 ];
 
 async function fetchFromTmdb(endpoint: string, params: Record<string, string> = {}) {
-  const apiKey = process.env.TMDB_API_KEY || '9d12b6b90ce72ac7663cd7cb98428a6a';
+  const apiKey = process.env.TMDB_API_KEY;
+  if (!apiKey) throw new Error('TMDB_API_KEY is not set');
   const url = new URL(`https://api.themoviedb.org/3${endpoint}`);
   url.searchParams.append('api_key', apiKey);
   url.searchParams.append('include_adult', 'false'); // Persistently filter adult content

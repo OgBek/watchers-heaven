@@ -41,7 +41,7 @@ export function FloatingNav() {
 
   return (
     <nav className="fixed bottom-3 left-3 right-3 lg:bottom-auto lg:left-4 lg:right-auto lg:top-1/2 lg:-translate-y-1/2 z-50 flex items-center justify-center">
-      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-800/80 flex flex-row lg:flex-col items-center py-2 px-3 lg:py-4 lg:px-1 w-full lg:w-14 h-14 lg:h-auto lg:max-h-[85vh] gap-1.5 justify-between lg:justify-start lg:overflow-visible">
+      <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700/60 flex flex-row lg:flex-col items-center py-2 px-3 lg:py-4 lg:px-1 w-full lg:w-14 h-14 lg:h-auto lg:max-h-[85vh] gap-1.5 justify-between lg:justify-start lg:overflow-visible">
         
         {/* Main nav icons */}
         <div className="flex flex-row lg:flex-col items-center gap-1 w-full lg:w-auto px-1 overflow-x-auto lg:overflow-visible scrollbar-none flex-1 lg:flex-initial">
@@ -56,7 +56,7 @@ export function FloatingNav() {
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
                     ? 'bg-blue-50 dark:bg-blue-950/60 text-accent-blue dark:text-blue-400' 
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
+                    : 'text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
                 }`}>
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
@@ -71,7 +71,7 @@ export function FloatingNav() {
         </div>
         
         {/* Divider */}
-        <div className="w-px h-6 lg:w-6 lg:h-px bg-slate-100 dark:bg-slate-800/80 my-0 mx-2 lg:my-1 lg:mx-0 shrink-0" />
+        <div className="w-px h-6 lg:w-6 lg:h-px bg-slate-100 dark:bg-slate-700/60 my-0 mx-2 lg:my-1 lg:mx-0 shrink-0" />
 
         {/* Bottom icons */}
         <div className="flex flex-row lg:flex-col items-center gap-1 shrink-0 px-1 lg:overflow-visible">
@@ -86,7 +86,7 @@ export function FloatingNav() {
                 <div className={`p-2 rounded-xl smooth-transition ${
                   isActive 
                     ? 'bg-blue-50 dark:bg-blue-950/60 text-accent-blue dark:text-blue-400' 
-                    : 'text-slate-500 dark:text-slate-400 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-slate-100'
+                    : 'text-slate-500 dark:text-slate-300 hover:bg-slate-100/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white'
                 }`}>
                   <item.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />
                 </div>
