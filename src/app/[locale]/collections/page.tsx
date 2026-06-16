@@ -1,8 +1,7 @@
 'use client';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ApiGateway } from '@/lib/api/gateway';
-import { ApiError } from '@/lib/api/client';
-import { Folder, ArrowLeft, Loader, Search, X, Film, ArrowRight, AlertCircle } from 'lucide-react';
+import { Folder, ArrowLeft, Loader, Search, X, Film, AlertCircle } from 'lucide-react';
 import { PosterCard } from '@/components/cards/PosterCard';
 
 // Static list of collection IDs + names
@@ -132,7 +131,7 @@ export default function CollectionsPage() {
   const [loadProgress, setLoadProgress] = useState(0);
 
   // Selected collection detail (with full parts loaded on click)
-  const [selectedCol, setSelectedCol] = useState<any | null>(null);
+  const [selectedCol, setSelectedCol] = useState<Record<string, unknown> | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [errorToast, setErrorToast] = useState<string | null>(null);
 
@@ -152,6 +151,7 @@ export default function CollectionsPage() {
     // Check cache first — instant load if available
     const cached = getCachedCollections();
     if (cached && cached.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCollections(cached);
       setLoading(false);
       return;
@@ -174,32 +174,35 @@ export default function CollectionsPage() {
               if (col.id === 531241) {
                 const subResults = await Promise.all(
                   SPIDERMAN_IDS.map(sid =>
-                    ApiGateway.fetchTmdb<any>(`/collection/${sid}`).catch(() => null)
+                    ApiGateway.fetchTmdb<Record<string, unknown>>(`/collection/${sid}`).catch(() => null)
                   )
                 );
-                const allParts: any[] = [];
-                subResults.forEach(r => { if (r?.parts) allParts.push(...r.parts); });
-                const uniqueMap = new Map();
+                const allParts: Record<string, unknown>[] = [];
+                subResults.forEach(r => {
+                  const rec = r as { parts?: Record<string, unknown>[] } | null;
+                  if (rec?.parts) allParts.push(...rec.parts);
+                });
+                const uniqueMap = new Map<unknown, Record<string, unknown>>();
                 allParts.forEach(p => { if (p?.id) uniqueMap.set(p.id, p); });
                 return {
                   id: 531241,
                   name: 'Spider-Man Collection',
                   overview: 'The complete Spider-Man cinematic franchise.',
-                  poster_path: subResults.find(r => r?.poster_path)?.poster_path || '',
-                  backdrop_path: subResults.find(r => r?.backdrop_path)?.backdrop_path || '',
+                  poster_path: (subResults.find(r => (r as { poster_path?: string } | null)?.poster_path) as { poster_path?: string } | null)?.poster_path || '',
+                  backdrop_path: (subResults.find(r => (r as { backdrop_path?: string } | null)?.backdrop_path) as { backdrop_path?: string } | null)?.backdrop_path || '',
                   partsCount: uniqueMap.size,
                 };
               }
-              const data = await ApiGateway.fetchTmdb<any>(`/collection/${col.id}`);
+              const data = await ApiGateway.fetchTmdb<Record<string, unknown>>(`/collection/${col.id}`);
               return {
                 id: col.id,
-                name: data.name || col.name,
-                overview: data.overview || '',
-                poster_path: data.poster_path || '',
-                backdrop_path: data.backdrop_path || '',
-                partsCount: data.parts?.length || 0,
+                name: (data.name as string) || col.name,
+                overview: (data.overview as string) || '',
+                poster_path: (data.poster_path as string) || '',
+                backdrop_path: (data.backdrop_path as string) || '',
+                partsCount: (data.parts as unknown[])?.length || 0,
               };
-            } catch (err) {
+            } catch {
               // Skip 404s and other failures — they won't be in the cached list
               return null;
             }
@@ -246,11 +249,13 @@ export default function CollectionsPage() {
   }, [filteredCollections, listPage]);
 
   // Reset page when search changes
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setListPage(1); }, [searchQuery]);
 
   // Clamp listPage if it exceeds totalListPages
   useEffect(() => {
     if (listPage > totalListPages && totalListPages > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setListPage(totalListPages);
     }
   }, [listPage, totalListPages]);
@@ -261,30 +266,33 @@ export default function CollectionsPage() {
     setCurrentPage(1);
 
     try {
-      let fullData: any;
+      let fullData: Record<string, unknown>;
 
       if (col.id === 531241) {
         const results = await Promise.all(
           SPIDERMAN_IDS.map(sid =>
-            ApiGateway.fetchTmdb<any>(`/collection/${sid}`).catch(() => null)
+            ApiGateway.fetchTmdb<Record<string, unknown>>(`/collection/${sid}`).catch(() => null)
           )
         );
-        const allParts: any[] = [];
-        results.forEach(r => { if (r?.parts) allParts.push(...r.parts); });
-        const uniqueMap = new Map();
+        const allParts: Record<string, unknown>[] = [];
+        results.forEach(r => {
+          const rec = r as { parts?: Record<string, unknown>[] } | null;
+          if (rec?.parts) allParts.push(...rec.parts);
+        });
+        const uniqueMap = new Map<unknown, Record<string, unknown>>();
         allParts.forEach(p => { if (p?.id) uniqueMap.set(p.id, p); });
         const uniqueParts = Array.from(uniqueMap.values());
-        uniqueParts.sort((a: any, b: any) => (a.release_date || '0').localeCompare(b.release_date || '0'));
+        uniqueParts.sort((a, b) => ((a.release_date as string) || '0').localeCompare((b.release_date as string) || '0'));
         fullData = {
           id: 531241,
           name: 'Spider-Man Collection',
           overview: 'The complete Spider-Man cinematic franchise.',
-          poster_path: results.find(r => r?.poster_path)?.poster_path || '',
-          backdrop_path: results.find(r => r?.backdrop_path)?.backdrop_path || '',
+          poster_path: (results.find(r => (r as { poster_path?: string } | null)?.poster_path) as { poster_path?: string } | null)?.poster_path || '',
+          backdrop_path: (results.find(r => (r as { backdrop_path?: string } | null)?.backdrop_path) as { backdrop_path?: string } | null)?.backdrop_path || '',
           parts: uniqueParts,
         };
       } else {
-        fullData = await ApiGateway.fetchTmdb<any>(`/collection/${col.id}`);
+        fullData = await ApiGateway.fetchTmdb<Record<string, unknown>>(`/collection/${col.id}`);
       }
 
       setSelectedCol(fullData);
@@ -298,7 +306,7 @@ export default function CollectionsPage() {
   }, []);
 
   // Paginated parts for the selected collection detail
-  const parts = selectedCol?.parts || [];
+  const parts = (selectedCol?.parts as Record<string, unknown>[] | undefined) || [];
   const totalPages = Math.ceil(parts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedParts = parts.slice(startIndex, startIndex + itemsPerPage);
@@ -384,14 +392,16 @@ export default function CollectionsPage() {
         )}
 
         {/* Collections Detail View */}
-        {selectedCol ? (
+        {selectedCol ? (() => {
+          const col = selectedCol as { name?: string; overview?: string; backdrop_path?: string };
+          return (
           <div className="space-y-8 animate-fadeIn">
             {/* Banner */}
             <div className="relative w-full h-[30vh] min-h-[200px] rounded-[2rem] overflow-hidden bg-slate-800 shadow-xl border border-slate-100 dark:border-slate-700">
-              {selectedCol.backdrop_path ? (
+              {col.backdrop_path ? (
                 <img 
-                  src={`https://image.tmdb.org/t/p/original${selectedCol.backdrop_path}`} 
-                  alt={selectedCol.name}
+                  src={`https://image.tmdb.org/t/p/original${col.backdrop_path}`} 
+                  alt={col.name}
                   className="w-full h-full object-cover opacity-75"
                 />
               ) : (
@@ -400,9 +410,9 @@ export default function CollectionsPage() {
                 </div>
               )}
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/50 to-transparent flex flex-col justify-end p-6 md:p-8">
-                <h2 className="text-2xl md:text-3xl font-black text-white">{selectedCol.name}</h2>
+                <h2 className="text-2xl md:text-3xl font-black text-white">{col.name}</h2>
                 <p className="text-xs md:text-sm text-slate-300 max-w-2xl mt-2 leading-relaxed">
-                  {selectedCol.overview || 'Explore all movies inside this cinematic collection.'}
+                  {col.overview || 'Explore all movies inside this cinematic collection.'}
                 </p>
               </div>
             </div>
@@ -415,14 +425,14 @@ export default function CollectionsPage() {
                 </h3>
                 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {paginatedParts.map((item: any) => (
+                  {(paginatedParts as Record<string, unknown>[]).map((item) => (
                     <PosterCard
-                      key={item.id}
-                      id={item.id}
-                      title={item.title}
-                      posterPath={item.poster_path}
-                      rating={item.vote_average}
-                      year={item.release_date ? item.release_date.split('-')[0] : ''}
+                      key={item.id as number}
+                      id={item.id as number}
+                      title={item.title as string}
+                      posterPath={item.poster_path as string}
+                      rating={item.vote_average as number}
+                      year={item.release_date ? (item.release_date as string).split('-')[0] : ''}
                       type="movie"
                     />
                   ))}

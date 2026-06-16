@@ -47,6 +47,7 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
   // Load bookmark state
   useEffect(() => {
     if (typeof window !== 'undefined' && currentMovie) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsBookmarked(isInWatchlist(currentMovie.id));
     }
   }, [currentMovie]);

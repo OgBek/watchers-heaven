@@ -274,30 +274,30 @@ export const ApiGateway = {
   },
 
   getMovieDetails: async (id: string | number) => {
-    return ApiGateway.fetchTmdb<any>(`/movie/${id}`);
+    return ApiGateway.fetchTmdb<Record<string, unknown>>(`/movie/${id}`);
   },
 
   getMovieCredits: async (id: string | number) => {
-    return ApiGateway.fetchTmdb<any>(`/movie/${id}/credits`);
+    return ApiGateway.fetchTmdb<Record<string, unknown>>(`/movie/${id}/credits`);
   },
 
   getMovieRecommendations: async (id: string | number) => {
-    return ApiGateway.fetchTmdb<any>(`/movie/${id}/recommendations`);
+    return ApiGateway.fetchTmdb<Record<string, unknown>>(`/movie/${id}/recommendations`);
   },
 
   getTvDetails: async (id: string | number) => {
-    return ApiGateway.fetchTmdb<any>(`/tv/${id}`);
+    return ApiGateway.fetchTmdb<Record<string, unknown>>(`/tv/${id}`);
   },
 
   getTvCredits: async (id: string | number) => {
-    return ApiGateway.fetchTmdb<any>(`/tv/${id}/credits`);
+    return ApiGateway.fetchTmdb<Record<string, unknown>>(`/tv/${id}/credits`);
   },
 
   getTvRecommendations: async (id: string | number) => {
-    return ApiGateway.fetchTmdb<any>(`/tv/${id}/recommendations`);
+    return ApiGateway.fetchTmdb<Record<string, unknown>>(`/tv/${id}/recommendations`);
   },
 
   getTvSeasonDetails: async (tvId: string | number, seasonNumber: number) => {
-    return ApiGateway.fetchTmdb<any>(`/tv/${tvId}/season/${seasonNumber}`);
+    return ApiGateway.fetchTmdb<Record<string, unknown>>(`/tv/${tvId}/season/${seasonNumber}`);
   }
 };

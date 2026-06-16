@@ -12,9 +12,9 @@ export default function MovieDetailPage() {
   const id = params.id as string;
   const locale = (params.locale as string) || 'en';
 
-  const [movie, setMovie] = useState<any>(null);
-  const [credits, setCredits] = useState<any>(null);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [movie, setMovie] = useState<Record<string, unknown> | null>(null);
+  const [credits, setCredits] = useState<Record<string, unknown> | null>(null);
+  const [recommendations, setRecommendations] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
   
@@ -30,9 +30,10 @@ export default function MovieDetailPage() {
           ApiGateway.getMovieCredits(id).catch(() => null),
           ApiGateway.getMovieRecommendations(id).catch(() => ({ results: [] }))
         ]);
-        setMovie(movieData);
-        setCredits(creditsData);
-        setRecommendations(recsData.results || []);
+        setMovie(movieData as Record<string, unknown>);
+        setCredits(creditsData as Record<string, unknown> | null);
+        const recsRecord = recsData as { results?: Record<string, unknown>[] };
+        setRecommendations(recsRecord.results || []);
       } catch (err) {
         console.error('Failed to load movie details', err);
       } finally {
@@ -44,6 +45,7 @@ export default function MovieDetailPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsBookmarked(isInWatchlist(id));
     }
   }, [id]);
@@ -149,7 +151,7 @@ export default function MovieDetailPage() {
             </h3>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {credits?.cast?.slice(0, 8).map((actor: any) => (
+              {(credits?.cast as { id: number; name: string; character: string; profile_path?: string }[] | undefined)?.slice(0, 8).map((actor) => (
                 <div key={actor.id} className="flex items-center gap-3 bg-white dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-2xl shadow-sm hover:shadow-md transition">
                   <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
                     {actor.profile_path ? (
@@ -170,7 +172,7 @@ export default function MovieDetailPage() {
                   </div>
                 </div>
               ))}
-              {(!credits?.cast || credits.cast.length === 0) && (
+              {(!(credits?.cast as unknown[]) || (credits.cast as unknown[]).length === 0) && (
                 <p className="text-xs text-slate-400 col-span-2">No cast information available.</p>
               )}
             </div>
@@ -211,7 +213,7 @@ export default function MovieDetailPage() {
                 <span>•</span>
                 <span>{movie.runtime ? `${runtimeHours}h ${runtimeMins}m` : 'N/A'}</span>
                 <span>•</span>
-                <span>{movie.genres ? movie.genres.slice(0, 3).map((g: any) => g.name).join(', ') : 'N/A'}</span>
+                <span>{movie.genres ? (movie.genres as { id: number; name: string }[]).slice(0, 3).map((g) => g.name).join(', ') : 'N/A'}</span>
               </div>
             </div>
 
@@ -274,8 +276,8 @@ export default function MovieDetailPage() {
                 
                 <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
                   <span className="text-slate-400 font-bold uppercase tracking-wider">Spoken Languages</span>
-                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.spoken_languages ? movie.spoken_languages.map((l: any) => l.english_name).join(', ') : 'N/A'}>
-                    {movie.spoken_languages ? movie.spoken_languages.map((l: any) => l.english_name).join(', ') : 'N/A'}
+                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.spoken_languages ? (movie.spoken_languages as { english_name: string }[]).map((l) => l.english_name).join(', ') : 'N/A'}>
+                    {movie.spoken_languages ? (movie.spoken_languages as { english_name: string }[]).map((l) => l.english_name).join(', ') : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -283,15 +285,15 @@ export default function MovieDetailPage() {
               <div className="space-y-2.5">
                 <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
                   <span className="text-slate-400 font-bold uppercase tracking-wider">Production Countries</span>
-                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.production_countries ? movie.production_countries.map((c: any) => c.name).join(', ') : 'N/A'}>
-                    {movie.production_countries ? movie.production_countries.map((c: any) => c.name).join(', ') : 'N/A'}
+                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.production_countries ? (movie.production_countries as { name: string }[]).map((c) => c.name).join(', ') : 'N/A'}>
+                    {movie.production_countries ? (movie.production_countries as { name: string }[]).map((c) => c.name).join(', ') : 'N/A'}
                   </span>
                 </div>
 
                 <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
                   <span className="text-slate-400 font-bold uppercase tracking-wider">Production Companies</span>
-                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.production_companies ? movie.production_companies.map((c: any) => c.name).join(', ') : 'N/A'}>
-                    {movie.production_companies ? movie.production_companies.map((c: any) => c.name).join(', ') : 'N/A'}
+                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={movie.production_companies ? (movie.production_companies as { name: string }[]).map((c) => c.name).join(', ') : 'N/A'}>
+                    {movie.production_companies ? (movie.production_companies as { name: string }[]).map((c) => c.name).join(', ') : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -305,14 +307,14 @@ export default function MovieDetailPage() {
             </h3>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {recommendations.slice(0, 8).map((rec: any) => (
+              {recommendations.slice(0, 8).map((rec) => (
                 <PosterCard
-                  key={rec.id}
-                  id={rec.id}
-                  title={rec.title}
-                  posterPath={rec.poster_path}
-                  rating={rec.vote_average}
-                  year={rec.release_date ? rec.release_date.split('-')[0] : ''}
+                  key={rec.id as number}
+                  id={rec.id as number}
+                  title={rec.title as string}
+                  posterPath={rec.poster_path as string}
+                  rating={rec.vote_average as number}
+                  year={rec.release_date ? (rec.release_date as string).split('-')[0] : ''}
                 />
               ))}
               {recommendations.length === 0 && (

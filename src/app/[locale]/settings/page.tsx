@@ -43,23 +43,6 @@ export default function SettingsPage() {
     router.push(newPath);
   };
 
-  // Load settings from localStorage on mount
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const mode = localStorage.getItem('setting-theme-mode') || 'light';
-      const accent = localStorage.getItem('setting-accent-color') || '#007bff';
-      const font = localStorage.getItem('setting-font-family') || 'bricolage';
-
-      setThemeMode(mode);
-      setAccentColor(accent);
-      setFontFamily(font);
-
-      applyTheme(mode);
-      applyAccent(accent);
-      applyFont(font);
-    }
-  }, []);
-
   const applyTheme = (mode: string) => {
     setThemeMode(mode);
     localStorage.setItem('setting-theme-mode', mode);
@@ -84,6 +67,24 @@ export default function SettingsPage() {
       document.documentElement.style.setProperty('--font-sans', selected.value);
     }
   };
+
+  // Load settings from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const mode = localStorage.getItem('setting-theme-mode') || 'light';
+      const accent = localStorage.getItem('setting-accent-color') || '#007bff';
+      const font = localStorage.getItem('setting-font-family') || 'bricolage';
+
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setThemeMode(mode);
+      setAccentColor(accent);
+      setFontFamily(font);
+
+      applyTheme(mode);
+      applyAccent(accent);
+      applyFont(font);
+    }
+  }, []);
 
   const clearAllData = () => {
     localStorage.clear();

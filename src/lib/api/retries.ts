@@ -28,7 +28,7 @@ export const withRetries = async <T>(
       // Special handling for 429 Too Many Requests:
       // Respect the Retry-After header and don't burn through retries pointlessly
       if (error instanceof ApiError && error.status === 429) {
-        const retryAfterSec = Number((error as any).retryAfter) || 0;
+        const retryAfterSec = Number((error as ApiError & { retryAfter?: number }).retryAfter) || 0;
         if (retryAfterSec > 10) {
           // Server says wait too long — just throw immediately
           throw error;

@@ -15,11 +15,6 @@ const ANIME_GENRES = [
 ];
 
 const YEARS = ['2026', '2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015'];
-const SORT_OPTIONS = [
-  { value: 'popularity.desc', label: 'Most Popular' },
-  { value: 'vote_average.desc', label: 'Highest Rated' },
-  { value: 'first_air_date.desc', label: 'Latest Air Date' },
-];
 
 const ITEMS_PER_PAGE = 18;
 
@@ -27,7 +22,7 @@ export default function AnimePage() {
   const tCat = useTranslations('Categories');
   const tFil = useTranslations('Filters');
 
-  const [shows, setShows] = useState<any[]>([]);
+  const [shows, setShows] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -67,23 +62,23 @@ export default function AnimePage() {
     setLoading(true);
     try {
       if (searchQuery.trim()) {
-        const data = await ApiGateway.fetchTmdb<any>('/search/tv', {
+        const data = await ApiGateway.fetchTmdb<{ results: Record<string, unknown>[]; total_pages: number }>('/search/tv', {
           query: searchQuery.trim(),
           page: String(currentPage),
           include_adult: 'false',
         });
         if (data.results) {
           // Filter shows client-side to ensure Japanese anime flavor
-          const filtered = data.results.filter((item: any) => 
-            item.original_language === 'ja' || 
-            (item.origin_country && item.origin_country.includes('JP'))
-          );
+          const filtered = data.results.filter((item) => {
+            const rec = item as { original_language?: string; origin_country?: string[] };
+            return rec.original_language === 'ja' || rec.origin_country?.includes('JP');
+          });
           setShows(filtered.slice(0, ITEMS_PER_PAGE));
           setTotalPages(Math.min(data.total_pages || 1, 500));
         }
       } else {
         // Base anime genres starts with Animation (16)
-        let genres = ['16'];
+        const genres = ['16'];
         selectedGenres.forEach(g => {
           if (g !== '16') genres.push(g);
         });
@@ -103,7 +98,7 @@ export default function AnimePage() {
           params['vote_count.gte'] = '50'; // anime typically has lower vote counts than main show types
         }
 
-        const data = await ApiGateway.fetchTmdb<any>('/discover/tv', params);
+        const data = await ApiGateway.fetchTmdb<{ results: Record<string, unknown>[]; total_pages: number }>('/discover/tv', params);
         if (data.results) {
           setShows(data.results.slice(0, ITEMS_PER_PAGE));
           setTotalPages(Math.min(data.total_pages || 1, 500));
@@ -117,12 +112,14 @@ export default function AnimePage() {
   }, [currentPage, selectedGenres, selectedYear, sortBy, searchQuery]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadAnime();
   }, [loadAnime]);
 
   // Debounced search
   useEffect(() => {
     if (!searchQuery) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsSearching(true);
     const timer = setTimeout(() => {
       setCurrentPage(1);
@@ -298,12 +295,12 @@ export default function AnimePage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {shows.map((item) => (
                 <PosterCard
-                  key={item.id}
-                  id={item.id}
-                  title={item.name}
-                  posterPath={item.poster_path}
-                  rating={item.vote_average}
-                  year={item.first_air_date ? item.first_air_date.split('-')[0] : ''}
+                  key={item.id as number}
+                  id={item.id as number}
+                  title={item.name as string}
+                  posterPath={item.poster_path as string}
+                  rating={item.vote_average as number}
+                  year={item.first_air_date ? (item.first_air_date as string).split('-')[0] : ''}
                   type="tv"
                 />
               ))}

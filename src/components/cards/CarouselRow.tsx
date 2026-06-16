@@ -1,6 +1,6 @@
 'use client';
 import { useRef } from 'react';
-import { ChevronLeft, ChevronRight, Link2 } from 'lucide-react';
+import { Link2 } from 'lucide-react';
 
 interface CarouselRowProps {
   title: string;

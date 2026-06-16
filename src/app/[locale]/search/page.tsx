@@ -27,8 +27,8 @@ const getQueryVariations = (q: string): string[] => {
 
 export default function SearchPage() {
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<any[]>([]);
-  const [trending, setTrending] = useState<any[]>([]);
+  const [results, setResults] = useState<Record<string, unknown>[]>([]);
+  const [trending, setTrending] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -38,7 +38,7 @@ export default function SearchPage() {
   useEffect(() => {
     async function loadTrending() {
       try {
-        const data = await ApiGateway.fetchTmdb<any>('/trending/movie/week');
+        const data = await ApiGateway.fetchTmdb<{ results: Record<string, unknown>[] }>('/trending/movie/week');
         if (data.results) {
           setTrending(data.results.slice(0, 12));
         }
@@ -52,6 +52,7 @@ export default function SearchPage() {
 
   useEffect(() => {
     if (!query.trim()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setResults([]);
       setError(null);
       return;
@@ -62,7 +63,7 @@ export default function SearchPage() {
       try {
         const variations = getQueryVariations(query);
         const fetches = variations.map(v => 
-          ApiGateway.fetchTmdb<any>('/search/multi', { query: v }).catch(() => ({ results: [] }))
+          ApiGateway.fetchTmdb<{ results: Record<string, unknown>[] }>('/search/multi', { query: v }).catch(() => ({ results: [] as Record<string, unknown>[] }))
         );
         const responses = await Promise.all(fetches);
         
@@ -70,7 +71,7 @@ export default function SearchPage() {
         const allResults = responses.flatMap(res => res.results || []);
         
         // Remove duplicates
-        const uniqueResultsMap = new Map();
+        const uniqueResultsMap = new Map<unknown, Record<string, unknown>>();
         allResults.forEach(item => {
           if (item && item.id) {
             uniqueResultsMap.set(item.id, item);
@@ -80,9 +81,9 @@ export default function SearchPage() {
 
         // Client-side fuzzy/substring filtering for precision
         const normQuery = normalizeString(query);
-        merged = merged.filter((item: any) => {
-          const title = item.title || item.name || '';
-          const originalTitle = item.original_title || item.original_name || '';
+        merged = merged.filter((item) => {
+          const title = (item.title as string) || (item.name as string) || '';
+          const originalTitle = (item.original_title as string) || (item.original_name as string) || '';
           return (
             item.poster_path && (
               normalizeString(title).includes(normQuery) ||
@@ -148,12 +149,12 @@ export default function SearchPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
             {results.map((item) => (
               <PosterCard
-                key={item.id}
-                id={item.id}
-                title={item.title || item.name}
-                posterPath={item.poster_path}
-                rating={item.vote_average}
-                year={item.release_date ? item.release_date.split('-')[0] : (item.first_air_date ? item.first_air_date.split('-')[0] : '')}
+                key={item.id as number}
+                id={item.id as number}
+                title={(item.title as string) || (item.name as string)}
+                posterPath={item.poster_path as string}
+                rating={item.vote_average as number}
+                year={item.release_date ? (item.release_date as string).split('-')[0] : (item.first_air_date ? (item.first_air_date as string).split('-')[0] : '')}
                 type={item.media_type === 'tv' ? 'tv' : 'movie'}
               />
             ))}
@@ -170,12 +171,12 @@ export default function SearchPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
               {trending.map((item) => (
                 <PosterCard
-                  key={item.id}
-                  id={item.id}
-                  title={item.title || item.name}
-                  posterPath={item.poster_path}
-                  rating={item.vote_average}
-                  year={item.release_date ? item.release_date.split('-')[0] : (item.first_air_date ? item.first_air_date.split('-')[0] : '')}
+                  key={item.id as number}
+                  id={item.id as number}
+                  title={(item.title as string) || (item.name as string)}
+                  posterPath={item.poster_path as string}
+                  rating={item.vote_average as number}
+                  year={item.release_date ? (item.release_date as string).split('-')[0] : (item.first_air_date ? (item.first_air_date as string).split('-')[0] : '')}
                   type="movie"
                 />
               ))}

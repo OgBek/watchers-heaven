@@ -35,238 +35,8 @@ export default function WatchPage() {
   // Generate storage key — includes provider so each server tracks its own progress
   const storageKey = `watch-progress:${id}:${season || 0}:${episode || 0}:${provider}`;
 
-  // Load accent color from settings
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('setting-accent-color');
-      if (stored) {
-        // Strip # if present
-        setAccentColor(stored.replace('#', ''));
-      }
-    }
-  }, []);
-
-  // Load saved progress from localStorage (provider-specific)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          if (parsed && parsed.timestamp > 0) {
-            setSavedProgress(parsed.timestamp);
-            setShowResumePrompt(true);
-            setInitialProgressApplied(false);
-            return;
-          }
-        } catch (e) {
-          console.error('Error parsing saved progress', e);
-        }
-      }
-      // No progress for this provider — don't show resume prompt
-      setShowResumePrompt(false);
-      setSavedProgress(0);
-    }
-  }, [storageKey]);
-
-  // Reload iframe when provider changes or resume is confirmed
-  useEffect(() => {
-    if (iframeRef.current && !showResumePrompt) {
-      iframeRef.current.src = getEmbedUrl();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [provider, initialProgressApplied]);
-
-  // Reset next episode trigger when episode changes
-  useEffect(() => {
-    hasTriggeredNextRef.current = false;
-    setShowNextEpisodePopup(false);
-    if (nextEpisodeTimerRef.current) {
-      clearInterval(nextEpisodeTimerRef.current);
-      nextEpisodeTimerRef.current = null;
-    }
-  }, [season, episode]);
-
-  const saveProgress = useCallback((currentTime: number, duration: number) => {
-    if (duration <= 0) return;
-    const progressPercent = (currentTime / duration) * 100;
-    
-    const data = {
-      id,
-      type: isTv ? 'tv' : 'movie',
-      season,
-      episode,
-      timestamp: Math.floor(currentTime),
-      duration: Math.floor(duration),
-      progress: progressPercent,
-      updatedAt: Date.now(),
-    };
-    localStorage.setItem(storageKey, JSON.stringify(data));
-
-    // Auto-play next episode detection: trigger when >95% complete
-    if (isTv && progressPercent > 95 && !hasTriggeredNextRef.current && !showNextEpisodePopup) {
-      hasTriggeredNextRef.current = true;
-      setShowNextEpisodePopup(true);
-      setNextEpisodeCountdown(15);
-
-      // Start countdown
-      nextEpisodeTimerRef.current = setInterval(() => {
-        setNextEpisodeCountdown(prev => {
-          if (prev <= 1) {
-            // Auto-navigate to next episode
-            if (nextEpisodeTimerRef.current) clearInterval(nextEpisodeTimerRef.current);
-            goToNextEpisode();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-  }, [id, isTv, season, episode, storageKey, showNextEpisodePopup]);
-
-  const goToNextEpisode = useCallback(() => {
-    if (nextEpisodeTimerRef.current) {
-      clearInterval(nextEpisodeTimerRef.current);
-      nextEpisodeTimerRef.current = null;
-    }
-    setShowNextEpisodePopup(false);
-    const nextEp = (episode || 1) + 1;
-    router.push(`/${locale}/watch/${id}?s=${season || 1}&e=${nextEp}`);
-  }, [episode, id, locale, router, season]);
-
-  const goBackToShow = useCallback(() => {
-    if (nextEpisodeTimerRef.current) {
-      clearInterval(nextEpisodeTimerRef.current);
-      nextEpisodeTimerRef.current = null;
-    }
-    setShowNextEpisodePopup(false);
-    router.push(`/${locale}/tv/${id}`);
-  }, [id, locale, router]);
-
-  const rewatchEpisode = useCallback(() => {
-    if (nextEpisodeTimerRef.current) {
-      clearInterval(nextEpisodeTimerRef.current);
-      nextEpisodeTimerRef.current = null;
-    }
-    setShowNextEpisodePopup(false);
-    hasTriggeredNextRef.current = false;
-    // Clear saved progress for this episode so it starts fresh
-    localStorage.removeItem(storageKey);
-    setSavedProgress(0);
-    // Reload iframe to restart the episode
-    if (iframeRef.current) {
-      iframeRef.current.src = getEmbedUrl();
-    }
-  }, [storageKey]);
-
-  const dismissNextPopup = useCallback(() => {
-    if (nextEpisodeTimerRef.current) {
-      clearInterval(nextEpisodeTimerRef.current);
-      nextEpisodeTimerRef.current = null;
-    }
-    setShowNextEpisodePopup(false);
-    hasTriggeredNextRef.current = false;
-  }, []);
-
-  // Listen for progress events from player iframes
-  useEffect(() => {
-    const handlePlayerMessage = (event: MessageEvent) => {
-      let eventData: any = null;
-
-      // Try parsing JSON (some providers send stringified JSON)
-      if (typeof event.data === 'string') {
-        try {
-          eventData = JSON.parse(event.data);
-        } catch {
-          // Not JSON, ignore
-        }
-      } else if (typeof event.data === 'object' && event.data !== null) {
-        eventData = event.data;
-      }
-
-      if (!eventData) return;
-
-      // --- VidLink PLAYER_EVENT (live playback updates) ---
-      // VidLink sends: { type: 'PLAYER_EVENT', data: { event, currentTime, duration } }
-      if (eventData.type === 'PLAYER_EVENT' && eventData.data) {
-        const { currentTime, duration } = eventData.data;
-        if (currentTime !== undefined && duration !== undefined) {
-          saveProgress(currentTime, duration);
-        }
-      }
-
-      // --- VidLink MEDIA_DATA (media metadata & continue watching info) ---
-      // VidLink sends: { type: 'MEDIA_DATA', data: { id, title, poster, ... } }
-      if (eventData.type === 'MEDIA_DATA' && eventData.data) {
-        const mediaData = eventData.data;
-        // Store metadata for Continue Watching list
-        const continueWatchingKey = `continue-watching`;
-        try {
-          const existing = localStorage.getItem(continueWatchingKey);
-          const list = existing ? JSON.parse(existing) : [];
-          // Update or insert this item
-          const idx = list.findIndex((item: any) => item.id === id && item.season === (season || 0) && item.episode === (episode || 0));
-          const entry = {
-            id,
-            type: isTv ? 'tv' : 'movie',
-            season: season || 0,
-            episode: episode || 0,
-            title: mediaData.title || `#${id}`,
-            poster: mediaData.poster || '',
-            updatedAt: Date.now(),
-          };
-          if (idx >= 0) {
-            list[idx] = entry;
-          } else {
-            list.unshift(entry);
-          }
-          // Keep only last 50 entries
-          localStorage.setItem(continueWatchingKey, JSON.stringify(list.slice(0, 50)));
-        } catch (e) {
-          console.error('Error saving continue watching data', e);
-        }
-      }
-
-      // --- VidKing Player Events (legacy) ---
-      if (eventData.type === 'PLAYER_EVENT' && eventData.data && !eventData.data.event) {
-        // VidKing uses a slightly different format, already handled above
-      }
-
-      // --- ScreenScape Watch History Response ---
-      if (eventData.type === 'SCREENSCAPE_WATCH_HISTORY_WITH_PROGRESS_RESPONSE') {
-        console.log('ScreenScape History:', eventData.watchHistory);
-      }
-    };
-
-    window.addEventListener('message', handlePlayerMessage);
-    return () => {
-      window.removeEventListener('message', handlePlayerMessage);
-    };
-  }, [id, season, episode, storageKey, isTv, saveProgress]);
-
-  const handleResume = () => {
-    setInitialProgressApplied(true);
-    setShowResumePrompt(false);
-  };
-
-  const handleSkipResume = () => {
-    setSavedProgress(0);
-    setInitialProgressApplied(true);
-    setShowResumePrompt(false);
-  };
-
-  const toggleFullscreen = () => {
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
-    }
-  };
-
-  // Generate correct URLs based on current provider
-  const getEmbedUrl = () => {
+  // ── getEmbedUrl declared early (before effects that call it) ──
+  const getEmbedUrl = useCallback(() => {
     const startProgress = initialProgressApplied ? savedProgress : 0;
 
     switch (provider) {
@@ -302,13 +72,13 @@ export default function WatchPage() {
         );
       case 'vidking':
         return ApiGateway.getVidKingUrl(
-          id, 
-          isTv ? 'tv' : 'movie', 
-          season, 
-          episode, 
-          { 
-            color: accentColor, 
-            autoPlay: true, 
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode,
+          {
+            color: accentColor,
+            autoPlay: true,
             nextEpisode: false, // We handle next episode ourselves
             episodeSelector: true,
             progress: startProgress > 0 ? startProgress : undefined
@@ -316,21 +86,249 @@ export default function WatchPage() {
         );
       case 'screenscape':
         return ApiGateway.getScreenScapeUrl(
-          id, 
-          isTv ? 'tv' : 'movie', 
-          season, 
-          episode, 
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode,
           'eng'
         );
       case 'toustream':
-        return isTv 
-          ? ApiGateway.getTvEmbedUrl(id, season || 1, episode || 1) 
+        return isTv
+          ? ApiGateway.getTvEmbedUrl(id, season || 1, episode || 1)
           : ApiGateway.getTouStreamMovieUrl(id);
       case 'rivestream':
       default:
-        return isTv 
-          ? ApiGateway.getTvEmbedUrl(id, season || 1, episode || 1) 
+        return isTv
+          ? ApiGateway.getTvEmbedUrl(id, season || 1, episode || 1)
           : ApiGateway.getMovieEmbedUrl(id);
+    }
+  }, [provider, id, isTv, season, episode, accentColor, initialProgressApplied, savedProgress]);
+
+  // ── goToNextEpisode declared before saveProgress (which calls it) ──
+  const goToNextEpisode = useCallback(() => {
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+    setShowNextEpisodePopup(false);
+    const nextEp = (episode || 1) + 1;
+    router.push(`/${locale}/watch/${id}?s=${season || 1}&e=${nextEp}`);
+  }, [episode, id, locale, router, season]);
+
+  // Load accent color from settings
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('setting-accent-color');
+      if (stored) {
+        // Strip # if present
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setAccentColor(stored.replace('#', ''));
+      }
+    }
+  }, []);
+
+  // Load saved progress from localStorage (provider-specific)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved) as { timestamp?: number };
+          if (parsed && parsed.timestamp && parsed.timestamp > 0) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setSavedProgress(parsed.timestamp);
+            setShowResumePrompt(true);
+            setInitialProgressApplied(false);
+            return;
+          }
+        } catch (e) {
+          console.error('Error parsing saved progress', e);
+        }
+      }
+      // No progress for this provider — don't show resume prompt
+      setShowResumePrompt(false);
+      setSavedProgress(0);
+    }
+  }, [storageKey]);
+
+  // Reload iframe when provider changes or resume is confirmed
+  useEffect(() => {
+    if (iframeRef.current && !showResumePrompt) {
+      iframeRef.current.src = getEmbedUrl();
+    }
+  }, [provider, initialProgressApplied, showResumePrompt, getEmbedUrl]);
+
+  // Reset next episode trigger when episode changes
+  useEffect(() => {
+    hasTriggeredNextRef.current = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowNextEpisodePopup(false);
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+  }, [season, episode]);
+
+  const saveProgress = useCallback((currentTime: number, duration: number) => {
+    if (duration <= 0) return;
+    const progressPercent = (currentTime / duration) * 100;
+
+    const data = {
+      id,
+      type: isTv ? 'tv' : 'movie',
+      season,
+      episode,
+      timestamp: Math.floor(currentTime),
+      duration: Math.floor(duration),
+      progress: progressPercent,
+      updatedAt: Date.now(),
+    };
+    localStorage.setItem(storageKey, JSON.stringify(data));
+
+    // Auto-play next episode detection: trigger when >95% complete
+    if (isTv && progressPercent > 95 && !hasTriggeredNextRef.current && !showNextEpisodePopup) {
+      hasTriggeredNextRef.current = true;
+      setShowNextEpisodePopup(true);
+      setNextEpisodeCountdown(15);
+
+      // Start countdown
+      nextEpisodeTimerRef.current = setInterval(() => {
+        setNextEpisodeCountdown(prev => {
+          if (prev <= 1) {
+            // Auto-navigate to next episode
+            if (nextEpisodeTimerRef.current) clearInterval(nextEpisodeTimerRef.current);
+            goToNextEpisode();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+  }, [id, isTv, season, episode, storageKey, showNextEpisodePopup, goToNextEpisode]);
+
+  const goBackToShow = useCallback(() => {
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+    setShowNextEpisodePopup(false);
+    router.push(`/${locale}/tv/${id}`);
+  }, [id, locale, router]);
+
+  const rewatchEpisode = useCallback(() => {
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+    setShowNextEpisodePopup(false);
+    hasTriggeredNextRef.current = false;
+    // Clear saved progress for this episode so it starts fresh
+    localStorage.removeItem(storageKey);
+    setSavedProgress(0);
+    // Reload iframe to restart the episode
+    if (iframeRef.current) {
+      iframeRef.current.src = getEmbedUrl();
+    }
+  }, [storageKey, getEmbedUrl]);
+
+  const dismissNextPopup = useCallback(() => {
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+    setShowNextEpisodePopup(false);
+    hasTriggeredNextRef.current = false;
+  }, []);
+
+  // Listen for progress events from player iframes
+  useEffect(() => {
+    const handlePlayerMessage = (event: MessageEvent) => {
+      let eventData: Record<string, unknown> | null = null;
+
+      // Try parsing JSON (some providers send stringified JSON)
+      if (typeof event.data === 'string') {
+        try {
+          eventData = JSON.parse(event.data) as Record<string, unknown>;
+        } catch {
+          // Not JSON, ignore
+        }
+      } else if (typeof event.data === 'object' && event.data !== null) {
+        eventData = event.data as Record<string, unknown>;
+      }
+
+      if (!eventData) return;
+
+      // --- VidLink PLAYER_EVENT (live playback updates) ---
+      if (eventData.type === 'PLAYER_EVENT' && eventData.data) {
+        const playerData = eventData.data as Record<string, unknown>;
+        const currentTime = playerData.currentTime as number | undefined;
+        const duration = playerData.duration as number | undefined;
+        if (currentTime !== undefined && duration !== undefined) {
+          saveProgress(currentTime, duration);
+        }
+      }
+
+      // --- VidLink MEDIA_DATA (media metadata & continue watching info) ---
+      if (eventData.type === 'MEDIA_DATA' && eventData.data) {
+        const mediaData = eventData.data as Record<string, unknown>;
+        // Store metadata for Continue Watching list
+        const continueWatchingKey = `continue-watching`;
+        try {
+          const existing = localStorage.getItem(continueWatchingKey);
+          const list: Record<string, unknown>[] = existing ? JSON.parse(existing) : [];
+          // Update or insert this item
+          const idx = list.findIndex((item) => item.id === id && item.season === (season || 0) && item.episode === (episode || 0));
+          const entry = {
+            id,
+            type: isTv ? 'tv' : 'movie',
+            season: season || 0,
+            episode: episode || 0,
+            title: (mediaData.title as string) || `#${id}`,
+            poster: (mediaData.poster as string) || '',
+            updatedAt: Date.now(),
+          };
+          if (idx >= 0) {
+            list[idx] = entry;
+          } else {
+            list.unshift(entry);
+          }
+          // Keep only last 50 entries
+          localStorage.setItem(continueWatchingKey, JSON.stringify(list.slice(0, 50)));
+        } catch (e) {
+          console.error('Error saving continue watching data', e);
+        }
+      }
+
+      // --- ScreenScape Watch History Response ---
+      if (eventData.type === 'SCREENSCAPE_WATCH_HISTORY_WITH_PROGRESS_RESPONSE') {
+        console.log('ScreenScape History:', eventData.watchHistory);
+      }
+    };
+
+    window.addEventListener('message', handlePlayerMessage);
+    return () => {
+      window.removeEventListener('message', handlePlayerMessage);
+    };
+  }, [id, season, episode, storageKey, isTv, saveProgress]);
+
+  const handleResume = () => {
+    setInitialProgressApplied(true);
+    setShowResumePrompt(false);
+  };
+
+  const handleSkipResume = () => {
+    setSavedProgress(0);
+    setInitialProgressApplied(true);
+    setShowResumePrompt(false);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+      setIsFullscreen(true);
+    } else {
+      document.exitFullscreen();
+      setIsFullscreen(false);
     }
   };
 
@@ -351,10 +349,10 @@ export default function WatchPage() {
     <div className="min-h-screen bg-slate-950 flex flex-col text-slate-100 font-sans">
       {/* Top Controller Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-4 py-3 bg-slate-900/90 border-b border-slate-800 z-10">
-        
+
         {/* Left Side: Back & Info */}
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => router.back()}
             className="flex items-center gap-2 text-slate-300 hover:text-white transition-colors text-sm font-medium bg-slate-800/80 px-3 py-2 rounded-xl"
           >
@@ -379,8 +377,8 @@ export default function WatchPage() {
                 // Provider change triggers storageKey change → useEffect handles resume check
               }}
               className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-300 flex flex-col items-center ${
-                provider === p.id 
-                  ? 'text-white shadow-md' 
+                provider === p.id
+                  ? 'text-white shadow-md'
                   : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
               style={provider === p.id ? { backgroundColor: `#${accentColor}` } : {}}
@@ -406,7 +404,7 @@ export default function WatchPage() {
           >
             <RefreshCw className="w-4 h-4" />
           </button>
-          <button 
+          <button
             onClick={toggleFullscreen}
             className="text-slate-400 hover:text-white p-2 bg-slate-800/80 rounded-xl transition-colors"
             title="Toggle Fullscreen"
@@ -507,7 +505,7 @@ export default function WatchPage() {
                   <span className="text-2xl font-black text-white">{nextEpisodeCountdown}</span>
                 </div>
               </div>
-              
+
               <div className="text-center">
                 <h3 className="text-xl font-black text-white mb-1">Episode Finished</h3>
                 <p className="text-slate-400 text-sm">
@@ -517,15 +515,15 @@ export default function WatchPage() {
 
               {/* Progress bar */}
               <div className="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
-                <div 
+                <div
                   className="h-full rounded-full transition-all duration-1000 ease-linear"
-                  style={{ 
+                  style={{
                     width: `${((15 - nextEpisodeCountdown) / 15) * 100}%`,
                     backgroundColor: `#${accentColor}`
                   }}
                 />
               </div>
-              
+
               {/* Action buttons */}
               <div className="flex flex-col gap-2.5 w-full">
                 <button

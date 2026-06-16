@@ -12,15 +12,15 @@ export default function TvShowDetailPage() {
   const id = params.id as string;
   const locale = (params.locale as string) || 'en';
 
-  const [show, setShow] = useState<any>(null);
-  const [credits, setCredits] = useState<any>(null);
-  const [recommendations, setRecommendations] = useState<any[]>([]);
+  const [show, setShow] = useState<Record<string, unknown> | null>(null);
+  const [credits, setCredits] = useState<Record<string, unknown> | null>(null);
+  const [recommendations, setRecommendations] = useState<Record<string, unknown>[]>([]);
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
 
   // Seasons and Episodes
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
-  const [seasonDetails, setSeasonDetails] = useState<any>(null);
+  const [seasonDetails, setSeasonDetails] = useState<Record<string, unknown> | null>(null);
   const [loadingEpisodes, setLoadingEpisodes] = useState(false);
 
   // Track hovered section: 'left' | 'right' | null for dynamic column expansion
@@ -35,13 +35,15 @@ export default function TvShowDetailPage() {
           ApiGateway.getTvCredits(id).catch(() => null),
           ApiGateway.getTvRecommendations(id).catch(() => ({ results: [] }))
         ]);
-        setShow(showData);
-        setCredits(creditsData);
-        setRecommendations(recsData.results || []);
+        setShow(showData as Record<string, unknown>);
+        setCredits(creditsData as Record<string, unknown> | null);
+        const recsRecord = recsData as { results?: Record<string, unknown>[] };
+        setRecommendations(recsRecord.results || []);
         
         // Default to first season if available
-        if (showData.seasons && showData.seasons.length > 0) {
-          const firstSeason = showData.seasons[0].season_number;
+        const showRecord = showData as Record<string, unknown>;
+        if (showRecord.seasons && Array.isArray(showRecord.seasons) && showRecord.seasons.length > 0) {
+          const firstSeason = (showRecord.seasons[0] as Record<string, unknown>).season_number as number;
           setSelectedSeason(firstSeason);
         }
       } catch (err) {
@@ -60,7 +62,7 @@ export default function TvShowDetailPage() {
       setLoadingEpisodes(true);
       try {
         const data = await ApiGateway.getTvSeasonDetails(id, selectedSeason);
-        setSeasonDetails(data);
+        setSeasonDetails(data as Record<string, unknown>);
       } catch (e) {
         console.error('Failed to fetch season details', e);
       } finally {
@@ -72,6 +74,7 @@ export default function TvShowDetailPage() {
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIsBookmarked(isInWatchlist(id));
     }
   }, [id]);
@@ -175,7 +178,7 @@ export default function TvShowDetailPage() {
             </h3>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {credits?.cast?.slice(0, 8).map((actor: any) => (
+              {(credits?.cast as { id: number; name: string; character: string; profile_path?: string }[] | undefined)?.slice(0, 8).map((actor) => (
                 <div key={actor.id} className="flex items-center gap-3 bg-white dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-2xl shadow-sm hover:shadow-md transition">
                   <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
                     {actor.profile_path ? (
@@ -196,7 +199,7 @@ export default function TvShowDetailPage() {
                   </div>
                 </div>
               ))}
-              {(!credits?.cast || credits.cast.length === 0) && (
+              {(!(credits?.cast as unknown[]) || (credits.cast as unknown[]).length === 0) && (
                 <p className="text-xs text-slate-400 col-span-2">No cast information available.</p>
               )}
             </div>
@@ -239,7 +242,7 @@ export default function TvShowDetailPage() {
                 <span>•</span>
                 <span>{show.number_of_episodes} Episodes</span>
                 <span>•</span>
-                <span>{show.genres ? show.genres.slice(0, 3).map((g: any) => g.name).join(', ') : 'N/A'}</span>
+                <span>{show.genres ? (show.genres as { id: number; name: string }[]).slice(0, 3).map((g) => g.name).join(', ') : 'N/A'}</span>
               </div>
             </div>
 
@@ -296,8 +299,8 @@ export default function TvShowDetailPage() {
                 
                 <div className="flex justify-between border-b border-slate-50 dark:border-slate-800/40 pb-1.5">
                   <span className="text-slate-400 font-bold uppercase tracking-wider">Networks</span>
-                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={show.networks ? show.networks.map((n: any) => n.name).join(', ') : 'N/A'}>
-                    {show.networks ? show.networks.map((n: any) => n.name).join(', ') : 'N/A'}
+                  <span className="text-slate-755 dark:text-slate-300 font-medium truncate max-w-[200px]" title={show.networks ? (show.networks as { name: string }[]).map((n) => n.name).join(', ') : 'N/A'}>
+                    {show.networks ? (show.networks as { name: string }[]).map((n) => n.name).join(', ') : 'N/A'}
                   </span>
                 </div>
               </div>
@@ -335,11 +338,13 @@ export default function TvShowDetailPage() {
                   onChange={(e) => setSelectedSeason(parseInt(e.target.value))}
                   className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-705 dark:text-slate-250 text-xs font-bold focus:outline-none focus:border-blue-500 transition shadow-sm"
                 >
-                  {show.seasons?.map((s: any) => (
-                    <option key={s.id} value={s.season_number}>
-                      {s.name || `Season ${s.season_number}`}
-                    </option>
-                  ))}
+                  {show.seasons && Array.isArray(show.seasons)
+                    ? (show.seasons as { id: number; season_number: number; name?: string }[]).map((s) => (
+                      <option key={s.id} value={s.season_number}>
+                        {s.name || `Season ${s.season_number}`}
+                      </option>
+                    ))
+                    : null}
                 </select>
               </div>
             </div>
@@ -351,7 +356,7 @@ export default function TvShowDetailPage() {
               </div>
             ) : seasonDetails?.episodes ? (
               <div className="space-y-3 max-h-[700px] overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
-                {seasonDetails.episodes.map((ep: any) => (
+                {(seasonDetails.episodes as { id: number; episode_number: number; name: string; overview?: string; still_path?: string }[]).map((ep) => (
                   <div 
                     key={ep.id}
                     onClick={() => router.push(`/${locale}/watch/${id}?s=${selectedSeason}&e=${ep.episode_number}`)}
@@ -395,14 +400,14 @@ export default function TvShowDetailPage() {
             </h3>
             
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-              {recommendations.slice(0, 8).map((rec: any) => (
+              {recommendations.slice(0, 8).map((rec) => (
                 <PosterCard
-                  key={rec.id}
-                  id={rec.id}
-                  title={rec.name}
-                  posterPath={rec.poster_path}
-                  rating={rec.vote_average}
-                  year={rec.first_air_date ? rec.first_air_date.split('-')[0] : ''}
+                  key={rec.id as number}
+                  id={rec.id as number}
+                  title={rec.name as string}
+                  posterPath={rec.poster_path as string}
+                  rating={rec.vote_average as number}
+                  year={rec.first_air_date ? (rec.first_air_date as string).split('-')[0] : ''}
                   type="tv"
                 />
               ))}

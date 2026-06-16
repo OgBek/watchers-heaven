@@ -114,14 +114,15 @@ export async function GET(
         'Cache-Control': 'public, s-maxage=600, stale-while-revalidate=1200',
       },
     });
-  } catch (err: any) {
-    if (err.name === 'AbortError') {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') {
       return NextResponse.json(
         { error: 'Upstream request timed out' },
         { status: 504 }
       );
     }
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -168,9 +169,9 @@ export async function POST(request: NextRequest) {
     try {
       const json = JSON.parse(text);
       const channels = Array.isArray(json)
-        ? json.slice(0, limit).map((ch: any) => ({
-            slug: ch.slug ?? '',
-            name: ch.name ?? '',
+        ? json.slice(0, limit).map((ch: Record<string, unknown>) => ({
+            slug: (ch.slug as string) ?? '',
+            name: (ch.name as string) ?? '',
           }))
         : [];
 
@@ -185,19 +186,21 @@ export async function POST(request: NextRequest) {
         status: 200,
         headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' },
       });
-    } catch (parseErr: any) {
+    } catch (parseErr: unknown) {
+      const message = parseErr instanceof Error ? parseErr.message : 'Parse error';
       return NextResponse.json(
-        { error: `Failed to parse channels: ${parseErr.message}` },
+        { error: `Failed to parse channels: ${message}` },
         { status: 502 }
       );
     }
-  } catch (err: any) {
-    if (err.name === 'AbortError') {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') {
       return NextResponse.json(
         { error: 'Channel fetch timed out' },
         { status: 504 }
       );
     }
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

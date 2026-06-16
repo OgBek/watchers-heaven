@@ -1,6 +1,6 @@
 export class ApiError extends Error {
   retryAfter?: number;
-  constructor(public status: number, public message: string, public data?: any) {
+  constructor(public status: number, public message: string, public data?: unknown) {
     super(message);
     this.name = "ApiError";
   }
@@ -44,8 +44,8 @@ export const fetchClient = async (
         `Invalid JSON response (${text.length} bytes)`
       );
     }
-  } catch (err: any) {
-    if (err.name === 'AbortError') {
+  } catch (err: unknown) {
+    if (err instanceof Error && err.name === 'AbortError') {
       throw new ApiError(408, `Request timed out after ${timeoutMs}ms`);
     }
     throw err;

@@ -6,7 +6,7 @@ import { Eye, Loader, Trash2 } from 'lucide-react';
 import { getWatchlist, removeFromWatchlist, WatchlistItem } from '@/lib/watchlist';
 
 export default function WatchlistPage() {
-  const [items, setItems] = useState<(WatchlistItem & { data?: any })[]>([]);
+  const [items, setItems] = useState<(WatchlistItem & { data?: Record<string, unknown> })[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadWatchlist = useCallback(async () => {
@@ -21,7 +21,7 @@ export default function WatchlistPage() {
 
     // Batch fetch in groups of 4 to avoid rate limiting
     const BATCH_SIZE = 4;
-    const results: (WatchlistItem & { data?: any })[] = [];
+    const results: (WatchlistItem & { data?: Record<string, unknown> })[] = [];
 
     for (let i = 0; i < watchlist.length; i += BATCH_SIZE) {
       const batch = watchlist.slice(i, i + BATCH_SIZE);
@@ -32,9 +32,9 @@ export default function WatchlistPage() {
               item.type === 'tv'
                 ? await ApiGateway.getTvDetails(item.id)
                 : await ApiGateway.getMovieDetails(item.id);
-            return { ...item, data };
+            return { ...item, data: data as Record<string, unknown> };
           } catch {
-            return { ...item, data: null };
+            return { ...item, data: undefined };
           }
         })
       );
@@ -46,11 +46,12 @@ export default function WatchlistPage() {
       }
     }
 
-    setItems(results.filter((r) => r.data !== null));
+    setItems(results.filter((r) => r.data !== undefined));
     setLoading(false);
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadWatchlist();
   }, [loadWatchlist]);
 
@@ -79,15 +80,15 @@ export default function WatchlistPage() {
             {items.map((item) => (
               <div key={item.id} className="relative group/card">
                 <PosterCard
-                  id={item.data.id}
-                  title={item.data.title || item.data.name}
-                  posterPath={item.data.poster_path}
-                  rating={item.data.vote_average}
+                  id={item.data!.id as number}
+                  title={(item.data!.title as string) || (item.data!.name as string)}
+                  posterPath={item.data!.poster_path as string}
+                  rating={item.data!.vote_average as number}
                   year={
-                    item.data.release_date
-                      ? item.data.release_date.split('-')[0]
-                      : item.data.first_air_date
-                        ? item.data.first_air_date.split('-')[0]
+                    item.data!.release_date
+                      ? (item.data!.release_date as string).split('-')[0]
+                      : item.data!.first_air_date
+                        ? (item.data!.first_air_date as string).split('-')[0]
                         : ''
                   }
                   type={item.type}
