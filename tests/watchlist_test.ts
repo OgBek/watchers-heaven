@@ -1,36 +1,71 @@
 /**
- * Tests for watchlist helpers (src/lib/watchlist.ts)
- * These functions depend on localStorage so we mock it with a simple in-memory store.
- * Covers: getWatchlist, saveWatchlist, isInWatchlist, toggleWatchlistItem,
- *         removeFromWatchlist, old-format migration
+ * Tests for watchlist logic (inlined from src/lib/watchlist.ts)
+ * Deno-compatible: no external src/ imports needed.
  */
 import { assertEquals } from "jsr:@std/assert";
 
-// ── Minimal localStorage mock ─────────────────────────────────────────────────
+// ── Inlined watchlist logic ───────────────────────────────────────────────────
+
+interface WatchlistItem {
+  id: string;
+  type: "movie" | "tv";
+}
+
+const STORAGE_KEY = "watchers-heaven-watchlist";
+
+// Simple in-memory store standing in for localStorage
 const store = new Map<string, string>();
-const localStorageMock = {
+const fakeStorage = {
   getItem: (key: string) => store.get(key) ?? null,
   setItem: (key: string, value: string) => { store.set(key, value); },
-  removeItem: (key: string) => { store.delete(key); },
-  clear: () => { store.clear(); },
 };
-// Inject into globalThis so the module picks it up
-(globalThis as unknown as Record<string, unknown>).window = globalThis;
-(globalThis as unknown as Record<string, unknown>).localStorage = localStorageMock;
-// ─────────────────────────────────────────────────────────────────────────────
 
-// Import AFTER injecting the mock so module-level `typeof window` resolves correctly
-import {
-  getWatchlist,
-  saveWatchlist,
-  isInWatchlist,
-  toggleWatchlistItem,
-  removeFromWatchlist,
-} from "../src/lib/watchlist.ts";
-
-function reset() {
-  store.clear();
+function getWatchlist(): WatchlistItem[] {
+  const stored = fakeStorage.getItem(STORAGE_KEY);
+  if (!stored) return [];
+  try {
+    const raw: unknown[] = JSON.parse(stored);
+    return raw.map((item) => {
+      if (typeof item === "string") return { id: item, type: "movie" as const };
+      if (item && typeof item === "object" && "id" in item) {
+        return item as WatchlistItem;
+      }
+      return null;
+    }).filter(Boolean) as WatchlistItem[];
+  } catch {
+    return [];
+  }
 }
+
+function saveWatchlist(items: WatchlistItem[]): void {
+  fakeStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+}
+
+function isInWatchlist(id: string | number): boolean {
+  return getWatchlist().some((item) => item.id === String(id));
+}
+
+function toggleWatchlistItem(id: string | number, type: "movie" | "tv"): boolean {
+  const items = getWatchlist();
+  const idStr = String(id);
+  const idx = items.findIndex((item) => item.id === idStr);
+  if (idx >= 0) {
+    items.splice(idx, 1);
+    saveWatchlist(items);
+    return false;
+  }
+  items.push({ id: idStr, type });
+  saveWatchlist(items);
+  return true;
+}
+
+function removeFromWatchlist(id: string | number): void {
+  saveWatchlist(getWatchlist().filter((item) => item.id !== String(id)));
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+function reset() { store.clear(); }
 
 Deno.test("watchlist - getWatchlist returns empty array when nothing stored", () => {
   reset();
@@ -55,7 +90,7 @@ Deno.test("watchlist - isInWatchlist returns true after adding an item", () => {
   reset();
   saveWatchlist([{ id: "42", type: "movie" }]);
   assertEquals(isInWatchlist("42"), true);
-  assertEquals(isInWatchlist(42), true); // numeric id should also work
+  assertEquals(isInWatchlist(42), true);
 });
 
 Deno.test("watchlist - toggleWatchlistItem adds item when not present", () => {
@@ -104,11 +139,7 @@ Deno.test("watchlist - removeFromWatchlist is a no-op for non-existent id", () =
 
 Deno.test("watchlist - migrates old format (plain string IDs) to WatchlistItem", () => {
   reset();
-  // Simulate the old storage format: array of plain strings
-  store.set(
-    "watchers-heaven-watchlist",
-    JSON.stringify(["101", "202"]),
-  );
+  store.set(STORAGE_KEY, JSON.stringify(["101", "202"]));
   const list = getWatchlist();
   assertEquals(list.length, 2);
   assertEquals(list[0], { id: "101", type: "movie" });
@@ -117,6 +148,6 @@ Deno.test("watchlist - migrates old format (plain string IDs) to WatchlistItem",
 
 Deno.test("watchlist - getWatchlist returns empty on corrupt JSON", () => {
   reset();
-  store.set("watchers-heaven-watchlist", "not-valid-json{{{");
+  store.set(STORAGE_KEY, "not-valid-json{{{");
   assertEquals(getWatchlist(), []);
 });

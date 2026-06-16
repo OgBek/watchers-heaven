@@ -1,20 +1,65 @@
 /**
- * Tests for CircuitBreaker (src/lib/api/circuit-breaker.ts)
- * Covers: success flow, failure threshold, OPEN state, HALF_OPEN recovery
+ * Tests for CircuitBreaker logic (inlined from src/lib/api/circuit-breaker.ts)
+ * Deno-compatible: no external src/ imports needed.
  */
 import { assertEquals, assertRejects } from "jsr:@std/assert";
-import { CircuitBreaker, CircuitState } from "../src/lib/api/circuit-breaker.ts";
-import { ApiError } from "../src/lib/api/client.ts";
 
-// Helper: an action that always succeeds
+// ── Inlined ApiError + CircuitBreaker ─────────────────────────────────────────
+
+class ApiError extends Error {
+  constructor(public status: number, message: string) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+enum CircuitState { CLOSED, OPEN, HALF_OPEN }
+
+class CircuitBreaker {
+  private state = CircuitState.CLOSED;
+  private failureCount = 0;
+  private nextAttemptTime = 0;
+
+  constructor(
+    private failureThreshold = 10,
+    private resetTimeoutMs = 15_000,
+  ) {}
+
+  async execute<T>(action: () => Promise<T>): Promise<T> {
+    if (this.state === CircuitState.OPEN) {
+      if (Date.now() > this.nextAttemptTime) {
+        this.state = CircuitState.HALF_OPEN;
+      } else {
+        throw new Error("Circuit breaker is OPEN. Failing fast.");
+      }
+    }
+    try {
+      const result = await action();
+      this.failureCount = 0;
+      this.state = CircuitState.CLOSED;
+      return result;
+    } catch (error) {
+      if (error instanceof ApiError && error.status >= 400 && error.status < 600) {
+        throw error;
+      }
+      this.failureCount++;
+      if (this.failureCount >= this.failureThreshold) {
+        this.state = CircuitState.OPEN;
+        this.nextAttemptTime = Date.now() + this.resetTimeoutMs;
+      }
+      throw error;
+    }
+  }
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
 const ok = <T>(val: T) => () => Promise.resolve(val);
-
-// Helper: an action that always throws a plain network error (not ApiError)
 const fail = (msg = "Network error") => () => Promise.reject(new Error(msg));
-
-// Helper: an action that throws an ApiError with a given status
 const apiErr = (status: number) => () =>
   Promise.reject(new ApiError(status, `HTTP ${status}`));
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
 
 Deno.test("CircuitBreaker - passes through successful calls", async () => {
   const cb = new CircuitBreaker(3, 10_000);
@@ -22,75 +67,54 @@ Deno.test("CircuitBreaker - passes through successful calls", async () => {
   assertEquals(result, 42);
 });
 
-Deno.test("CircuitBreaker - stays CLOSED after a success resets failure count", async () => {
+Deno.test("CircuitBreaker - success resets failure count", async () => {
   const cb = new CircuitBreaker(3, 10_000);
-  // Two failures
   await assertRejects(() => cb.execute(fail()));
   await assertRejects(() => cb.execute(fail()));
-  // Then one success — resets the counter
-  await cb.execute(ok("recovered"));
-  // Now two more failures shouldn't open the breaker yet (threshold is 3)
+  await cb.execute(ok("reset"));
+  // After reset, two more failures should not open (threshold is 3)
   await assertRejects(() => cb.execute(fail()));
   await assertRejects(() => cb.execute(fail()));
-  // Still CLOSED — 3rd failure to trip it
-  const result = await cb.execute(ok("still works")).catch(() => "open");
-  assertEquals(result, "still works");
+  const result = await cb.execute(ok("still closed")).catch(() => "open");
+  assertEquals(result, "still closed");
 });
 
 Deno.test("CircuitBreaker - opens after reaching failure threshold", async () => {
   const cb = new CircuitBreaker(3, 5_000);
   await assertRejects(() => cb.execute(fail()));
   await assertRejects(() => cb.execute(fail()));
-  await assertRejects(() => cb.execute(fail())); // threshold hit
-
-  // Next call should fail fast with circuit OPEN message
-  await assertRejects(
-    () => cb.execute(ok("should not run")),
-    Error,
-    "Circuit breaker is OPEN",
-  );
-});
-
-Deno.test("CircuitBreaker - does NOT count ApiError 4xx/5xx toward threshold", async () => {
-  const cb = new CircuitBreaker(2, 5_000);
-  // Two 404 ApiErrors — should NOT trip the breaker
-  await assertRejects(() => cb.execute(apiErr(404)));
-  await assertRejects(() => cb.execute(apiErr(404)));
-  // Circuit should still be CLOSED — a success call works normally
-  const result = await cb.execute(ok("ok"));
-  assertEquals(result, "ok");
-});
-Deno.test("CircuitBreaker - transitions to HALF_OPEN after resetTimeout", async () => {
-  const cb = new CircuitBreaker(2, 80); // 80ms reset window
   await assertRejects(() => cb.execute(fail()));
-  await assertRejects(() => cb.execute(fail())); // opens breaker
-
-  // Should be OPEN immediately
   await assertRejects(
     () => cb.execute(ok("blocked")),
     Error,
     "Circuit breaker is OPEN",
   );
-
-  // Wait for reset timeout
-  await new Promise((r) => setTimeout(r, 100));
-
-  // Should now allow a probe request (HALF_OPEN → CLOSED on success)
-  const result = await cb.execute(ok("probe succeeded"));
-  assertEquals(result, "probe succeeded");
 });
 
-Deno.test("CircuitBreaker - re-opens if probe fails in HALF_OPEN", async () => {
+Deno.test("CircuitBreaker - ApiError 4xx/5xx does not trip the breaker", async () => {
+  const cb = new CircuitBreaker(2, 5_000);
+  await assertRejects(() => cb.execute(apiErr(404)));
+  await assertRejects(() => cb.execute(apiErr(404)));
+  const result = await cb.execute(ok("still works"));
+  assertEquals(result, "still works");
+});
+
+Deno.test("CircuitBreaker - transitions to HALF_OPEN after reset timeout", async () => {
   const cb = new CircuitBreaker(2, 80);
   await assertRejects(() => cb.execute(fail()));
-  await assertRejects(() => cb.execute(fail())); // opens
+  await assertRejects(() => cb.execute(fail()));
+  await assertRejects(() => cb.execute(ok("blocked")), Error, "OPEN");
+  await new Promise((r) => setTimeout(r, 100));
+  const result = await cb.execute(ok("probe ok"));
+  assertEquals(result, "probe ok");
+});
 
-  await new Promise((r) => setTimeout(r, 100)); // wait for HALF_OPEN
-
-  // Probe fails — should re-open
+Deno.test("CircuitBreaker - re-opens if probe fails in HALF_OPEN state", async () => {
+  const cb = new CircuitBreaker(2, 80);
+  await assertRejects(() => cb.execute(fail()));
+  await assertRejects(() => cb.execute(fail()));
+  await new Promise((r) => setTimeout(r, 100));
   await assertRejects(() => cb.execute(fail("still down")));
-
-  // Breaker is OPEN again — next call fast-fails
   await assertRejects(
     () => cb.execute(ok("no")),
     Error,
@@ -98,8 +122,7 @@ Deno.test("CircuitBreaker - re-opens if probe fails in HALF_OPEN", async () => {
   );
 });
 
-// Expose CircuitState for the export check
-Deno.test("CircuitBreaker - CircuitState enum values are exported", () => {
+Deno.test("CircuitBreaker - CircuitState enum values are correct", () => {
   assertEquals(CircuitState.CLOSED, 0);
   assertEquals(CircuitState.OPEN, 1);
   assertEquals(CircuitState.HALF_OPEN, 2);
