@@ -14,6 +14,17 @@ export const withRetries = async <T>(
     } catch (error) {
       attempt++;
 
+      // Never retry 404 Not Found — it will never succeed
+      if (error instanceof ApiError && error.status === 404) {
+        throw error;
+      }
+
+      // Don't retry server errors (5xx) — our proxy already tried the upstream,
+      // retrying the proxy won't help. Only network/timeout errors benefit from retries.
+      if (error instanceof ApiError && error.status >= 500) {
+        throw error;
+      }
+
       // Special handling for 429 Too Many Requests:
       // Respect the Retry-After header and don't burn through retries pointlessly
       if (error instanceof ApiError && error.status === 429) {

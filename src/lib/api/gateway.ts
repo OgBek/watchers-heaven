@@ -163,7 +163,7 @@ export const ApiGateway = {
         return channels;
       });
     } catch (err) {
-      console.error('Error fetching TouStream channels:', err);
+      console.warn('TouStream channels unavailable, using fallback:', (err as Error).message);
       return FALLBACK;
     }
   },

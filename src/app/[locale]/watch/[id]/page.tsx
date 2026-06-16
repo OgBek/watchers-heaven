@@ -1,6 +1,6 @@
 'use client';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Maximize2, Minimize2, Info, RefreshCw, SkipForward, ArrowLeftCircle } from 'lucide-react';
+import { ArrowLeft, Maximize2, Minimize2, Play, RefreshCw, SkipForward, ArrowLeftCircle, RotateCcw, X } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
@@ -32,8 +32,8 @@ export default function WatchPage() {
   const nextEpisodeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hasTriggeredNextRef = useRef(false);
 
-  // Generate storage key
-  const storageKey = `watch-progress:${id}:${season || 0}:${episode || 0}`;
+  // Generate storage key — includes provider so each server tracks its own progress
+  const storageKey = `watch-progress:${id}:${season || 0}:${episode || 0}:${provider}`;
 
   // Load accent color from settings
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function WatchPage() {
     }
   }, []);
 
-  // Load saved progress from localStorage
+  // Load saved progress from localStorage (provider-specific)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem(storageKey);
@@ -56,13 +56,26 @@ export default function WatchPage() {
           if (parsed && parsed.timestamp > 0) {
             setSavedProgress(parsed.timestamp);
             setShowResumePrompt(true);
+            setInitialProgressApplied(false);
+            return;
           }
         } catch (e) {
           console.error('Error parsing saved progress', e);
         }
       }
+      // No progress for this provider — don't show resume prompt
+      setShowResumePrompt(false);
+      setSavedProgress(0);
     }
   }, [storageKey]);
+
+  // Reload iframe when provider changes or resume is confirmed
+  useEffect(() => {
+    if (iframeRef.current && !showResumePrompt) {
+      iframeRef.current.src = getEmbedUrl();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [provider, initialProgressApplied]);
 
   // Reset next episode trigger when episode changes
   useEffect(() => {
@@ -129,6 +142,31 @@ export default function WatchPage() {
     setShowNextEpisodePopup(false);
     router.push(`/${locale}/tv/${id}`);
   }, [id, locale, router]);
+
+  const rewatchEpisode = useCallback(() => {
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+    setShowNextEpisodePopup(false);
+    hasTriggeredNextRef.current = false;
+    // Clear saved progress for this episode so it starts fresh
+    localStorage.removeItem(storageKey);
+    setSavedProgress(0);
+    // Reload iframe to restart the episode
+    if (iframeRef.current) {
+      iframeRef.current.src = getEmbedUrl();
+    }
+  }, [storageKey]);
+
+  const dismissNextPopup = useCallback(() => {
+    if (nextEpisodeTimerRef.current) {
+      clearInterval(nextEpisodeTimerRef.current);
+      nextEpisodeTimerRef.current = null;
+    }
+    setShowNextEpisodePopup(false);
+    hasTriggeredNextRef.current = false;
+  }, []);
 
   // Listen for progress events from player iframes
   useEffect(() => {
@@ -338,10 +376,7 @@ export default function WatchPage() {
               key={p.id}
               onClick={() => {
                 setProvider(p.id);
-                if (savedProgress > 0) {
-                  setShowResumePrompt(true);
-                  setInitialProgressApplied(false);
-                }
+                // Provider change triggers storageKey change → useEffect handles resume check
               }}
               className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-300 flex flex-col items-center ${
                 provider === p.id 
@@ -385,25 +420,56 @@ export default function WatchPage() {
       <div className="flex-1 flex items-center justify-center relative bg-black">
         {/* Resume Watching Prompt */}
         {showResumePrompt && (
-          <div className="absolute inset-0 bg-slate-950/90 z-20 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-8 max-w-sm shadow-2xl flex flex-col items-center">
-              <Info className="w-12 h-12 text-blue-500 mb-4" />
-              <h3 className="text-lg font-bold text-white mb-2">Resume Watching?</h3>
-              <p className="text-slate-400 text-sm mb-6">
-                We found saved progress from your last session: {Math.floor(savedProgress / 60)}m {savedProgress % 60}s.
-              </p>
-              <div className="flex gap-3 w-full">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-20 flex flex-col items-center justify-center p-6 animate-fade-in">
+            <div className="relative bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 max-w-sm w-full shadow-2xl shadow-black/50 flex flex-col items-center space-y-6">
+              {/* Close button */}
+              <button
+                onClick={handleSkipResume}
+                className="absolute top-4 right-4 p-1.5 rounded-full text-slate-500 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Progress ring */}
+              <div className="relative w-20 h-20">
+                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="35" fill="none" stroke="#1e293b" strokeWidth="4" />
+                  <circle
+                    cx="40" cy="40" r="35" fill="none"
+                    stroke={`#${accentColor}`}
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 35}`}
+                    strokeDashoffset={`${2 * Math.PI * 35 * (1 - Math.min((savedProgress / 3600), 1))}`}
+                  />
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <Play className="w-6 h-6 text-white fill-white" />
+                </div>
+              </div>
+
+              <div className="text-center">
+                <h3 className="text-xl font-black text-white mb-1">Resume Watching?</h3>
+                <p className="text-slate-400 text-sm">
+                  Pick up from <span className="text-white font-semibold">{Math.floor(savedProgress / 60)}m {savedProgress % 60}s</span> on <span className="text-white font-semibold">{providersList.find(p => p.id === provider)?.name || provider}</span>
+                </p>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex flex-col gap-2.5 w-full">
                 <button
                   onClick={handleResume}
-                  className="flex-1 hover:brightness-110 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-all"
+                  className="w-full flex items-center justify-center gap-2.5 hover:brightness-110 text-white font-bold py-3.5 px-4 rounded-2xl text-sm transition-all shadow-lg"
                   style={{ backgroundColor: `#${accentColor}` }}
                 >
+                  <Play className="w-4 h-4 fill-white" />
                   Yes, Resume
                 </button>
                 <button
                   onClick={handleSkipResume}
-                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors"
+                  className="w-full flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 px-4 rounded-2xl text-sm transition-colors"
                 >
+                  <RotateCcw className="w-3.5 h-3.5" />
                   Start Over
                 </button>
               </div>
@@ -413,24 +479,44 @@ export default function WatchPage() {
 
         {/* Next Episode Auto-play Popup */}
         {showNextEpisodePopup && isTv && (
-          <div className="absolute inset-0 bg-slate-950/85 z-30 flex flex-col items-center justify-center p-6 text-center animate-fade-in">
-            <div className="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-md shadow-2xl flex flex-col items-center space-y-5">
-              <div className="w-16 h-16 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-blue-500/30">
-                <SkipForward className="w-8 h-8 text-white fill-white" />
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm z-30 flex flex-col items-center justify-center p-6 animate-fade-in">
+            <div className="relative bg-slate-900/95 backdrop-blur-xl border border-slate-700/50 rounded-3xl p-8 max-w-md w-full shadow-2xl shadow-black/50 flex flex-col items-center space-y-6">
+              {/* Close button */}
+              <button
+                onClick={dismissNextPopup}
+                className="absolute top-4 right-4 p-1.5 rounded-full text-slate-500 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Countdown ring */}
+              <div className="relative w-20 h-20">
+                <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="35" fill="none" stroke="#1e293b" strokeWidth="4" />
+                  <circle
+                    cx="40" cy="40" r="35" fill="none"
+                    stroke={`#${accentColor}`}
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeDasharray={`${2 * Math.PI * 35}`}
+                    strokeDashoffset={`${2 * Math.PI * 35 * (nextEpisodeCountdown / 15)}`}
+                    className="transition-all duration-1000 ease-linear"
+                  />
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="text-2xl font-black text-white">{nextEpisodeCountdown}</span>
+                </div>
               </div>
               
-              <div>
-                <h3 className="text-xl font-bold text-white mb-1">Episode Finished</h3>
+              <div className="text-center">
+                <h3 className="text-xl font-black text-white mb-1">Episode Finished</h3>
                 <p className="text-slate-400 text-sm">
-                  Playing next episode in <span className="text-white font-bold text-lg">{nextEpisodeCountdown}</span> seconds...
-                </p>
-                <p className="text-slate-500 text-xs mt-1">
-                  S{season}E{(episode || 1) + 1}
+                  Up next: <span className="text-white font-semibold">S{season}E{(episode || 1) + 1}</span>
                 </p>
               </div>
 
-              {/* Countdown progress ring */}
-              <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+              {/* Progress bar */}
+              <div className="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
                 <div 
                   className="h-full rounded-full transition-all duration-1000 ease-linear"
                   style={{ 
@@ -440,22 +526,33 @@ export default function WatchPage() {
                 />
               </div>
               
-              <div className="flex gap-3 w-full">
+              {/* Action buttons */}
+              <div className="flex flex-col gap-2.5 w-full">
                 <button
                   onClick={goToNextEpisode}
-                  className="flex-1 flex items-center justify-center gap-2 hover:brightness-110 text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-md"
+                  className="w-full flex items-center justify-center gap-2.5 hover:brightness-110 text-white font-bold py-3.5 px-4 rounded-2xl text-sm transition-all shadow-lg"
                   style={{ backgroundColor: `#${accentColor}` }}
                 >
                   <SkipForward className="w-4 h-4" />
-                  Next Episode
+                  Play Next Episode
                 </button>
-                <button
-                  onClick={goBackToShow}
-                  className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 px-4 rounded-xl text-sm transition-colors"
-                >
-                  <ArrowLeftCircle className="w-4 h-4" />
-                  Go Back
-                </button>
+
+                <div className="flex gap-2.5">
+                  <button
+                    onClick={rewatchEpisode}
+                    className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 px-4 rounded-2xl text-sm transition-colors"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    Rewatch
+                  </button>
+                  <button
+                    onClick={goBackToShow}
+                    className="flex-1 flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold py-3 px-4 rounded-2xl text-sm transition-colors"
+                  >
+                    <ArrowLeftCircle className="w-3.5 h-3.5" />
+                    Show Details
+                  </button>
+                </div>
               </div>
             </div>
           </div>

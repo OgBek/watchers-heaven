@@ -1,11 +1,11 @@
 'use client';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { ApiGateway } from '@/lib/api/gateway';
-import { Folder, ArrowLeft, Loader, Search, X, Film, ArrowRight } from 'lucide-react';
+import { ApiError } from '@/lib/api/client';
+import { Folder, ArrowLeft, Loader, Search, X, Film, ArrowRight, AlertCircle } from 'lucide-react';
 import { PosterCard } from '@/components/cards/PosterCard';
 
-// Static metadata — no API calls needed to display the grid.
-// Parts/movies are fetched on-demand when the user clicks a collection.
+// Static list of collection IDs + names
 const COLLECTIONS = [
   { id: 10, name: 'Star Wars' },
   { id: 1241, name: 'Harry Potter' },
@@ -88,14 +88,53 @@ const COLLECTIONS = [
 // Spider-Man special IDs (merged from multiple sub-collections)
 const SPIDERMAN_IDS = [531241, 556, 125574, 558216];
 
+const CACHE_KEY = 'collections-metadata';
+const CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+interface CollectionMeta {
+  id: number;
+  name: string;
+  overview: string;
+  poster_path: string;
+  backdrop_path: string;
+  partsCount: number;
+}
+
+// ── Cache helpers ──
+function getCachedCollections(): CollectionMeta[] | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed.expiresAt && Date.now() <= parsed.expiresAt && Array.isArray(parsed.data)) {
+      return parsed.data;
+    }
+    sessionStorage.removeItem(CACHE_KEY);
+  } catch { /* sessionStorage unavailable */ }
+  return null;
+}
+
+function setCachedCollections(data: CollectionMeta[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+      data,
+      expiresAt: Date.now() + CACHE_TTL,
+    }));
+  } catch { /* quota exceeded */ }
+}
+
 export default function CollectionsPage() {
-  // Metadata for the grid — loaded lazily per page (poster_path, backdrop_path, overview, parts count)
-  const [metadata, setMetadata] = useState<Record<number, any>>({});
-  const [loadingMeta, setLoadingMeta] = useState<Set<number>>(new Set());
+  // All collection metadata — loaded once, cached in sessionStorage
+  const [collections, setCollections] = useState<CollectionMeta[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
 
   // Selected collection detail (with full parts loaded on click)
   const [selectedCol, setSelectedCol] = useState<any | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+  const [errorToast, setErrorToast] = useState<string | null>(null);
 
   // Search & Pagination for the collections list
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,12 +145,98 @@ export default function CollectionsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
-  // Filter collections by search (instant — uses static names)
+  // ── Load ALL collection metadata once (from cache or API) ──
+  useEffect(() => {
+    let cancelled = false;
+
+    // Check cache first — instant load if available
+    const cached = getCachedCollections();
+    if (cached && cached.length > 0) {
+      setCollections(cached);
+      setLoading(false);
+      return;
+    }
+
+    // Fetch all collections from TMDB
+    async function loadAll() {
+      const results: CollectionMeta[] = [];
+      const BATCH = 10;
+      const total = COLLECTIONS.length;
+      let loaded = 0;
+
+      for (let i = 0; i < total; i += BATCH) {
+        if (cancelled) return;
+        const batch = COLLECTIONS.slice(i, i + BATCH);
+
+        const batchResults = await Promise.all(
+          batch.map(async (col): Promise<CollectionMeta | null> => {
+            try {
+              if (col.id === 531241) {
+                const subResults = await Promise.all(
+                  SPIDERMAN_IDS.map(sid =>
+                    ApiGateway.fetchTmdb<any>(`/collection/${sid}`).catch(() => null)
+                  )
+                );
+                const allParts: any[] = [];
+                subResults.forEach(r => { if (r?.parts) allParts.push(...r.parts); });
+                const uniqueMap = new Map();
+                allParts.forEach(p => { if (p?.id) uniqueMap.set(p.id, p); });
+                return {
+                  id: 531241,
+                  name: 'Spider-Man Collection',
+                  overview: 'The complete Spider-Man cinematic franchise.',
+                  poster_path: subResults.find(r => r?.poster_path)?.poster_path || '',
+                  backdrop_path: subResults.find(r => r?.backdrop_path)?.backdrop_path || '',
+                  partsCount: uniqueMap.size,
+                };
+              }
+              const data = await ApiGateway.fetchTmdb<any>(`/collection/${col.id}`);
+              return {
+                id: col.id,
+                name: data.name || col.name,
+                overview: data.overview || '',
+                poster_path: data.poster_path || '',
+                backdrop_path: data.backdrop_path || '',
+                partsCount: data.parts?.length || 0,
+              };
+            } catch (err) {
+              // Skip 404s and other failures — they won't be in the cached list
+              return null;
+            }
+          })
+        );
+
+        batchResults.forEach(r => { if (r) results.push(r); });
+        loaded += batch.length;
+        if (!cancelled) setLoadProgress(Math.round((loaded / total) * 100));
+
+        // Small delay between batches to avoid rate limiting
+        if (i + BATCH < total && !cancelled) {
+          await new Promise(r => setTimeout(r, 200));
+        }
+      }
+
+      if (!cancelled) {
+        // Sort to maintain the original COLLECTIONS order
+        const idOrder = new Map(COLLECTIONS.map((c, idx) => [c.id, idx]));
+        results.sort((a, b) => (idOrder.get(a.id) ?? 0) - (idOrder.get(b.id) ?? 0));
+
+        setCollections(results);
+        setCachedCollections(results);
+        setLoading(false);
+      }
+    }
+
+    loadAll();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Filter collections by search
   const filteredCollections = useMemo(() => {
-    if (!searchQuery.trim()) return COLLECTIONS;
+    if (!searchQuery.trim()) return collections;
     const q = searchQuery.toLowerCase();
-    return COLLECTIONS.filter(c => c.name.toLowerCase().includes(q));
-  }, [searchQuery]);
+    return collections.filter(c => c.name.toLowerCase().includes(q));
+  }, [collections, searchQuery]);
 
   // Paginated list
   const totalListPages = Math.ceil(filteredCollections.length / collectionsPerPage);
@@ -121,85 +246,17 @@ export default function CollectionsPage() {
   }, [filteredCollections, listPage]);
 
   // Reset page when search changes
+  useEffect(() => { setListPage(1); }, [searchQuery]);
+
+  // Clamp listPage if it exceeds totalListPages
   useEffect(() => {
-    setListPage(1);
-  }, [searchQuery]);
-
-  // ── Lazy-load metadata for the current page of collections ──
-  useEffect(() => {
-    let cancelled = false;
-    const idsToFetch = paginatedCollections
-      .map(c => c.id)
-      .filter(id => !metadata[id] && !loadingMeta.has(id));
-
-    if (idsToFetch.length === 0) return;
-
-    setLoadingMeta(prev => {
-      const next = new Set(prev);
-      idsToFetch.forEach(id => next.add(id));
-      return next;
-    });
-
-    async function loadMeta() {
-      for (const id of idsToFetch) {
-        if (cancelled) return;
-        try {
-          if (id === 531241) {
-            // Spider-Man: merge multiple sub-collections
-            const results = await Promise.all(
-              SPIDERMAN_IDS.map(sid =>
-                ApiGateway.fetchTmdb<any>(`/collection/${sid}`).catch(() => null)
-              )
-            );
-            const allParts: any[] = [];
-            results.forEach(r => { if (r?.parts) allParts.push(...r.parts); });
-            const uniqueMap = new Map();
-            allParts.forEach(p => { if (p?.id) uniqueMap.set(p.id, p); });
-            setMetadata(prev => ({
-              ...prev,
-              [id]: {
-                name: 'Spider-Man Collection',
-                overview: 'The complete Spider-Man cinematic franchise.',
-                poster_path: results.find(r => r?.poster_path)?.poster_path || '',
-                backdrop_path: results.find(r => r?.backdrop_path)?.backdrop_path || '',
-                partsCount: uniqueMap.size,
-              },
-            }));
-          } else {
-            const data = await ApiGateway.fetchTmdb<any>(`/collection/${id}`);
-            if (cancelled) return;
-            setMetadata(prev => ({
-              ...prev,
-              [id]: {
-                name: data.name,
-                overview: data.overview,
-                poster_path: data.poster_path,
-                backdrop_path: data.backdrop_path,
-                partsCount: data.parts?.length || 0,
-              },
-            }));
-          }
-        } catch {
-          // Silently skip failed fetches — grid still shows static name
-        }
-        // Small delay between requests to avoid rate limiting
-        await new Promise(r => setTimeout(r, 150));
-      }
-      if (!cancelled) {
-        setLoadingMeta(prev => {
-          const next = new Set(prev);
-          idsToFetch.forEach(id => next.delete(id));
-          return next;
-        });
-      }
+    if (listPage > totalListPages && totalListPages > 0) {
+      setListPage(totalListPages);
     }
-    loadMeta();
-    return () => { cancelled = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [listPage, searchQuery]);
+  }, [listPage, totalListPages]);
 
   // ── Fetch full collection details when user clicks a collection ──
-  const handleSelectCollection = useCallback(async (col: { id: number; name: string }) => {
+  const handleSelectCollection = useCallback(async (col: CollectionMeta) => {
     setLoadingDetail(true);
     setCurrentPage(1);
 
@@ -207,7 +264,6 @@ export default function CollectionsPage() {
       let fullData: any;
 
       if (col.id === 531241) {
-        // Spider-Man: merge all sub-collections
         const results = await Promise.all(
           SPIDERMAN_IDS.map(sid =>
             ApiGateway.fetchTmdb<any>(`/collection/${sid}`).catch(() => null)
@@ -234,6 +290,8 @@ export default function CollectionsPage() {
       setSelectedCol(fullData);
     } catch (err) {
       console.error('Failed to load collection details', err);
+      setErrorToast(`"${col.name}" is no longer available.`);
+      setTimeout(() => setErrorToast(null), 4000);
     } finally {
       setLoadingDetail(false);
     }
@@ -272,25 +330,27 @@ export default function CollectionsPage() {
               </p>
             </div>
 
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 dark:text-slate-500" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search movie collections by name..."
-                className="w-full pl-11 pr-10 py-3 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue/50 transition-all shadow-sm"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+            {/* Search Bar — only show when collections are loaded */}
+            {collections.length > 0 && (
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 dark:text-slate-500" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search movie collections by name..."
+                  className="w-full pl-11 pr-10 py-3 rounded-2xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-slate-700 text-sm text-slate-800 dark:text-slate-200 placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:outline-none focus:ring-2 focus:ring-accent-blue/30 focus:border-accent-blue/50 transition-all shadow-sm"
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -299,6 +359,27 @@ export default function CollectionsPage() {
           <div className="flex flex-col items-center justify-center py-20 gap-3">
             <Loader className="w-8 h-8 animate-spin text-accent-blue" />
             <span className="text-sm font-semibold text-slate-500 dark:text-slate-400">Loading collection movies...</span>
+          </div>
+        )}
+
+        {/* Initial Loading State — fetching all metadata */}
+        {loading && !selectedCol && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader className="w-10 h-10 animate-spin text-accent-blue" />
+            <div className="text-center space-y-2">
+              <span className="text-sm font-bold text-slate-600 dark:text-slate-300">Loading Movie Collections</span>
+              <p className="text-xs text-slate-400 dark:text-slate-500 max-w-sm">
+                Fetching metadata for {COLLECTIONS.length} collections. This only happens once — data is cached for instant access afterward.
+              </p>
+            </div>
+            {/* Progress bar */}
+            <div className="w-48 bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-full bg-accent-blue rounded-full transition-all duration-300 ease-out"
+                style={{ width: `${loadProgress}%` }}
+              />
+            </div>
+            <span className="text-xs font-bold text-slate-400 dark:text-slate-500">{loadProgress}%</span>
           </div>
         )}
 
@@ -376,54 +457,39 @@ export default function CollectionsPage() {
               </div>
             )}
           </div>
-        ) : !loadingDetail && paginatedCollections.length > 0 ? (
-          /* Collections Grid — shows instantly using static names */
+        ) : !loading && !loadingDetail && paginatedCollections.length > 0 ? (
+          /* Collections Grid — all loaded from cache */
           <div className="space-y-8 animate-fadeIn">
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-              {paginatedCollections.map((col) => {
-                const meta = metadata[col.id];
-                const posterPath = meta?.poster_path;
-                const partsCount = meta?.partsCount;
-                const isLoading = loadingMeta.has(col.id);
-
-                return (
-                  <div
-                    key={col.id}
-                    onClick={() => handleSelectCollection(col)}
-                    className="group relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:-translate-y-1.5 bg-slate-900"
-                  >
-                    {/* Poster — shows once metadata loads, fallback shows name */}
-                    {posterPath ? (
-                      <img 
-                        src={`https://image.tmdb.org/t/p/w500${posterPath}`} 
-                        alt={col.name}
-                        className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-103"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
-                        {isLoading ? (
-                          <Loader className="w-6 h-6 animate-spin text-slate-600 dark:text-slate-500" />
-                        ) : (
-                          <Film className="w-10 h-10 text-slate-600 dark:text-slate-500 mb-2" />
-                        )}
-                        <span className="text-xs text-slate-400 dark:text-slate-400 font-bold text-center mt-1">{col.name}</span>
-                      </div>
-                    )}
-                    
-                    {/* Overlay — always show name, parts count when available */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-4 z-10">
-                      <h3 className="text-xs font-black text-white drop-shadow-md leading-tight line-clamp-2">{col.name}</h3>
-                      {partsCount !== undefined ? (
-                        <span className="text-[9px] font-bold text-blue-400 dark:text-blue-400 uppercase tracking-wider mt-1 block">
-                          {partsCount} Parts
-                        </span>
-                      ) : isLoading ? (
-                        <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider mt-1 block">Loading...</span>
-                      ) : null}
+              {paginatedCollections.map((col) => (
+                <div
+                  key={col.id}
+                  onClick={() => handleSelectCollection(col)}
+                  className="group relative aspect-[2/3] rounded-2xl overflow-hidden cursor-pointer shadow-md hover:shadow-xl border border-slate-100 dark:border-slate-700 transition-all duration-300 hover:-translate-y-1.5 bg-slate-900"
+                >
+                  {/* Poster */}
+                  {col.poster_path ? (
+                    <img 
+                      src={`https://image.tmdb.org/t/p/w342${col.poster_path}`} 
+                      alt={col.name}
+                      className="absolute inset-0 w-full h-full object-cover transition duration-500 group-hover:scale-103"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
+                      <Film className="w-10 h-10 text-slate-600 dark:text-slate-500 mb-2" />
+                      <span className="text-xs text-slate-400 dark:text-slate-400 font-bold text-center">{col.name}</span>
                     </div>
+                  )}
+                  
+                  {/* Overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-4 z-10">
+                    <h3 className="text-xs font-black text-white drop-shadow-md leading-tight line-clamp-2">{col.name}</h3>
+                    <span className="text-[9px] font-bold text-blue-400 dark:text-blue-400 uppercase tracking-wider mt-1 block">
+                      {col.partsCount} Parts
+                    </span>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
 
             {/* List Pagination */}
@@ -463,11 +529,22 @@ export default function CollectionsPage() {
               </div>
             )}
           </div>
-        ) : !loadingDetail ? (
+        ) : !loading && !loadingDetail ? (
           <div className="text-center py-20 text-slate-400 dark:text-slate-600">
             No movie collections found matching search.
           </div>
         ) : null}
+
+        {/* Error Toast */}
+        {errorToast && (
+          <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 px-5 py-3 rounded-2xl bg-red-600 text-white text-sm font-semibold shadow-lg shadow-red-900/30 animate-fadeIn">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            {errorToast}
+            <button onClick={() => setErrorToast(null)} className="ml-2 p-0.5 hover:bg-red-500 rounded-full transition">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

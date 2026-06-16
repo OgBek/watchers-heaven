@@ -1,25 +1,61 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { ApiGateway, TouStreamChannel } from '@/lib/api/gateway';
 import { Tv, Search, Play, RefreshCw, Loader } from 'lucide-react';
 
 export default function LiveTvPage() {
   const [channels, setChannels] = useState<TouStreamChannel[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedChannel, setSelectedChannel] = useState<TouStreamChannel | null>(null);
 
+  // Progressive loading: show first batch quickly, then load rest in background
   useEffect(() => {
+    let cancelled = false;
+
     async function loadChannels() {
       setLoading(true);
-      const list = await ApiGateway.getTouStreamChannels();
-      setChannels(list);
-      if (list.length > 0) {
-        setSelectedChannel(list[0]);
-      }
+
+      // Phase 1: Fast initial batch (30 channels)
+      const firstBatch = await ApiGateway.getTouStreamChannels(30);
+      if (cancelled) return;
+
+      setChannels(firstBatch);
       setLoading(false);
+      if (firstBatch.length > 0) {
+        setSelectedChannel(firstBatch[0]);
+      }
+
+      // Phase 2: Background fetch for full list (200 channels)
+      if (firstBatch.length >= 30) {
+        setLoadingMore(true);
+        try {
+          const fullList = await ApiGateway.getTouStreamChannels(200);
+          if (cancelled) return;
+
+          // Merge: full list replaces the initial batch
+          if (fullList.length > firstBatch.length) {
+            setChannels(fullList);
+          }
+        } catch {
+          // Keep the first batch if full fetch fails
+        } finally {
+          if (!cancelled) setLoadingMore(false);
+        }
+      }
     }
+
     loadChannels();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Manual refresh — fetches full list
+  const handleRefresh = useCallback(async () => {
+    setLoading(true);
+    const list = await ApiGateway.getTouStreamChannels(200);
+    setChannels(list);
+    setLoading(false);
   }, []);
 
   const filteredChannels = channels.filter((c) =>
@@ -94,17 +130,20 @@ export default function LiveTvPage() {
             )}
           </div>
 
-          {/* Right Column: Channels List - Logo removed, name only */}
+          {/* Right Column: Channels List */}
           <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-md p-4 max-h-[70vh] overflow-y-auto flex flex-col gap-2">
             <h3 className="text-sm font-bold text-slate-700 dark:text-slate-200 px-2 pb-2 border-b border-slate-100 dark:border-slate-800 mb-2 flex items-center justify-between">
-              <span>Available Streams</span>
+              <span className="flex items-center gap-2">
+                Available Streams
+                {loadingMore && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-blue-500 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 px-2 py-0.5 rounded-full">
+                    <Loader className="w-2.5 h-2.5 animate-spin" />
+                    Loading more...
+                  </span>
+                )}
+              </span>
               <button 
-                onClick={async () => {
-                  setLoading(true);
-                  const list = await ApiGateway.getTouStreamChannels();
-                  setChannels(list);
-                  setLoading(false);
-                }}
+                onClick={handleRefresh}
                 className="p-1 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 smooth-transition"
                 title="Refresh Channel List"
               >
