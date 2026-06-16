@@ -1,4 +1,4 @@
-import { ApiError } from './client.ts';
+import { ApiError } from './client';
 
 export enum CircuitState {
   CLOSED, // Requests pass normally
