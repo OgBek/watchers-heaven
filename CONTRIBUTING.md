@@ -32,3 +32,32 @@ We love new ideas! To suggest an enhancement, open an issue and describe:
    ```bash
    git clone [https://github.com/YOUR-USERNAME/watchers-heaven.git](https://github.com/YOUR-USERNAME/watchers-heaven.git)
    cd watchers-heaven
+
+   
+## Branch Rules
+
+DO NOT commit directly to `main`.
+
+### Contribution flow
+
+1. Fork the repository
+2. Create a feature branch
+
+Example:
+
+```bash
+git checkout -b feature/my-feature
+```
+
+3. Push your branch
+4. Open a Pull Request into `dev`
+
+## Allowed PR targets
+
+✅ feature/* → dev  
+✅ fix/* → dev  
+
+## Forbidden
+
+❌ feature/* → main  
+❌ direct pushes to main
