@@ -305,9 +305,9 @@ export default function WatchPage() {
       }
     };
 
-    window.addEventListener('message', handlePlayerMessage);
+    globalThis.addEventListener('message', handlePlayerMessage);
     return () => {
-      window.removeEventListener('message', handlePlayerMessage);
+      globalThis.removeEventListener('message', handlePlayerMessage);
     };
   }, [id, season, episode, storageKey, isTv, saveProgress]);
 

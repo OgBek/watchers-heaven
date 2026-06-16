@@ -1,6 +1,19 @@
+import process from 'node:process';
 import { HeroFeature } from '@/components/hero/HeroFeature';
 import { CarouselRow } from '@/components/cards/CarouselRow';
 import { PosterCard } from '@/components/cards/PosterCard';
+
+interface TmdbItem {
+  id: number;
+  title?: string;
+  name?: string;
+  poster_path?: string;
+  backdrop_path?: string;
+  vote_average?: number;
+  release_date?: string;
+  first_air_date?: string;
+  media_type?: string;
+}
 
 // Fallback lists in case API fetch fails
 const fallbackRecommendation = [
@@ -64,14 +77,11 @@ export default async function Home() {
   // Mix trending movies + TV shows for the hero slider
   const heroMovies = getList(trendingMovies, fallbackRecommendation)
     .slice(0, 3)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((item: any) => ({ ...item, media_type: 'movie' }));
+    .map((item) => ({ ...(item as TmdbItem), media_type: 'movie' }));
   const heroTv = getList(trendingTv, [])
     .slice(0, 3)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((item: any) => ({ ...item, media_type: 'tv' }));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const heroSlides = [...heroMovies, ...heroTv].filter((item: any) => item.backdrop_path);
+    .map((item) => ({ ...(item as TmdbItem), media_type: 'tv' }));
+  const heroSlides = [...heroMovies, ...heroTv].filter((item) => (item as TmdbItem).backdrop_path);
 
   return (
     <main className="min-h-screen pb-20 bg-[var(--color-main)] text-slate-800 dark:text-white transition-colors duration-300">
@@ -79,93 +89,105 @@ export default async function Home() {
       
       <div className="mt-8 space-y-4 animate-fadeIn">
         <CarouselRow title="Recommendation">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {getList(trendingMovies, fallbackRecommendation).map((movie: any) => (
+          {getList(trendingMovies, fallbackRecommendation).map((item) => {
+            const movie = item as TmdbItem;
+            return (
             <PosterCard 
               key={movie.id}
               id={movie.id}
-              title={movie.title || movie.name}
-              posterPath={movie.poster_path}
+              title={movie.title ?? movie.name ?? ''}
+              posterPath={movie.poster_path ?? ''}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : (movie.first_air_date ? movie.first_air_date.split('-')[0] : '')}
               type="movie"
             />
-          ))}
+            );
+          })}
         </CarouselRow>
 
         <CarouselRow title="Trending TV Shows">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {getList(trendingTv, []).map((show: any) => (
+          {getList(trendingTv, []).map((item) => {
+            const show = item as TmdbItem;
+            return (
             <PosterCard 
               key={show.id}
               id={show.id}
-              title={show.name || show.title}
-              posterPath={show.poster_path}
+              title={show.name ?? show.title ?? ''}
+              posterPath={show.poster_path ?? ''}
               rating={show.vote_average}
               year={show.first_air_date ? show.first_air_date.split('-')[0] : ''}
               type="tv"
             />
-          ))}
+            );
+          })}
         </CarouselRow>
 
         <CarouselRow title="Top Rated Movies">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {getList(topRated, []).map((movie: any) => (
+          {getList(topRated, []).map((item) => {
+            const movie = item as TmdbItem;
+            return (
             <PosterCard 
               key={movie.id}
               id={movie.id}
-              title={movie.title}
-              posterPath={movie.poster_path}
+              title={movie.title ?? ''}
+              posterPath={movie.poster_path ?? ''}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : ''}
               type="movie"
             />
-          ))}
+            );
+          })}
         </CarouselRow>
 
         <CarouselRow title="Now Playing in Theaters">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {getList(nowPlaying, []).map((movie: any) => (
+          {getList(nowPlaying, []).map((item) => {
+            const movie = item as TmdbItem;
+            return (
             <PosterCard 
               key={movie.id}
               id={movie.id}
-              title={movie.title}
-              posterPath={movie.poster_path}
+              title={movie.title ?? ''}
+              posterPath={movie.poster_path ?? ''}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : ''}
               type="movie"
             />
-          ))}
+            );
+          })}
         </CarouselRow>
 
         <CarouselRow title="Popular Anime">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {getList(anime, []).map((show: any) => (
+          {getList(anime, []).map((item) => {
+            const show = item as TmdbItem;
+            return (
             <PosterCard 
               key={show.id}
               id={show.id}
-              title={show.name}
-              posterPath={show.poster_path}
+              title={show.name ?? ''}
+              posterPath={show.poster_path ?? ''}
               rating={show.vote_average}
               year={show.first_air_date ? show.first_air_date.split('-')[0] : ''}
               type="tv"
             />
-          ))}
+            );
+          })}
         </CarouselRow>
 
         <CarouselRow title="Action & Adventure">
-          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-          {getList(action, []).map((movie: any) => (
+          {getList(action, []).map((item) => {
+            const movie = item as TmdbItem;
+            return (
             <PosterCard 
               key={movie.id}
               id={movie.id}
-              title={movie.title}
-              posterPath={movie.poster_path}
+              title={movie.title ?? ''}
+              posterPath={movie.poster_path ?? ''}
               rating={movie.vote_average}
               year={movie.release_date ? movie.release_date.split('-')[0] : ''}
               type="movie"
             />
-          ))}
+            );
+          })}
         </CarouselRow>
       </div>
     </main>

@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { NextRequest, NextResponse } from 'next/server';
 import { tmdbCache, channelsCache, MemoryCache } from '@/lib/cache';
 import { apiRateLimiter } from '@/lib/rate-limiter';

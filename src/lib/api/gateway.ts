@@ -1,3 +1,4 @@
+import process from 'node:process';
 import { fetchClient } from './client';
 import { withRetries } from './retries';
 import { tmdbCircuitBreaker } from './circuit-breaker';
@@ -242,7 +243,7 @@ export const ApiGateway = {
     }
 
     // ── Deduplicate in-flight requests ──
-    return dedupeRequest(cacheKey, async () => {
+    return await dedupeRequest(cacheKey, async () => {
       let urlString = '';
 
       if (isBrowser) {
@@ -273,31 +274,31 @@ export const ApiGateway = {
     });
   },
 
-  getMovieDetails: async (id: string | number) => {
+  getMovieDetails: (id: string | number) => {
     return ApiGateway.fetchTmdb<Record<string, unknown>>(`/movie/${id}`);
   },
 
-  getMovieCredits: async (id: string | number) => {
+  getMovieCredits: (id: string | number) => {
     return ApiGateway.fetchTmdb<Record<string, unknown>>(`/movie/${id}/credits`);
   },
 
-  getMovieRecommendations: async (id: string | number) => {
+  getMovieRecommendations: (id: string | number) => {
     return ApiGateway.fetchTmdb<Record<string, unknown>>(`/movie/${id}/recommendations`);
   },
 
-  getTvDetails: async (id: string | number) => {
+  getTvDetails: (id: string | number) => {
     return ApiGateway.fetchTmdb<Record<string, unknown>>(`/tv/${id}`);
   },
 
-  getTvCredits: async (id: string | number) => {
+  getTvCredits: (id: string | number) => {
     return ApiGateway.fetchTmdb<Record<string, unknown>>(`/tv/${id}/credits`);
   },
 
-  getTvRecommendations: async (id: string | number) => {
+  getTvRecommendations: (id: string | number) => {
     return ApiGateway.fetchTmdb<Record<string, unknown>>(`/tv/${id}/recommendations`);
   },
 
-  getTvSeasonDetails: async (tvId: string | number, seasonNumber: number) => {
+  getTvSeasonDetails: (tvId: string | number, seasonNumber: number) => {
     return ApiGateway.fetchTmdb<Record<string, unknown>>(`/tv/${tvId}/season/${seasonNumber}`);
   }
 };

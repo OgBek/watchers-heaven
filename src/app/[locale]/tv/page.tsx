@@ -79,14 +79,11 @@ export default function TvShowsPage() {
           include_adult: 'false',
         });
         if (data.results) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          let results: any[] = data.results || [];
+          let results: Record<string, unknown>[] = data.results || [];
           if (selectedIndustry === 'hollywood') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            results = results.filter((r: any) => r.original_language === 'en');
+            results = results.filter((r) => r.original_language === 'en');
           } else if (selectedIndustry === 'bollywood') {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            results = results.filter((r: any) => r.original_language === 'hi');
+            results = results.filter((r) => r.original_language === 'hi');
           }
           setShows(results.slice(0, ITEMS_PER_PAGE));
           setTotalPages(Math.min(data.total_pages || 1, 500));
