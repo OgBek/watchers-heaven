@@ -5,9 +5,14 @@
 Designed with a premium, cinematic UI, Watchers Heaven features fluid micro-animations via Framer Motion, glassmorphism elements, SVG clip-path masking, smooth scrolling with Lenis, and full internationalization across five languages.
 
 ---
-
-<img width="1920" height="984" alt="Screenshot 2026-06-16 001913" src="https://github.com/user-attachments/assets/2cdf4fb1-5098-4ed3-8302-dc2daee5ed13" />
-<img width="1920" height="973" alt="Screenshot 2026-06-16 002110" src="https://github.com/user-attachments/assets/d1ff34c1-62c3-4a79-bffa-2e4382e71422" />
+<img width="1920" height="995" alt="1" src="https://github.com/user-attachments/assets/30223fe4-1e65-4e2a-ad4d-760c4715fb66" />
+<img width="1920" height="971" alt="2" src="https://github.com/user-attachments/assets/2cb9aa51-5de6-4081-9fb8-f6f918b119d1" />
+<img width="1920" height="979" alt="3" src="https://github.com/user-attachments/assets/92bbfcde-d0d8-4886-b026-eb1efad2b783" />
+<img width="1920" height="979" alt="4" src="https://github.com/user-attachments/assets/68eeee03-fc62-4b53-bb87-9dcc5a142545" />
+<img width="1920" height="977" alt="5" src="https://github.com/user-attachments/assets/2e5dbe7f-a438-4beb-8cd0-7e5d4e7dc478" />
+<img width="1920" height="982" alt="6" src="https://github.com/user-attachments/assets/2fb8e2ed-1d67-4564-9227-dda948109ed5" />
+<img width="1920" height="995" alt="7" src="https://github.com/user-attachments/assets/c5d19249-a244-400b-ad7f-2b024ecb331b" />
+<img width="1920" height="969" alt="8" src="https://github.com/user-attachments/assets/cc67004d-b9f5-4e28-beb7-c1d28a6a167c" />
 
 ---
 
