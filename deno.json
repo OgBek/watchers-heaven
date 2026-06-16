@@ -1,7 +1,6 @@
 {
-  "unstable": ["sloppy-imports"],
   "lint": {
-    "exclude": ["node_modules", ".next"]
+    "include": ["tests/"]
   },
   "test": {
     "include": ["tests/"]
