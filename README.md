@@ -263,7 +263,7 @@ npm run lint     # ESLint
 
 ## 📖 API Documentation
 
-Full streaming provider reference: [`docs/streaming-providers.md`](docs/streaming-providers.md)
+Full streaming provider reference: [`streaming-providers.md`](streaming-providers.md)
 
 Covers URL structures, parameters, event formats, and gateway methods for all 10 providers:
 
