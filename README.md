@@ -48,7 +48,8 @@ Browse movies, TV shows, anime, and live channels — all in one place.
 <summary><b>🎥 Content & Discovery</b></summary>
 
 - Trending movies, TV shows, and anime powered by the TMDB API
-- **76+ curated franchise collections** (MCU, Star Wars, Harry Potter, etc.) with instant cached loading
+- **100+ curated franchise collections** organized by category, with instant cached loading and 24h sessionStorage persistence
+- Spider-Man collection split into 4 franchise groups: Tobey Maguire, Andrew Garfield, Tom Holland (MCU), Spider-Verse
 - Anime browsing with Japanese-language filtering via TMDB Discover
 - K-Drama section with dedicated genre filtering
 - Robust search across movies, shows, and collections
@@ -59,15 +60,18 @@ Browse movies, TV shows, anime, and live channels — all in one place.
 <details>
 <summary><b>📺 Watch Player</b></summary>
 
-- **10 streaming providers** with smart per-content-type ordering:
-  - 🎬 Movies → VidFast ⭐, VidRock, Videasy, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream
-  - 📺 TV Shows → VidRock ⭐, VidFast, Videasy, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream
-  - 🎌 Anime → Videasy ⭐, VidRock, VidFast, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream
+- **12 streaming providers** with smart per-content-type ordering:
+  - 🎬 Movies → Vyla ⭐, VidFast ⭐, VidRock, Videasy, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream, VidSync
+  - 📺 TV Shows → Vyla ⭐, VidRock ⭐, VidFast, Videasy, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream, VidSync
+  - 🎌 Anime → Videasy ⭐, VidRock, VidFast, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream, VidSync
+- **Vyla** — real HLS/MP4 streams via SSE with live verification, multi-provider fanout, built-in CORS proxy, and multi-language subtitles
+- **VylaPlayer** — custom native `<video>` player with source switcher, subtitle selector, seek bar, volume, and fullscreen
 - **AniList ID resolution** — anime content automatically resolves TMDB titles → AniList IDs so Videasy gets the correct anime embed
 - **Provider-specific resume** — each server tracks its own progress independently in `localStorage`
 - **Next episode auto-advance** with a glassmorphic countdown popup and 15-second cancel window
 - **Resume watching prompt** with circular progress ring showing exact position
 - Accent color theming synced to the player across all providers
+- Download button on movie/TV detail pages and watch page powered by **Vyla `/downloads` API**
 
 </details>
 
@@ -122,6 +126,7 @@ Full i18n support via `next-intl` across 5 languages:
 | Movie Data | [TMDB API](https://developer.themoviedb.org/docs) |
 | Anime Data | [AniList GraphQL API](https://docs.anilist.co/) |
 | Live TV | [TouStream](https://toustream.xyz) |
+| Streaming | [Vyla API](https://vyla.mintlify.app/introduction) (HLS) |
 
 ---
 
@@ -171,20 +176,22 @@ src/
 ├── app/
 │   ├── [locale]/
 │   │   ├── anime/            # Anime browse (TMDB discover, ja language)
-│   │   ├── collections/      # 76+ franchise collections (sessionStorage cached)
+│   │   ├── collections/      # 100+ franchise collections (Spider-Man grouped)
 │   │   ├── k-drama/          # K-Drama section
-│   │   ├── live/             # Live TV with progressive loading
-│   │   ├── movie/[id]/       # Movie detail (cast, recommendations)
+│   │   ├── live/             # Live TV with category filters + progressive loading
+│   │   ├── movie/[id]/       # Movie detail (cast → person page, download)
 │   │   ├── movies/           # Movies browse + filters
+│   │   ├── person/[id]/      # Actor filmography (movies, TV, anime, K-Drama tabs)
 │   │   ├── tv/[id]/          # TV show detail + episode browser
-│   │   ├── watch/[id]/       # Multi-provider watch player
+│   │   ├── watch/[id]/       # Multi-provider watch player (Vyla native + 11 iframes)
 │   │   ├── watchlist/        # localStorage-backed bookmarks
 │   │   ├── search/           # Global search
 │   │   ├── stats/            # Viewing statistics
 │   │   └── page.tsx          # Homepage (hero + carousel rows)
 │   ├── api/
 │   │   ├── tmdb/[...path]/   # TMDB proxy (GET + POST for channels)
-│   │   └── anilist/          # AniList GraphQL proxy (POST)
+│   │   ├── anilist/          # AniList GraphQL proxy (POST)
+│   │   └── download/         # Vyla download proxy (GET, streams file)
 │   └── globals.css
 ├── components/
 │   ├── cards/                # PosterCard, FeatureCard, CarouselRow
@@ -262,6 +269,7 @@ Covers URL structures, parameters, event formats, and gateway methods for all 10
 
 | Provider | Best For | Gateway Method |
 |----------|----------|---------------|
+| Vyla ⭐ | Movies + TV (real HLS) | `VylaPlayer` component |
 | VidFast ⭐ | Movies | `getVidFastUrl()` |
 | VidRock ⭐ | TV Shows | `getVidRockUrl()` |
 | Videasy ⭐ | Anime | `getVideasyUrl()` |
@@ -272,6 +280,7 @@ Covers URL structures, parameters, event formats, and gateway methods for all 10
 | ScreenScape | English | `getScreenScapeUrl()` |
 | TouStream | Live TV | `getTouStreamMovieUrl()` |
 | RiveStream | Torrent | `getMovieEmbedUrl()` |
+| VidSync | Backup | `getVidSyncUrl()` |
 
 ---
 

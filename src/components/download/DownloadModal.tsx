@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
-import { Download, X, Film, Tv, ChevronDown } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Download, X, Film, Tv, Loader, AlertCircle } from 'lucide-react';
 
 export type DownloadQuality = '360p' | '480p' | '720p' | '1080p' | '4K';
 
-interface DownloadSource {
-  name: string;
+interface VylaDownload {
   url: string;
-  qualities: DownloadQuality[];
+  quality: string;
+  size: string | null;
+  type: string;    // 'mkv', 'mp4', etc.
+  active?: boolean;
 }
 
 interface DownloadModalProps {
@@ -20,84 +22,66 @@ interface DownloadModalProps {
   onClose: () => void;
 }
 
-const QUALITIES: DownloadQuality[] = ['360p', '480p', '720p', '1080p', '4K'];
-
-const QUALITY_LABELS: Record<DownloadQuality, { label: string; badge: string; color: string }> = {
-  '360p':  { label: '360p SD',  badge: 'SD',   color: 'bg-slate-500' },
-  '480p':  { label: '480p SD',  badge: 'SD+',  color: 'bg-slate-400' },
-  '720p':  { label: '720p HD',  badge: 'HD',   color: 'bg-blue-500' },
-  '1080p': { label: '1080p FHD',badge: 'FHD',  color: 'bg-purple-500' },
-  '4K':    { label: '2160p 4K', badge: '4K',   color: 'bg-yellow-500' },
+const QUALITY_COLORS: Record<string, string> = {
+  '360p': 'bg-slate-500',
+  '480p': 'bg-slate-400',
+  '720p': 'bg-blue-500',
+  '1080p': 'bg-purple-500',
+  '4K': 'bg-yellow-500',
+  '2160p': 'bg-yellow-500',
+  'Unknown': 'bg-slate-600',
 };
 
-function buildSources(
-  id: string | number,
-  type: 'movie' | 'tv',
-  season?: number,
-  episode?: number
-): DownloadSource[] {
-  const idStr = String(id);
-  const s = season || 1;
-  const e = episode || 1;
-
-  if (type === 'movie') {
-    return [
-      {
-        name: 'RiveStream',
-        url: `https://rivestream.ru/download?type=movie&id=${idStr}`,
-        qualities: ['360p', '480p', '720p', '1080p'],
-      },
-      {
-        name: 'VidSrc',
-        url: `https://vidsrc-embed.ru/download/movie/${idStr}`,
-        qualities: ['360p', '480p', '720p', '1080p'],
-      },
-      {
-        name: 'VidFast',
-        url: `https://vidfast.pro/download/movie/${idStr}`,
-        qualities: ['360p', '480p', '720p', '1080p', '4K'],
-      },
-    ];
-  }
-
-  return [
-    {
-      name: 'RiveStream',
-      url: `https://rivestream.ru/download?type=tv&id=${idStr}&season=${s}&episode=${e}`,
-      qualities: ['360p', '480p', '720p', '1080p'],
-    },
-    {
-      name: 'VidSrc',
-      url: `https://vidsrc-embed.ru/download/tv/${idStr}/${s}/${e}`,
-      qualities: ['360p', '480p', '720p', '1080p'],
-    },
-    {
-      name: 'VidFast',
-      url: `https://vidfast.pro/download/tv/${idStr}/${s}/${e}`,
-      qualities: ['360p', '480p', '720p', '1080p', '4K'],
-    },
-  ];
+function qualityColor(q: string): string {
+  // normalize "2160p" → "4K"
+  const norm = q.replace('2160p', '4K');
+  return QUALITY_COLORS[norm] || QUALITY_COLORS['Unknown'];
 }
 
-function buildQualityUrl(baseUrl: string, quality: DownloadQuality, title: string): string {
-  const upstream = new URL(baseUrl);
-  upstream.searchParams.set('quality', quality.toLowerCase().replace('k', 'K'));
-  // Strip any # from title for a clean filename
-  const safeName = title.replace(/[^a-z0-9 ._-]/gi, '_').replace(/\s+/g, '_');
-  const ext = upstream.pathname.endsWith('.mkv') ? 'mkv' : 'mp4';
-  const filename = `${safeName}_${quality}.${ext}`;
-  // Route through our own proxy
-  return `/api/download?url=${encodeURIComponent(upstream.toString())}&filename=${encodeURIComponent(filename)}`;
-}
+const VYLA_BASE = 'https://missourimonster-vyla.hf.space';
 
 export function DownloadModal({
   id, title, type, season, episode, onClose,
 }: DownloadModalProps) {
-  const [selectedQuality, setSelectedQuality] = useState<DownloadQuality>('1080p');
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [links, setLinks] = useState<VylaDownload[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const sources = buildSources(id, type, season, episode);
   const isTv = type === 'tv' && season !== undefined;
+
+  useEffect(() => {
+    async function fetchLinks() {
+      setLoading(true);
+      setError(null);
+      try {
+        // Vyla /downloads endpoint — correct path pattern: /downloads/movie/:id or /downloads/tv/:id/:s/:e
+        let url: string;
+        if (type === 'tv' && season !== undefined && episode !== undefined) {
+          url = `${VYLA_BASE}/downloads/tv/${id}/${season}/${episode}`;
+        } else {
+          url = `${VYLA_BASE}/downloads/movie/${id}`;
+        }
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Download API returned ${res.status}`);
+        const data = await res.json() as { downloads?: VylaDownload[] } | VylaDownload[];
+
+        const downloads: VylaDownload[] = Array.isArray(data)
+          ? data
+          : (data as { downloads?: VylaDownload[] }).downloads ?? [];
+
+        // Filter only active links
+        const active = downloads.filter((d) => d.active !== false);
+        if (active.length === 0) throw new Error('No download links available');
+        setLinks(active);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Failed to fetch download links');
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLinks();
+  }, [id, type, season, episode]);
 
   return (
     <div
@@ -140,112 +124,55 @@ export function DownloadModal({
           }
         </div>
 
-        {/* Quality selector */}
-        <div className="space-y-2">
-          <p className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">Select Quality</p>
-          <div className="flex flex-wrap gap-2">
-            {QUALITIES.map((q) => {
-              const meta = QUALITY_LABELS[q];
-              const isSelected = selectedQuality === q;
-              return (
-                <button
-                  key={q}
-                  onClick={() => setSelectedQuality(q)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-200 ${
-                    isSelected
-                      ? 'bg-accent-blue text-white border-transparent shadow-md shadow-accent-blue/20 scale-105'
-                      : 'bg-slate-800/60 text-slate-400 border-slate-700 hover:border-accent-blue/40 hover:text-slate-200'
-                  }`}
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full ${meta.color}`} />
-                  {meta.label}
-                </button>
-              );
-            })}
+        {/* Body */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <Loader className="w-7 h-7 animate-spin text-accent-blue" />
+            <p className="text-slate-400 text-xs">Finding download links…</p>
           </div>
-        </div>
-
-        {/* Source list */}
-        <div className="space-y-2">
-          <p className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">Download Sources</p>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center py-8 gap-3">
+            <AlertCircle className="w-7 h-7 text-red-400" />
+            <p className="text-slate-300 text-xs text-center">{error}</p>
+            <p className="text-slate-500 text-[10px] text-center">
+              Download links are provided by Vyla API and depend on availability.
+            </p>
+          </div>
+        ) : (
           <div className="space-y-2">
-            {sources.map((src) => {
-              const supportsQuality = src.qualities.includes(selectedQuality);
-              const isOpen = expanded === src.name;
-
-              return (
-                <div
-                  key={src.name}
-                  className="rounded-2xl border border-slate-700/60 bg-slate-800/40 overflow-hidden"
+            <p className="text-[10px] font-black tracking-[0.2em] text-slate-400 uppercase">
+              {links.length} download{links.length > 1 ? 's' : ''} available
+            </p>
+            <div className="space-y-2 max-h-72 overflow-y-auto pr-1" style={{ scrollbarWidth: 'thin' }}>
+              {links.map((dl, i) => (
+                <a
+                  key={i}
+                  href={dl.url}
+                  download
+                  className="flex items-center justify-between gap-3 w-full px-4 py-3 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 hover:border-accent-blue/40 rounded-2xl transition group"
                 >
-                  {/* Source header */}
-                  <button
-                    className="w-full flex items-center justify-between px-4 py-3 text-left"
-                    onClick={() => setExpanded(isOpen ? null : src.name)}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-sm font-bold text-slate-200">{src.name}</span>
-                      <div className="flex gap-1">
-                        {src.qualities.map((q) => (
-                          <span
-                            key={q}
-                            className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                              q === selectedQuality
-                                ? `${QUALITY_LABELS[q].color} text-white`
-                                : 'bg-slate-700 text-slate-400'
-                            }`}
-                          >
-                            {QUALITY_LABELS[q].badge}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className={`w-4 h-4 text-slate-500 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    />
-                  </button>
-
-                  {/* Expanded actions */}
-                  {isOpen && (
-                    <div className="px-4 pb-3 space-y-2 border-t border-slate-700/40 pt-3">
-                      {supportsQuality ? (
-                        <a
-                          href={buildQualityUrl(src.url, selectedQuality, title)}
-                          download
-                          className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-accent-blue hover:brightness-110 text-white font-bold text-xs rounded-xl transition shadow-md"
-                        >
-                          <Download className="w-3.5 h-3.5" />
-                          Download {QUALITY_LABELS[selectedQuality].label}
-                        </a>
-                      ) : (
-                        <p className="text-[11px] text-amber-400 font-semibold text-center py-1">
-                          {selectedQuality} not available on {src.name}. Try 1080p or lower.
-                        </p>
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className={`text-[9px] font-black px-2 py-1 rounded-lg text-white shrink-0 ${qualityColor(dl.quality)}`}>
+                      {dl.quality === '2160p' ? '4K' : dl.quality}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-200 truncate">
+                        {dl.type?.toUpperCase()} · {dl.quality === '2160p' ? '4K' : dl.quality}
+                      </p>
+                      {dl.size && (
+                        <p className="text-[10px] text-slate-500">{dl.size}</p>
                       )}
-                      {/* All qualities quick-links */}
-                      <div className="flex flex-wrap gap-1.5 pt-1">
-                        {src.qualities.map((q) => (
-                          <a
-                            key={q}
-                            href={buildQualityUrl(src.url, q, title)}
-                            download
-                            className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition"
-                          >
-                            {QUALITY_LABELS[q].badge}
-                          </a>
-                        ))}
-                      </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  </div>
+                  <Download className="w-4 h-4 text-slate-500 group-hover:text-accent-blue transition shrink-0" />
+                </a>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         <p className="text-[10px] text-slate-500 text-center leading-relaxed">
-          Downloads are served directly from Watchers Heaven.
-          Quality availability depends on the source.
+          Links are verified by Vyla API. File availability may vary.
         </p>
       </div>
     </div>

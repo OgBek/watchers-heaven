@@ -10,17 +10,17 @@
 | Rank | 🎬 Movies | 📺 TV Shows | 🎌 Anime |
 |------|-----------|-------------|---------|
 | 1 ⭐ | Vyla | Vyla | Videasy |
-| 2 | VidSync | VidRock | VidRock |
-| 3 | VidFast | VidSync | VidFast |
-| 4 | VidRock | VidFast | VidSync |
-| 5 | Videasy | Videasy | VidLink |
-| 6 | VidLink | VidLink | Vidsrc |
-| 7 | Vidsrc | Vidsrc | Vidsrc.to |
-| 8 | Vidsrc.to | Vidsrc.to | VidKing |
-| 9 | VidKing | VidKing | ScreenScape |
-| 10 | ScreenScape | ScreenScape | TouStream |
-| 11 | TouStream | TouStream | RiveStream |
-| 12 | RiveStream | RiveStream | — |
+| 2 ⭐ | VidFast | VidRock | VidRock |
+| 3 | VidRock | VidFast | VidFast |
+| 4 | Videasy | Videasy | VidLink |
+| 5 | VidLink | VidLink | Vidsrc |
+| 6 | Vidsrc | Vidsrc | Vidsrc.to |
+| 7 | Vidsrc.to | Vidsrc.to | VidKing |
+| 8 | VidKing | VidKing | ScreenScape |
+| 9 | ScreenScape | ScreenScape | TouStream |
+| 10 | TouStream | TouStream | RiveStream |
+| 11 | RiveStream | RiveStream | — |
+| 12 | VidSync (last) | VidSync (last) | — |
 
 ### Full Comparison: Vyla vs iframe providers
 
@@ -61,7 +61,8 @@ Unlike every other provider, Vyla returns **actual verified stream URLs** you pl
 | `/movie?id=:tmdbId` | GET (SSE) | Stream sources + meta for a movie |
 | `/tv?id=:tmdbId&season=:s&episode=:e` | GET (SSE) | Stream sources + meta for a TV episode |
 | `/subtitles?id=:tmdbId&type=movie` | GET | Subtitle tracks only |
-| `/downloads?id=:tmdbId&type=movie` | GET | Download links with quality + size |
+| `/downloads/movie/:tmdbId` | GET | Download links for a movie |
+| `/downloads/tv/:tmdbId/:season/:episode` | GET | Download links for a TV episode |
 | `/health` | GET | Per-provider health check with latency |
 
 ### SSE Event Flow
@@ -117,9 +118,19 @@ The `url` in each `source` event is a fully-proxied CORS-safe stream URL:
 ### Download endpoint
 
 ```
-GET https://missourimonster-vyla.hf.space/downloads?id=550&type=movie
-→ [{ url, quality: "1080p", size: "2.14 GB", format: "MP4" }, ...]
+GET https://missourimonster-vyla.hf.space/downloads/movie/550
+→ {
+    "downloads": [
+      { "url": "https://...", "quality": "720p", "size": "996 MB", "type": "mkv", "active": true },
+      { "url": "https://...", "quality": "1080p", "size": "3.73 GB", "type": "mkv", "active": true }
+    ]
+  }
+
+GET https://missourimonster-vyla.hf.space/downloads/tv/1396/1/1
+→ { "downloads": [...] }
 ```
+
+Fields: `url` (direct link), `quality` (`720p`, `1080p`, `2160p`), `size` (human-readable), `type` (`mkv`, `mp4`), `active` (boolean — filter to `true` only).
 
 ### Caching
 

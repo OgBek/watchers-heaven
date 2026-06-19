@@ -157,19 +157,12 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 90_000); // 90s — large upstream payload
 
-    // Try multiple TouStream endpoint variants — the primary sometimes returns 502
-    const TOUSTREAM_ENDPOINTS = [
-      'https://toustream.xyz/tou/api/channels',
-      'https://toustream.xyz/api/channels',
-      'https://toustream.xyz/tou/channels',
-    ];
-
+    // TouStream confirmed endpoint — only one URL, but add retry + User-Agent
     let res: Response | null = null;
     let lastError = '';
-
-    for (const endpoint of TOUSTREAM_ENDPOINTS) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
-        const r = await fetch(endpoint, {
+        const r = await fetch('https://toustream.xyz/tou/api/channels', {
           signal: controller.signal,
           headers: {
             'Accept': 'application/json',
@@ -177,14 +170,18 @@ export async function POST(request: NextRequest) {
           },
         });
         if (r.ok) { res = r; break; }
-        lastError = `${endpoint} returned ${r.status}`;
+        lastError = `HTTP ${r.status}`;
+        // Don't retry 4xx — only transient 5xx
+        if (r.status < 500) break;
       } catch (e) {
         lastError = e instanceof Error ? e.message : 'fetch error';
       }
+      // Small delay before retry
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 1000 * (attempt + 1)));
     }
 
     clearTimeout(timeout);
-    if (!res) throw new Error(lastError || 'All TouStream endpoints failed');
+    if (!res) throw new Error(lastError || 'TouStream endpoint unavailable');
 
     const text = await res.text();
 

@@ -81,6 +81,7 @@ const COLLECTIONS = [
   // ── Romance & Drama ──
   { id: 33514, name: 'Twilight' },
   { id: 284433, name: 'Fifty Shades' },
+  { id: 614698, name: 'To All the Boys' },
   // ── Sci-Fi Series ──
   { id: 151, name: 'Star Trek' },
   { id: 115570, name: 'Star Trek Reboot' },
@@ -113,12 +114,6 @@ const COLLECTIONS = [
   { id: 2602, name: 'Ace Ventura' },
   { id: 9775, name: 'Scream' },
   { id: 86055, name: 'The Amazing Spider-Man' },
-];
-  { id: 3294, name: 'The Bourne Series' },
-  { id: 131634, name: 'Deadpool' },
-  { id: 9016, name: 'Friday the 13th' },
-  { id: 18926, name: 'Nightmare on Elm Street' },
-  { id: 9795, name: 'Halloween' },
 ];
 
 // Spider-Man special IDs (merged from multiple sub-collections)
@@ -159,6 +154,47 @@ function setCachedCollections(data: CollectionMeta[]): void {
       expiresAt: Date.now() + CACHE_TTL,
     }));
   } catch { /* quota exceeded */ }
+}
+
+// ── Spider-Man franchise group component ──────────────────────────────────────
+const SPIDER_GROUP_ORDER = ['Tobey Maguire', 'Andrew Garfield', 'Tom Holland (MCU)', 'Spider-Verse'];
+
+function SpiderManGroups({ parts }: { parts: Record<string, unknown>[] }) {
+  const groups: Record<string, Record<string, unknown>[]> = {};
+  parts.forEach((p) => {
+    const g = (p._spiderGroup as string) || 'Other';
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(p);
+  });
+
+  return (
+    <div className="space-y-10">
+      {SPIDER_GROUP_ORDER.filter(g => groups[g]?.length).map((group) => (
+        <div key={group} className="space-y-4">
+          <h3 className="text-xs font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-accent-blue inline-block" />
+            {group}
+            <span className="text-slate-600 dark:text-slate-600 font-normal normal-case tracking-normal">
+              · {groups[group].length} film{groups[group].length > 1 ? 's' : ''}
+            </span>
+          </h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+            {groups[group].map((item) => (
+              <PosterCard
+                key={item.id as number}
+                id={item.id as number}
+                title={item.title as string}
+                posterPath={item.poster_path as string}
+                rating={item.vote_average as number}
+                year={item.release_date ? (item.release_date as string).split('-')[0] : ''}
+                type="movie"
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export default function CollectionsPage() {
@@ -306,27 +342,44 @@ export default function CollectionsPage() {
       let fullData: Record<string, unknown>;
 
       if (col.id === 531241) {
+        // Spider-Man: tag each part with its franchise group
+        const SPIDERMAN_GROUPS: Record<number, string> = {
+          556:    'Tobey Maguire',
+          125574: 'Andrew Garfield',
+          531241: 'Tom Holland (MCU)',
+          558216: 'Spider-Verse',
+        };
+
         const results = await Promise.all(
-          SPIDERMAN_IDS.map(sid =>
-            ApiGateway.fetchTmdb<Record<string, unknown>>(`/collection/${sid}`).catch(() => null)
-          )
+          SPIDERMAN_IDS.map(async (sid) => {
+            const data = await ApiGateway.fetchTmdb<Record<string, unknown>>(`/collection/${sid}`).catch(() => null);
+            return { sid, data };
+          })
         );
+
         const allParts: Record<string, unknown>[] = [];
-        results.forEach(r => {
-          const rec = r as { parts?: Record<string, unknown>[] } | null;
-          if (rec?.parts) allParts.push(...rec.parts);
+        results.forEach(({ sid, data }) => {
+          const rec = data as { parts?: Record<string, unknown>[] } | null;
+          if (rec?.parts) {
+            rec.parts.forEach(p => {
+              allParts.push({ ...p, _spiderGroup: SPIDERMAN_GROUPS[sid] ?? 'Other' });
+            });
+          }
         });
+
         const uniqueMap = new Map<unknown, Record<string, unknown>>();
         allParts.forEach(p => { if (p?.id) uniqueMap.set(p.id, p); });
         const uniqueParts = Array.from(uniqueMap.values());
         uniqueParts.sort((a, b) => ((a.release_date as string) || '0').localeCompare((b.release_date as string) || '0'));
+
         fullData = {
           id: 531241,
           name: 'Spider-Man Collection',
           overview: 'The complete Spider-Man cinematic franchise.',
-          poster_path: (results.find(r => (r as { poster_path?: string } | null)?.poster_path) as { poster_path?: string } | null)?.poster_path || '',
-          backdrop_path: (results.find(r => (r as { backdrop_path?: string } | null)?.backdrop_path) as { backdrop_path?: string } | null)?.backdrop_path || '',
+          poster_path: (results.find(r => (r.data as { poster_path?: string } | null)?.poster_path)?.data as { poster_path?: string } | null)?.poster_path || '',
+          backdrop_path: (results.find(r => (r.data as { backdrop_path?: string } | null)?.backdrop_path)?.data as { backdrop_path?: string } | null)?.backdrop_path || '',
           parts: uniqueParts,
+          _isSpiderMan: true,
         };
       } else {
         fullData = await ApiGateway.fetchTmdb<Record<string, unknown>>(`/collection/${col.id}`);
@@ -463,23 +516,29 @@ export default function CollectionsPage() {
             {/* Movies grid with pagination */}
             {paginatedParts.length > 0 ? (
               <div className="space-y-6">
-                <h3 className="text-xs font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase">
-                  Movies in this collection (Page {currentPage} of {totalPages})
-                </h3>
-                
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-                  {(paginatedParts as Record<string, unknown>[]).map((item) => (
-                    <PosterCard
-                      key={item.id as number}
-                      id={item.id as number}
-                      title={item.title as string}
-                      posterPath={item.poster_path as string}
-                      rating={item.vote_average as number}
-                      year={item.release_date ? (item.release_date as string).split('-')[0] : ''}
-                      type="movie"
-                    />
-                  ))}
-                </div>
+                {/* Spider-Man: show group headers */}
+                {(selectedCol as Record<string, unknown>)?._isSpiderMan ? (
+                  <SpiderManGroups parts={sortedParts as Record<string, unknown>[]} />
+                ) : (
+                  <>
+                    <h3 className="text-xs font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase">
+                      Movies in this collection (Page {currentPage} of {totalPages})
+                    </h3>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                      {(paginatedParts as Record<string, unknown>[]).map((item) => (
+                        <PosterCard
+                          key={item.id as number}
+                          id={item.id as number}
+                          title={item.title as string}
+                          posterPath={item.poster_path as string}
+                          rating={item.vote_average as number}
+                          year={item.release_date ? (item.release_date as string).split('-')[0] : ''}
+                          type="movie"
+                        />
+                      ))}
+                    </div>
+                  </>
+                )}
 
                 {/* Pagination */}
                 {totalPages > 1 && (
