@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Download, X, Film, Tv, ExternalLink, ChevronDown } from 'lucide-react';
+import { Download, X, Film, Tv, ChevronDown } from 'lucide-react';
 
 export type DownloadQuality = '360p' | '480p' | '720p' | '1080p' | '4K';
 
@@ -79,10 +79,15 @@ function buildSources(
   ];
 }
 
-function buildQualityUrl(baseUrl: string, quality: DownloadQuality): string {
-  const url = new URL(baseUrl);
-  url.searchParams.set('quality', quality.toLowerCase().replace('k', 'K'));
-  return url.toString();
+function buildQualityUrl(baseUrl: string, quality: DownloadQuality, title: string): string {
+  const upstream = new URL(baseUrl);
+  upstream.searchParams.set('quality', quality.toLowerCase().replace('k', 'K'));
+  // Strip any # from title for a clean filename
+  const safeName = title.replace(/[^a-z0-9 ._-]/gi, '_').replace(/\s+/g, '_');
+  const ext = upstream.pathname.endsWith('.mkv') ? 'mkv' : 'mp4';
+  const filename = `${safeName}_${quality}.${ext}`;
+  // Route through our own proxy
+  return `/api/download?url=${encodeURIComponent(upstream.toString())}&filename=${encodeURIComponent(filename)}`;
 }
 
 export function DownloadModal({
@@ -205,14 +210,12 @@ export function DownloadModal({
                     <div className="px-4 pb-3 space-y-2 border-t border-slate-700/40 pt-3">
                       {supportsQuality ? (
                         <a
-                          href={buildQualityUrl(src.url, selectedQuality)}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                          href={buildQualityUrl(src.url, selectedQuality, title)}
+                          download
                           className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-accent-blue hover:brightness-110 text-white font-bold text-xs rounded-xl transition shadow-md"
                         >
                           <Download className="w-3.5 h-3.5" />
                           Download {QUALITY_LABELS[selectedQuality].label}
-                          <ExternalLink className="w-3 h-3 opacity-70" />
                         </a>
                       ) : (
                         <p className="text-[11px] text-amber-400 font-semibold text-center py-1">
@@ -224,9 +227,8 @@ export function DownloadModal({
                         {src.qualities.map((q) => (
                           <a
                             key={q}
-                            href={buildQualityUrl(src.url, q)}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            href={buildQualityUrl(src.url, q, title)}
+                            download
                             className="text-[10px] font-bold px-2 py-1 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 transition"
                           >
                             {QUALITY_LABELS[q].badge}
@@ -242,7 +244,7 @@ export function DownloadModal({
         </div>
 
         <p className="text-[10px] text-slate-500 text-center leading-relaxed">
-          Downloads open in a new tab via third-party providers.
+          Downloads are served directly from Watchers Heaven.
           Quality availability depends on the source.
         </p>
       </div>

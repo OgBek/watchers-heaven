@@ -108,6 +108,17 @@ const COLLECTIONS = [
   { id: 9016, name: 'Friday the 13th' },
   { id: 18926, name: 'Nightmare on Elm Street' },
   { id: 9795, name: 'Halloween' },
+  // ── Additional well-known ──
+  { id: 645, name: 'James Bond 007' },
+  { id: 2602, name: 'Ace Ventura' },
+  { id: 9775, name: 'Scream' },
+  { id: 86055, name: 'The Amazing Spider-Man' },
+];
+  { id: 3294, name: 'The Bourne Series' },
+  { id: 131634, name: 'Deadpool' },
+  { id: 9016, name: 'Friday the 13th' },
+  { id: 18926, name: 'Nightmare on Elm Street' },
+  { id: 9795, name: 'Halloween' },
 ];
 
 // Spider-Man special IDs (merged from multiple sub-collections)
@@ -333,9 +344,15 @@ export default function CollectionsPage() {
 
   // Paginated parts for the selected collection detail
   const parts = (selectedCol?.parts as Record<string, unknown>[] | undefined) || [];
-  const totalPages = Math.ceil(parts.length / itemsPerPage);
+  // Sort parts ascending by release_date before paginating
+  const sortedParts = [...parts].sort((a, b) => {
+    const dateA = ((a as Record<string, unknown>).release_date as string) || '0';
+    const dateB = ((b as Record<string, unknown>).release_date as string) || '0';
+    return dateA.localeCompare(dateB);
+  });
+  const totalPages = Math.ceil(sortedParts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedParts = parts.slice(startIndex, startIndex + itemsPerPage);
+  const paginatedParts = sortedParts.slice(startIndex, startIndex + itemsPerPage);
 
   return (
     <div className="min-h-screen py-10 px-4 md:px-8 bg-[var(--color-main)] text-slate-800 dark:text-slate-100 transition-colors duration-300">

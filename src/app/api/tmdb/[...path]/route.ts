@@ -157,12 +157,34 @@ export async function POST(request: NextRequest) {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 90_000); // 90s — large upstream payload
 
-    const res = await fetch('https://toustream.xyz/tou/api/channels', {
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
+    // Try multiple TouStream endpoint variants — the primary sometimes returns 502
+    const TOUSTREAM_ENDPOINTS = [
+      'https://toustream.xyz/tou/api/channels',
+      'https://toustream.xyz/api/channels',
+      'https://toustream.xyz/tou/channels',
+    ];
 
-    if (!res.ok) throw new Error('Upstream returned ' + res.status);
+    let res: Response | null = null;
+    let lastError = '';
+
+    for (const endpoint of TOUSTREAM_ENDPOINTS) {
+      try {
+        const r = await fetch(endpoint, {
+          signal: controller.signal,
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (compatible; WatchersHeaven/1.0)',
+          },
+        });
+        if (r.ok) { res = r; break; }
+        lastError = `${endpoint} returned ${r.status}`;
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : 'fetch error';
+      }
+    }
+
+    clearTimeout(timeout);
+    if (!res) throw new Error(lastError || 'All TouStream endpoints failed');
 
     const text = await res.text();
 

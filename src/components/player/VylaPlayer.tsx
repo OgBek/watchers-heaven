@@ -379,8 +379,8 @@ export function VylaPlayer({
         </div>
       )}
 
-      {/* Controls overlay — only show when video is loaded */}
-      {!loading && !error && (
+      {/* Controls overlay — only show when video has loaded and has a known duration */}
+      {!loading && !error && duration > 0 && (
       <div
         className={`absolute inset-x-0 bottom-0 z-30 transition-opacity duration-300 ${showControls || !playing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >

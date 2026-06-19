@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
 
 interface CastMember {
   id: number;
@@ -20,20 +21,25 @@ interface CastSectionProps {
 export function CastSection({ credits }: CastSectionProps) {
   const [open, setOpen] = useState(false);
   const cast = credits?.cast?.slice(0, 8) ?? [];
+  const router = useRouter();
+  const pathname = usePathname() || '/';
+  const segments = pathname.split('/').filter(Boolean);
+  const locale = segments[0] && ['en', 'am', 'om', 'ti', 'so'].includes(segments[0]) ? segments[0] : 'en';
 
   const content = (
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
       {cast.length > 0 ? cast.map((actor) => (
-        <div
+        <button
           key={actor.id}
-          className="flex items-center gap-3 bg-white dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-2xl shadow-sm hover:shadow-md transition"
+          onClick={() => router.push(`/${locale}/person/${actor.id}`)}
+          className="flex items-center gap-3 bg-white dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-2xl shadow-sm hover:shadow-md hover:border-accent-blue/30 transition text-left w-full group"
         >
           <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
             {actor.profile_path ? (
               <img
                 src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`}
                 alt={actor.name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-slate-400 text-[9px] font-bold">
@@ -42,10 +48,11 @@ export function CastSection({ credits }: CastSectionProps) {
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-black text-slate-800 dark:text-slate-100 truncate leading-tight">{actor.name}</p>
+            <p className="text-xs font-black text-slate-800 dark:text-slate-100 truncate leading-tight group-hover:text-accent-blue transition">{actor.name}</p>
             <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{actor.character}</p>
+            <p className="text-[9px] text-accent-blue/70 mt-0.5 hidden group-hover:block">View filmography →</p>
           </div>
-        </div>
+        </button>
       )) : (
         <p className="text-xs text-slate-400 col-span-2">No cast information available.</p>
       )}
