@@ -138,7 +138,7 @@ export const ApiGateway = {
    * @param limit  Max channels to return (10–200, default 200).
    *               Use a smaller limit for a fast initial batch.
    */
-  getTouStreamChannels: async (limit = 200): Promise<TouStreamChannel[]> => {
+  getTouStreamChannels: async (limit = 500): Promise<TouStreamChannel[]> => {
     const cacheKey = `toustream-channels:${limit}`;
 
     // Check client cache first

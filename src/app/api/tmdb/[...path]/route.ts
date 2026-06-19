@@ -141,7 +141,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   }
 
-  const limit = Math.min(Math.max(Number(body.limit) || 200, 10), 200);
+  const limit = Math.min(Math.max(Number(body.limit) || 500, 10), 500);
   const cacheKey = `toustream-channels:${limit}`;
 
   try {

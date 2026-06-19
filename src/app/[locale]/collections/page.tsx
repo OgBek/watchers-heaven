@@ -78,7 +78,6 @@ const COLLECTIONS = [
   { id: 176166, name: 'The Smurfs' },
   { id: 2831, name: 'The Mighty Ducks' },
   { id: 328, name: 'Jurassic Park' },
-  { id: 87359, name: 'Mission: Impossible' },
   // ── Romance & Drama ──
   { id: 33514, name: 'Twilight' },
   { id: 284433, name: 'Fifty Shades' },
@@ -94,27 +93,20 @@ const COLLECTIONS = [
   { id: 228446, name: 'Divergent' },
   // ── Men in Black / Spy ──
   { id: 955, name: 'Men in Black' },
-  // ── New additions ──
-  { id: 1575, name: 'Rocky / Creed' },
   { id: 107971, name: 'Creed' },
   { id: 313086, name: 'Conjuring' },
   { id: 453993, name: 'Aquaman' },
   { id: 468552, name: 'Wonder Woman' },
-  { id: 131296, name: 'Iron Man' },
   { id: 86834, name: 'Lethal Weapon' },
   { id: 8581, name: 'Beverly Hills Cop' },
   { id: 9735, name: 'Ghostbusters' },
   { id: 5514, name: 'Ghostbusters (2016)' },
-  { id: 2150, name: 'Shrek' },
   { id: 9116, name: 'Rush Hour' },
   { id: 9754, name: 'Bad Boys' },
   { id: 3294, name: 'The Bourne Series' },
-  { id: 748, name: 'X-Men' },
   { id: 131634, name: 'Deadpool' },
-  { id: 422834, name: 'Ant-Man' },
-  { id: 531241, name: 'Spider-Man: No Way Home' },
   { id: 9016, name: 'Friday the 13th' },
-  { id: 9735, name: 'Nightmare on Elm Street' },
+  { id: 18926, name: 'Nightmare on Elm Street' },
   { id: 9795, name: 'Halloween' },
 ];
 

@@ -3,11 +3,41 @@ import { useEffect, useState, useCallback } from 'react';
 import { ApiGateway, TouStreamChannel } from '@/lib/api/gateway';
 import { Tv, Search, Play, RefreshCw, Loader } from 'lucide-react';
 
+type Category = 'all' | 'sports' | 'news' | 'kids' | 'entertainment' | 'others';
+
+function getChannelCategory(name: string): Exclude<Category, 'all'> {
+  const n = name.toLowerCase();
+
+  const sportsKeywords = ['soccer', 'football', 'sport', 'espn', 'fox sports', 'nfl', 'nba', 'mlb', 'sky sports', 'bein', 'golf', 'racing', 'wrestling'];
+  if (sportsKeywords.some((k) => n.includes(k))) return 'sports';
+
+  const newsKeywords = ['news', 'cnn', 'bbc', 'fox news', 'msnbc', 'abc news', 'nbc news', 'bloomberg', 'al jazeera', 'sky news'];
+  if (newsKeywords.some((k) => n.includes(k))) return 'news';
+
+  const kidsKeywords = ['kids', 'cartoon', 'disney', 'nick', 'boomerang', 'toon', 'baby', 'junior', 'jr'];
+  if (kidsKeywords.some((k) => n.includes(k))) return 'kids';
+
+  const entertainmentKeywords = ['movies', 'cinema', 'hbo', 'amc', 'fx', 'comedy', 'drama', 'series'];
+  if (entertainmentKeywords.some((k) => n.includes(k))) return 'entertainment';
+
+  return 'others';
+}
+
+const CATEGORY_LABELS: { id: Category; label: string }[] = [
+  { id: 'all', label: 'All' },
+  { id: 'sports', label: 'Sports' },
+  { id: 'news', label: 'News' },
+  { id: 'kids', label: 'Kids' },
+  { id: 'entertainment', label: 'Entertainment' },
+  { id: 'others', label: 'Others' },
+];
+
 export default function LiveTvPage() {
   const [channels, setChannels] = useState<TouStreamChannel[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [loadingMore, setLoadingMore] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [category, setCategory] = useState<Category>('all');
   const [selectedChannel, setSelectedChannel] = useState<TouStreamChannel | null>(null);
 
   // Progressive loading: show first batch quickly, then load rest in background
@@ -27,11 +57,11 @@ export default function LiveTvPage() {
         setSelectedChannel(firstBatch[0]);
       }
 
-      // Phase 2: Background fetch for full list (200 channels)
-      if (firstBatch.length >= 30) {
+      // Phase 2: Background fetch for full list (500 channels) — always runs
+      if (!cancelled) {
         setLoadingMore(true);
         try {
-          const fullList = await ApiGateway.getTouStreamChannels(200);
+          const fullList = await ApiGateway.getTouStreamChannels(500);
           if (cancelled) return;
 
           // Merge: full list replaces the initial batch
@@ -53,19 +83,32 @@ export default function LiveTvPage() {
   // Manual refresh — fetches full list
   const handleRefresh = useCallback(async () => {
     setLoading(true);
-    const list = await ApiGateway.getTouStreamChannels(200);
+    const list = await ApiGateway.getTouStreamChannels(500);
     setChannels(list);
     setLoading(false);
   }, []);
 
-  const filteredChannels = channels.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Count channels per category for badges
+  const categoryCounts = channels.reduce<Record<Category, number>>(
+    (acc, ch) => {
+      const cat = getChannelCategory(ch.name);
+      acc[cat] = (acc[cat] || 0) + 1;
+      acc['all'] = (acc['all'] || 0) + 1;
+      return acc;
+    },
+    { all: 0, sports: 0, news: 0, kids: 0, entertainment: 0, others: 0 }
   );
+
+  const filteredChannels = channels.filter((c) => {
+    const matchesSearch = c.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = category === 'all' || getChannelCategory(c.name) === category;
+    return matchesSearch && matchesCategory;
+  });
 
   return (
     <div className="min-h-screen pb-20 px-4 md:px-8 pt-6 bg-[var(--color-main)]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-800 dark:text-white flex items-center gap-2">
             <Tv className="w-6 h-6 text-accent-blue" />
@@ -86,6 +129,34 @@ export default function LiveTvPage() {
           />
         </div>
       </div>
+
+      {/* Category Filter Bar */}
+      {!loading && (
+        <div className="flex items-center gap-2 mb-6 flex-wrap">
+          {CATEGORY_LABELS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => setCategory(id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all border ${
+                category === id
+                  ? 'bg-accent-blue text-white border-transparent shadow-sm'
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+              }`}
+            >
+              {label}
+              {categoryCounts[id] > 0 && (
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                  category === id
+                    ? 'bg-white/25 text-white'
+                    : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+                }`}>
+                  {categoryCounts[id]}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       {loading ? (
         <div className="flex flex-col items-center justify-center min-h-[50vh] text-slate-500 gap-3">

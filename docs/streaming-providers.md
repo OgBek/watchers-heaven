@@ -9,30 +9,132 @@
 
 | Rank | 🎬 Movies | 📺 TV Shows | 🎌 Anime |
 |------|-----------|-------------|---------|
-| 1 ⭐ | VidSync | VidRock | Videasy |
-| 2 | VidFast | VidFast | VidRock |
-| 3 | VidRock | Videasy | VidFast |
-| 4 | Videasy | VidLink | VidLink |
-| 5 | VidLink | Vidsrc | Vidsrc |
-| 6 | Vidsrc | Vidsrc.to | Vidsrc.to |
-| 7 | Vidsrc.to | VidKing | VidKing |
-| 8 | VidKing | ScreenScape | ScreenScape |
-| 9 | ScreenScape | TouStream | TouStream |
-| 10 | TouStream | RiveStream | RiveStream |
-| 11 | RiveStream | — | — |
+| 1 ⭐ | Vyla | Vyla | Videasy |
+| 2 | VidSync | VidRock | VidRock |
+| 3 | VidFast | VidSync | VidFast |
+| 4 | VidRock | VidFast | VidSync |
+| 5 | Videasy | Videasy | VidLink |
+| 6 | VidLink | VidLink | Vidsrc |
+| 7 | Vidsrc | Vidsrc | Vidsrc.to |
+| 8 | Vidsrc.to | Vidsrc.to | VidKing |
+| 9 | VidKing | VidKing | ScreenScape |
+| 10 | ScreenScape | ScreenScape | TouStream |
+| 11 | TouStream | TouStream | RiveStream |
+| 12 | RiveStream | RiveStream | — |
 
-### Why VidSync leads for Movies
+### Full Comparison: Vyla vs iframe providers
 
-| Feature | VidSync | VidFast | VidRock |
-|---------|:-------:|:-------:|:-------:|
-| Resume via URL param | ✅ `startTime` | ✅ `startAt` | ❌ |
-| Server picker param | ✅ `defaultServer` | ❌ | ❌ |
-| `PLAYER_EVENT` with title+poster | ✅ | ❌ | ❌ |
-| `MEDIA_DATA` normalized entry | ✅ full entry | partial | partial |
-| On-demand `getMediaData` command | ✅ | ❌ | ❌ |
-| `autoNext` TV | ✅ | ✅ | ✅ |
-| Theme color | ✅ | ✅ | ✅ |
-| TMDB + IMDB IDs | TMDB only | ✅ both | ✅ both |
+| Feature | Vyla | VidSync | VidFast | VidRock | Videasy |
+|---------|:----:|:-------:|:-------:|:-------:|:-------:|
+| **Stream type** | Real HLS/MP4 | iframe | iframe | iframe | iframe |
+| **Multi-provider fanout** | ✅ parallel SSE | ❌ | ❌ | ❌ | ❌ |
+| **Live stream verification** | ✅ | ❌ | ❌ | ❌ | ❌ |
+| **Built-in HLS proxy** | ✅ CORS-safe | ❌ | ❌ | ❌ | ❌ |
+| **Subtitles (VTT/SRT)** | ✅ multi-lang | ❌ | ✅ `sub=` | ✅ `lang=` | ❌ |
+| **Resume via param** | ✅ SSE startAt | ✅ `startTime` | ✅ `startAt` | ❌ | ✅ `progress` |
+| **Server picker** | ✅ SSE sources | ✅ `defaultServer` | ❌ | ❌ | ❌ |
+| **Rich event payload** | ✅ native events | ✅ title+poster | ✅ | ✅ | partial |
+| **Download endpoint** | ✅ `/downloads` | ❌ | ❌ | ✅ | ❌ |
+| **Health monitoring** | ✅ `/health` | ❌ | ❌ | ❌ | ❌ |
+| **No auth required** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| **Anime support** | ❌ | ❌ | ❌ | ❌ | ✅ AniList |
+| **IMDB IDs** | ❌ TMDB only | ❌ TMDB only | ✅ | ✅ | ✅ TMDB |
+
+**Why Vyla leads:** It's the only provider that gives you **actual stream URLs** (not iframes) with live verification — dead sources are silently dropped before they reach your player. It fans out to 14+ backend providers simultaneously and streams results via SSE so your player starts on the first working source without waiting. It also includes subtitles, download links, and a health endpoint.
+
+**Why Videasy stays ⭐ for anime:** Vyla doesn't support anime (no AniList integration). Videasy remains the only provider with native AniList ID support and sub/dub auto-selection.
+
+---
+
+## Vyla ⭐ Movies & TV Shows
+
+**Base URL:** `https://missourimonster-vyla.hf.space`  
+**Type:** Real HLS/MP4 streams via SSE — NOT an iframe  
+**Auth:** None required · CORS: `*`
+
+Unlike every other provider, Vyla returns **actual verified stream URLs** you play in a native `<video>` element. It fans out to 14+ backend providers in parallel, drops dead sources, and streams results back one at a time via Server-Sent Events.
+
+### Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/movie?id=:tmdbId` | GET (SSE) | Stream sources + meta for a movie |
+| `/tv?id=:tmdbId&season=:s&episode=:e` | GET (SSE) | Stream sources + meta for a TV episode |
+| `/subtitles?id=:tmdbId&type=movie` | GET | Subtitle tracks only |
+| `/downloads?id=:tmdbId&type=movie` | GET | Download links with quality + size |
+| `/health` | GET | Per-provider health check with latency |
+
+### SSE Event Flow
+
+```
+EventSource open
+  → meta    (immediate) — TMDB info + subtitles
+  → source  (one per working provider)
+  → source
+  → source  ← player auto-starts on first source
+  → ...
+  → done    — total working source count
+```
+
+### SSE Event Shapes
+
+```ts
+// meta — fires immediately before any provider resolves
+{ type: "meta",
+  meta: { id, title, release_date, runtime, vote_average },
+  subtitles: [{ label, file, type: "vtt"|"srt", source }] }
+
+// source — one per working provider
+{ type: "source",
+  source: { source: "provider-key", label: "Provider Name",
+            url: "https://missourimonster-vyla.hf.space/api?url=...&pp=1" } }
+
+// done — stream complete
+{ type: "done", total: 14 }
+```
+
+### Source URL
+
+The `url` in each `source` event is a fully-proxied CORS-safe stream URL:
+- **HLS** (`.m3u8`): pass directly to `hls.loadSource()` — segment and key URIs are pre-rewritten
+- **MP4**: set as `video.src` directly
+
+### Gateway component
+
+```ts
+// In VylaPlayer.tsx — opens SSE, collects sources, loads first into hls.js
+<VylaPlayer
+  id={tmdbId}
+  type="movie" | "tv"
+  season={1}
+  episode={1}
+  accentColor="007bff"
+  startAt={resumeSeconds}
+  onProgress={(currentTime, duration) => saveProgress(currentTime, duration)}
+/>
+```
+
+### Download endpoint
+
+```
+GET https://missourimonster-vyla.hf.space/downloads?id=550&type=movie
+→ [{ url, quality: "1080p", size: "2.14 GB", format: "MP4" }, ...]
+```
+
+### Caching
+
+- 5-minute in-memory TTL per source
+- Cache key: `source_key + tmdb_id + season + episode`
+- Cache resets on server restart (hosted on Hugging Face Spaces)
+
+### Examples
+
+```
+https://missourimonster-vyla.hf.space/movie?id=550
+https://missourimonster-vyla.hf.space/tv?id=1399&season=1&episode=1
+https://missourimonster-vyla.hf.space/downloads?id=550&type=movie
+https://missourimonster-vyla.hf.space/health
+```
 
 ---
 

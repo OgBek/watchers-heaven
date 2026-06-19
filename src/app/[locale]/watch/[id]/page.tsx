@@ -4,8 +4,9 @@ import { ArrowLeft, Maximize2, Minimize2, Play, RefreshCw, SkipForward, ArrowLef
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DownloadModal } from '@/components/download/DownloadModal';
+import { VylaPlayer } from '@/components/player/VylaPlayer';
 
-type Provider = 'vidsync' | 'vidrock' | 'videasy' | 'vidfast' | 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
+type Provider = 'vyla' | 'vidsync' | 'vidrock' | 'videasy' | 'vidfast' | 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
 
 export default function WatchPage() {
   const params = useParams();
@@ -21,7 +22,7 @@ export default function WatchPage() {
   const isAnime = searchParams.get('type') === 'anime';
 
   const [provider, setProvider] = useState<Provider>(
-    isAnime ? 'videasy' : isTv ? 'vidrock' : 'vidsync'
+    isAnime ? 'videasy' : 'vyla'
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showDownload, setShowDownload] = useState(false);
@@ -516,17 +517,18 @@ export default function WatchPage() {
   // Providers ordered by best fit for the current content type
   // ⭐ marks the recommended server for that content type
   const allProviders: { id: Provider; name: string; quality: string; badge?: string; best: ('movie' | 'tv' | 'anime')[] }[] = [
-    { id: 'vidsync',     name: 'VidSync',     quality: '1080p / HLS',     badge: '⭐', best: ['movie'] },
-    { id: 'vidfast',     name: 'VidFast',     quality: '1080p / HLS',     best: ['movie'] },
-    { id: 'vidrock',     name: 'VidRock',     quality: '1080p / Multi',   badge: '⭐', best: ['tv'] },
-    { id: 'videasy',     name: 'Videasy',     quality: '1080p / Multi',   badge: '⭐', best: ['anime'] },
-    { id: 'vidlink',     name: 'VidLink',     quality: '1080p / HLS',     best: ['movie', 'tv', 'anime'] },
-    { id: 'vidsrc',      name: 'Vidsrc',      quality: '1080p / Multi',   best: ['movie', 'tv', 'anime'] },
-    { id: 'vidsrcto',    name: 'Vidsrc.to',   quality: '1080p / Multi',   best: ['movie', 'tv', 'anime'] },
-    { id: 'vidking',     name: 'VidKing',     quality: '1080p / Auto',    best: ['movie', 'tv'] },
-    { id: 'screenscape', name: 'ScreenScape', quality: '1080p / English', best: ['movie', 'tv'] },
-    { id: 'toustream',   name: 'TouStream',   quality: '720p / Backup',   best: ['movie', 'tv'] },
-    { id: 'rivestream',  name: 'RiveStream',  quality: '1080p / Torrent', best: ['movie', 'tv'] },
+    { id: 'vyla',        name: 'Vyla',        quality: 'HLS / Real Streams', badge: '⭐', best: ['movie', 'tv'] },
+    { id: 'vidfast',     name: 'VidFast',     quality: '1080p / HLS',        badge: '⭐', best: ['movie'] },
+    { id: 'vidrock',     name: 'VidRock',     quality: '1080p / Multi',      best: ['tv'] },
+    { id: 'videasy',     name: 'Videasy',     quality: '1080p / Multi',      badge: '⭐', best: ['anime'] },
+    { id: 'vidlink',     name: 'VidLink',     quality: '1080p / HLS',        best: ['movie', 'tv', 'anime'] },
+    { id: 'vidsrc',      name: 'Vidsrc',      quality: '1080p / Multi',      best: ['movie', 'tv', 'anime'] },
+    { id: 'vidsrcto',    name: 'Vidsrc.to',   quality: '1080p / Multi',      best: ['movie', 'tv', 'anime'] },
+    { id: 'vidking',     name: 'VidKing',     quality: '1080p / Auto',       best: ['movie', 'tv'] },
+    { id: 'screenscape', name: 'ScreenScape', quality: '1080p / English',    best: ['movie', 'tv'] },
+    { id: 'toustream',   name: 'TouStream',   quality: '720p / Backup',      best: ['movie', 'tv'] },
+    { id: 'rivestream',  name: 'RiveStream',  quality: '1080p / Torrent',    best: ['movie', 'tv'] },
+    { id: 'vidsync',     name: 'VidSync',     quality: '1080p / HLS',        best: ['movie'] },
   ];
 
   const contentType: 'movie' | 'tv' | 'anime' = isAnime ? 'anime' : isTv ? 'tv' : 'movie';
@@ -568,27 +570,29 @@ export default function WatchPage() {
         </div>
 
         {/* Center: Server Selector */}
-        <div className="flex flex-wrap items-center gap-1 bg-slate-950/80 p-1 rounded-2xl border border-slate-800">
-          {providersList.map((p) => (
-            <button
-              key={p.id}
-              onClick={() => {
-                setProvider(p.id);
-                // Provider change triggers storageKey change → useEffect handles resume check
-              }}
-              className={`px-2.5 py-1.5 rounded-xl text-[11px] font-semibold transition-all duration-300 flex flex-col items-center ${
-                provider === p.id
-                  ? 'text-white shadow-md'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-              style={provider === p.id ? { backgroundColor: `#${accentColor}` } : {}}
-            >
-              <span>{p.badge ? `${p.badge} ${p.name}` : p.name}</span>
-              <span className={`text-[8px] mt-0.5 opacity-80 ${provider === p.id ? 'text-white/80' : 'text-slate-500'}`}>
-                {p.quality}
-              </span>
-            </button>
-          ))}
+        <div className="max-w-full overflow-x-auto scrollbar-hide">
+          <div className="flex flex-nowrap items-center gap-1 bg-slate-950/80 p-1 rounded-2xl border border-slate-800 w-max">
+            {providersList.map((p) => (
+              <button
+                key={p.id}
+                onClick={() => {
+                  setProvider(p.id);
+                  // Provider change triggers storageKey change → useEffect handles resume check
+                }}
+                className={`px-2 py-1 rounded-xl text-[10px] font-semibold transition-all duration-300 flex flex-col items-center whitespace-nowrap ${
+                  provider === p.id
+                    ? 'text-white shadow-md'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+                }`}
+                style={provider === p.id ? { backgroundColor: `#${accentColor}` } : {}}
+              >
+                <span>{p.badge ? `${p.badge} ${p.name}` : p.name}</span>
+                <span className={`text-[7px] mt-0.5 opacity-80 ${provider === p.id ? 'text-white/80' : 'text-slate-500'}`}>
+                  {p.quality}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Right Side: Download, Refresh & Fullscreen */}
@@ -764,21 +768,33 @@ export default function WatchPage() {
           </div>
         )}
 
-        <iframe
-          ref={iframeRef}
-          src={getEmbedUrl()}
-          className="w-full h-full min-h-[75vh]"
-          allowFullScreen
-          allow="autoplay; fullscreen; picture-in-picture"
-          {...(isRivestream ? { sandbox: "allow-scripts allow-same-origin allow-forms allow-popups" } : {})}
-          title="Watchers Heaven Stream Player"
-          style={{ border: 'none' }}
-        />
+        {provider === 'vyla' ? (
+          <VylaPlayer
+            id={id}
+            type={isTv ? 'tv' : 'movie'}
+            season={season}
+            episode={episode}
+            accentColor={accentColor}
+            startAt={initialProgressApplied ? savedProgress : 0}
+            onProgress={saveProgress}
+          />
+        ) : (
+          <iframe
+            ref={iframeRef}
+            src={getEmbedUrl()}
+            className="w-full h-full min-h-[75vh]"
+            allowFullScreen
+            allow="autoplay; fullscreen; picture-in-picture"
+            {...(isRivestream ? { sandbox: "allow-scripts allow-same-origin allow-forms allow-popups" } : {})}
+            title="Watchers Heaven Stream Player"
+            style={{ border: 'none' }}
+          />
+        )}
       </div>
 
       {/* Info notice */}
       <div className="px-6 py-4 bg-slate-900 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-        <span>If the player shows a loading error, try switching servers above.</span>
+        <span>{provider === 'vyla' ? 'Vyla streams real HLS sources. Switch server if nothing loads.' : 'If the player shows a loading error, try switching servers above.'}</span>
         <span>Watch History is synced locally.</span>
       </div>
 
