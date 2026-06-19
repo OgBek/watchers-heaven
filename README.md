@@ -1,49 +1,111 @@
+<div align="center">
+
+<img src="https://github.com/user-attachments/assets/30223fe4-1e65-4e2a-ad4d-760c4715fb66" alt="Watchers Heaven Banner" width="100%" />
+
 # 🎬 Watchers Heaven
 
-**Watchers Heaven** is a beautifully designed, modern movie and TV show exploration application built with **Next.js 16**, **React 19**, and **Tailwind CSS 4**. It leverages the **TMDB API** through a resilient server-side proxy to fetch trending movies, top-rated shows, live TV channels, detailed cast information, and beautifully curated cinematic collections.
+**A beautifully crafted, cinema-grade streaming discovery app.**  
+Browse movies, TV shows, anime, and live channels — all in one place.
 
-Designed with a premium, cinematic UI, Watchers Heaven features fluid micro-animations via Framer Motion, glassmorphism elements, SVG clip-path masking, smooth scrolling with Lenis, and full internationalization across five languages.
+[![Next.js](https://img.shields.io/badge/Next.js_16-black?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React_19-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://react.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
+
+[![Deno Lint](https://github.com/OgBek/watchers-heaven/actions/workflows/deno.yml/badge.svg)](https://github.com/OgBek/watchers-heaven/actions/workflows/deno.yml)
+
+[Live Demo](https://watchers-heaven.vercel.app) · [Report Bug](https://github.com/OgBek/watchers-heaven/issues) · [Request Feature](https://github.com/OgBek/watchers-heaven/issues)
+
+</div>
 
 ---
-<img width="1920" height="995" alt="1" src="https://github.com/user-attachments/assets/30223fe4-1e65-4e2a-ad4d-760c4715fb66" />
-<img width="1920" height="971" alt="2" src="https://github.com/user-attachments/assets/2cb9aa51-5de6-4081-9fb8-f6f918b119d1" />
-<img width="1920" height="979" alt="3" src="https://github.com/user-attachments/assets/92bbfcde-d0d8-4886-b026-eb1efad2b783" />
-<img width="1920" height="979" alt="4" src="https://github.com/user-attachments/assets/68eeee03-fc62-4b53-bb87-9dcc5a142545" />
-<img width="1920" height="977" alt="5" src="https://github.com/user-attachments/assets/2e5dbe7f-a438-4beb-8cd0-7e5d4e7dc478" />
-<img width="1920" height="982" alt="6" src="https://github.com/user-attachments/assets/2fb8e2ed-1d67-4564-9227-dda948109ed5" />
-<img width="1920" height="995" alt="7" src="https://github.com/user-attachments/assets/c5d19249-a244-400b-ad7f-2b024ecb331b" />
-<img width="1920" height="969" alt="8" src="https://github.com/user-attachments/assets/cc67004d-b9f5-4e28-beb7-c1d28a6a167c" />
+
+## 📸 Screenshots
+
+<div align="center">
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/2cb9aa51-5de6-4081-9fb8-f6f918b119d1" alt="Home" /></td>
+    <td><img src="https://github.com/user-attachments/assets/92bbfcde-d0d8-4886-b026-eb1efad2b783" alt="Movies" /></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/68eeee03-fc62-4b53-bb87-9dcc5a142545" alt="Detail" /></td>
+    <td><img src="https://github.com/user-attachments/assets/2fb8e2ed-1d67-4564-9227-dda948109ed5" alt="Watch" /></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/2e5dbe7f-a438-4beb-8cd0-7e5d4e7dc478" alt="Collections" /></td>
+    <td><img src="https://github.com/user-attachments/assets/c5d19249-a244-400b-ad7f-2b024ecb331b" alt="Live TV" /></td>
+  </tr>
+</table>
+</div>
 
 ---
 
 ## ✨ Features
 
-### Core
-* **🎥 Comprehensive Database**: Browse thousands of movies, TV shows, and anime with detailed metadata.
-* **🌐 Internationalization (i18n)**: Full support for English, Amharic, Oromo, Tigrinya, and Somali via `next-intl`.
-* **🎨 Premium UI/UX**:
-  * Glassmorphic floating navigation with smooth scroll.
-  * Creative SVG clip-path masking on hero sections and detail pages.
-  * Seamless responsive grid layouts for all device sizes.
-  * Cinema mode with auto-dimming ambient lighting.
-* **📂 Curated Collections**: Explore 76+ legendary franchises (Star Wars, MCU, Harry Potter, etc.) in a dedicated collections page with instant cached loading.
-* **📺 Live TV**: Stream 200+ live channels via TouStream integration with progressive two-phase loading.
-* **🎞️ Watch Player**: Embedded video player with multi-provider server switching, provider-specific resume progress, and redesigned glassmorphic navigation modals.
-* **🔖 Watchlist**: Easily bookmark your favorite movies and shows to your local watchlist (localStorage-backed).
-* **🔍 Search & Filter**: Robust search to quickly find any title across movies, shows, and collections.
-* **📊 Stats**: Track your viewing statistics and watch history.
-* **📅 Schedule**: View upcoming movie and show release schedules.
-* **📚 Library**: Manage your personal media library.
+<details>
+<summary><b>🎥 Content & Discovery</b></summary>
 
-### Performance & Resilience
-* **⚡ Server-Side Proxy**: All TMDB API calls are proxied through a Next.js API route, keeping API keys secure and enabling server-side caching.
-* **🔁 Smart Retry Logic**: Intelligent retries with exponential backoff — automatically skips non-retryable errors (404, 5xx) to avoid wasting time.
-* **🛡️ Circuit Breaker**: Protects against cascading failures with a configurable threshold; HTTP errors don't trip the breaker.
-* **💾 Client-Side Cache**: In-memory caching with TTL-based expiration and request deduplication to prevent redundant API calls.
-* **📦 Progressive Loading**:
-  * **Live TV**: Shows the first 30 channels instantly, then silently loads the remaining 200 in the background.
-  * **Collections**: Fetches all collection metadata once on first visit, caches in `sessionStorage` for 24h — subsequent visits are instant.
-* **🎯 Provider-Specific Resume**: Each streaming provider tracks its own watch progress independently in localStorage, so switching servers doesn't carry stale resume data.
+- Trending movies, TV shows, and anime powered by the TMDB API
+- **76+ curated franchise collections** (MCU, Star Wars, Harry Potter, etc.) with instant cached loading
+- Anime browsing with Japanese-language filtering via TMDB Discover
+- K-Drama section with dedicated genre filtering
+- Robust search across movies, shows, and collections
+- Upcoming release schedule and stats tracking
+
+</details>
+
+<details>
+<summary><b>📺 Watch Player</b></summary>
+
+- **10 streaming providers** with smart per-content-type ordering:
+  - 🎬 Movies → VidFast ⭐, VidRock, Videasy, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream
+  - 📺 TV Shows → VidRock ⭐, VidFast, Videasy, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream
+  - 🎌 Anime → Videasy ⭐, VidRock, VidFast, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream
+- **AniList ID resolution** — anime content automatically resolves TMDB titles → AniList IDs so Videasy gets the correct anime embed
+- **Provider-specific resume** — each server tracks its own progress independently in `localStorage`
+- **Next episode auto-advance** with a glassmorphic countdown popup and 15-second cancel window
+- **Resume watching prompt** with circular progress ring showing exact position
+- Accent color theming synced to the player across all providers
+
+</details>
+
+<details>
+<summary><b>📡 Live TV</b></summary>
+
+- Stream 200+ live channels via TouStream integration
+- Two-phase progressive loading — first 30 channels appear instantly, the rest load silently
+- Channel search and filtering
+
+</details>
+
+<details>
+<summary><b>🌐 Internationalization</b></summary>
+
+Full i18n support via `next-intl` across 5 languages:
+
+| Language | File |
+|----------|------|
+| English | `messages/en.json` |
+| Amharic | `messages/am.json` |
+| Oromo | `messages/om.json` |
+| Tigrinya | `messages/ti.json` |
+| Somali | `messages/so.json` |
+
+</details>
+
+<details>
+<summary><b>⚡ Performance & Resilience</b></summary>
+
+- **Server-side TMDB proxy** — API keys never exposed to the client, with in-memory LRU caching (TTL-based)
+- **AniList GraphQL proxy** — `/api/anilist` caches responses for 10 min, respects 90 req/min rate limit
+- **Circuit breaker** — CLOSED → OPEN → HALF_OPEN state machine; HTTP errors don't trip it, only connectivity failures
+- **Smart retries** — exponential backoff + jitter; skips 404 and 5xx immediately, respects `Retry-After` on 429s
+- **Request deduplication** — in-flight requests are merged so rapid navigation never fires duplicate API calls
+- **Collections cache** — all 76+ collection metadata loaded once, stored in `sessionStorage` for 24h
+
+</details>
 
 ---
 
@@ -51,101 +113,96 @@ Designed with a premium, cinematic UI, Watchers Heaven features fluid micro-anim
 
 | Layer | Technology |
 |-------|-----------|
-| **Framework** | [Next.js 16](https://nextjs.org/) (App Router, Turbopack) |
-| **Language** | [TypeScript 5](https://www.typescriptlang.org/) |
-| **UI Library** | [React 19](https://react.dev/) |
-| **Styling** | [Tailwind CSS 4](https://tailwindcss.com/) |
-| **Animations** | [Framer Motion 11](https://www.framer.com/motion/) |
-| **Smooth Scroll** | [Lenis](https://lenis.darkroom.engineering/) |
-| **Icons** | [Lucide React](https://lucide.dev/) |
-| **State Management** | [Zustand](https://zustand-demo.pmnd.rs/) |
-| **Data Fetching** | [TanStack Query (React Query)](https://tanstack.com/query) |
-| **Validation** | [Zod](https://zod.dev/) |
-| **Internationalization** | [next-intl](https://next-intl-docs.vercel.app/) |
-| **API** | [TMDB (The Movie Database)](https://developer.themoviedb.org/docs) + TouStream |
+| Framework | [Next.js 16](https://nextjs.org/) (App Router, Turbopack) |
+| Language | [TypeScript 5](https://www.typescriptlang.org/) |
+| UI | [React 19](https://react.dev/) |
+| Styling | [Tailwind CSS 4](https://tailwindcss.com/) |
+| Icons | [Lucide React](https://lucide.dev/) |
+| i18n | [next-intl](https://next-intl-docs.vercel.app/) |
+| Movie Data | [TMDB API](https://developer.themoviedb.org/docs) |
+| Anime Data | [AniList GraphQL API](https://docs.anilist.co/) |
+| Live TV | [TouStream](https://toustream.xyz) |
 
 ---
 
 ## 🏗️ Architecture
 
-### API Layer (`src/lib/api/`)
-
-The API layer follows a resilience-first design:
+### API Request Flow
 
 ```
-Client Component → ApiGateway → dedupeRequest → withRetries → CircuitBreaker → fetchClient → /api/tmdb/[...path] → TMDB
+Client Component
+  → ApiGateway (gateway.ts)
+    → dedupeRequest          ← prevents duplicate in-flight calls
+      → withRetries           ← exponential backoff, skips 404/5xx
+        → CircuitBreaker      ← opens after N failures, half-opens on recovery
+          → fetchClient       ← timeout + Retry-After parsing
+            → /api/tmdb/*     ← Next.js server proxy (cached, rate-limited)
+              → TMDB API
 ```
 
-* **`fetchClient`** (`client.ts`): Thin fetch wrapper with configurable timeouts, error handling, and `Retry-After` header parsing for 429 responses.
-* **`withRetries`** (`retries.ts`): Retry orchestrator with exponential backoff + jitter. Skips 404 and 5xx errors immediately (no wasted retries). Respects `Retry-After` headers on 429s.
-* **`CircuitBreaker`** (`circuit-breaker.ts`): State machine (CLOSED → OPEN → HALF_OPEN) with configurable failure threshold. HTTP errors propagate but don't trip the breaker — only genuine connectivity failures count.
-* **`gateway`** (`gateway.ts`): High-level API methods with in-memory caching (TTL-based), request deduplication, and graceful fallbacks.
+### Anime ID Resolution Flow
 
-### Server Proxy (`src/app/api/tmdb/[...path]/route.ts`)
+```
+Anime PosterCard clicked
+  → /tv/{tmdbId} detail page
+    → Watch page (type=anime in URL)
+      → ApiGateway.fetchTmdb("/tv/{id}") → get title
+        → ApiGateway.getAniListId(title)
+          → POST /api/anilist (server proxy, cached 10min)
+            → AniList GraphQL API
+              → aniListId resolved
+                → Videasy embed with correct /anime/{aniListId}/{episode}
+```
 
-All external API calls are proxied through a Next.js API route:
-- **Security**: API keys never exposed to the client.
-- **Server-side caching**: Redis-style in-memory cache with per-endpoint TTLs.
-- **Rate limiting**: Built-in protection against API abuse.
-- **Streaming support**: TouStream channels endpoint with configurable limit parameter (10–200).
+### Server Proxy Routes
 
-### Collections Caching Strategy
-
-The collections page uses a **load-all-once-and-cache** pattern:
-1. **First visit**: Fetches metadata for all 76+ collections in batches of 10 with 200ms delays. Shows a progress bar during loading.
-2. **Cache**: Stores results in `sessionStorage` for 24 hours. Failed collections (404) are silently excluded.
-3. **Subsequent visits**: Loads the entire grid instantly from cache — no API calls, no spinners.
-
-### Live TV Progressive Loading
-
-The live TV page uses a **two-phase progressive loading** pattern:
-1. **Phase 1**: Fetches first 30 channels (fast batch) and displays them immediately.
-2. **Phase 2**: Silently fetches full list of 200 channels in the background with a subtle "Loading more..." indicator.
-
-### Watch Player Features
-
-* **Multi-provider switching**: Multiple streaming servers available per title.
-* **Provider-specific resume**: Each provider tracks its own watch progress via localStorage key `watch-progress:{id}:{season}:{episode}:{provider}`.
-* **Episode navigation modal**: Redesigned glassmorphic UI with SVG circular progress ring, rewatch option, and auto-advance countdown.
-* **Resume prompt modal**: Shows remaining progress percentage with Start Over / Resume choices.
+| Route | Purpose |
+|-------|---------|
+| `GET /api/tmdb/[...path]` | TMDB API proxy with caching, rate limiting, size guards |
+| `POST /api/tmdb` (channels) | TouStream channels proxy (trims 12MB response to slug+name) |
+| `POST /api/anilist` | AniList GraphQL proxy with 10-min response cache |
 
 ---
 
 ## 📂 Project Structure
 
-```text
+```
 src/
 ├── app/
-│   ├── [locale]/               # Main application routes with i18n support
-│   │   ├── add/                # Add content to library
-│   │   ├── anime/              # Anime section
-│   │   ├── collections/        # Curated cinematic collections (cached)
-│   │   ├── k-drama/            # K-Drama section
-│   │   ├── library/            # Personal media library
-│   │   ├── live/               # Live TV (progressive loading)
-│   │   ├── movie/[id]/         # Movie detail pages
-│   │   ├── movies/             # Movies browse page
-│   │   ├── schedule/           # Upcoming release schedule
-│   │   ├── search/             # Search functionality
-│   │   ├── settings/           # App settings (theme, language)
-│   │   ├── stats/              # Viewing statistics
-│   │   ├── theater/            # Theater mode
-│   │   ├── tv/[id]/            # TV show detail & episode pages
-│   │   ├── watch/[id]/         # Video player with multi-provider
-│   │   ├── watchlist/          # User bookmarks (localStorage)
-│   │   ├── layout.tsx          # Root layout (fonts, providers, nav)
-│   │   └── page.tsx            # Homepage (Hero, Trending rows)
-│   ├── api/tmdb/[...path]/     # Server-side TMDB proxy route
-│   └── globals.css             # Global Tailwind styles & custom animations
+│   ├── [locale]/
+│   │   ├── anime/            # Anime browse (TMDB discover, ja language)
+│   │   ├── collections/      # 76+ franchise collections (sessionStorage cached)
+│   │   ├── k-drama/          # K-Drama section
+│   │   ├── live/             # Live TV with progressive loading
+│   │   ├── movie/[id]/       # Movie detail (cast, recommendations)
+│   │   ├── movies/           # Movies browse + filters
+│   │   ├── tv/[id]/          # TV show detail + episode browser
+│   │   ├── watch/[id]/       # Multi-provider watch player
+│   │   ├── watchlist/        # localStorage-backed bookmarks
+│   │   ├── search/           # Global search
+│   │   ├── stats/            # Viewing statistics
+│   │   └── page.tsx          # Homepage (hero + carousel rows)
+│   ├── api/
+│   │   ├── tmdb/[...path]/   # TMDB proxy (GET + POST for channels)
+│   │   └── anilist/          # AniList GraphQL proxy (POST)
+│   └── globals.css
 ├── components/
-│   ├── cards/                  # PosterCard, FeatureCard, CarouselRow
-│   ├── effects/                # CinemaModeProvider, ThemeScript
-│   ├── hero/                   # HeroFeature section
-│   ├── layout/                 # FloatingNav, Footer, SmoothScroll
-│   └── typography/             # BalancedText
-├── i18n/                       # next-intl configuration
-├── lib/api/                    # API gateway, circuit breaker, retries, client
-└── middleware.ts               # Auth/routing middleware
+│   ├── cards/                # PosterCard, FeatureCard, CarouselRow
+│   ├── effects/              # CinemaModeProvider, ThemeScript
+│   ├── hero/                 # HeroFeature
+│   └── layout/               # FloatingNav, Footer
+├── lib/
+│   ├── api/
+│   │   ├── gateway.ts        # All provider URL builders + TMDB/AniList methods
+│   │   ├── client.ts         # fetch wrapper with timeout + error handling
+│   │   ├── retries.ts        # withRetries (backoff, 404/5xx skip, 429 respect)
+│   │   └── circuit-breaker.ts# CircuitBreaker state machine
+│   ├── cache.ts              # MemoryCache (LRU + TTL)
+│   ├── rate-limiter.ts       # Sliding window rate limiter
+│   └── watchlist.ts          # localStorage watchlist helpers
+├── i18n/                     # next-intl routing + request config
+├── messages/                 # en, am, om, ti, so JSON translation files
+└── middleware.ts             # Locale routing middleware
 ```
 
 ---
@@ -154,61 +211,88 @@ src/
 
 ### Prerequisites
 
-* **Node.js** (v18.17 or higher)
-* **npm**, **yarn**, or **pnpm**
-* A [TMDB API Key](https://www.themoviedb.org/documentation/api)
+- **Node.js** v18.17+
+- **npm** / **yarn** / **pnpm**
+- A free [TMDB API Key](https://www.themoviedb.org/documentation/api)
 
 ### Installation
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/your-username/watchers-heaven.git
-   cd watchers-heaven
-   ```
+```bash
+# 1. Clone the repo
+git clone https://github.com/OgBek/watchers-heaven.git
+cd watchers-heaven
 
-2. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+# 2. Install dependencies
+npm install
 
-3. **Configure Environment Variables:**
-   Create a `.env.local` file in the root directory:
-   ```env
-   TMDB_API_KEY=your_api_key_here
-   ```
+# 3. Set environment variables
+cp .env.local.example .env.local
+# → Add your TMDB_API_KEY to .env.local
 
-4. **Run the development server:**
-   ```bash
-   npm run dev
-   ```
+# 4. Start the dev server
+npm run dev
+```
 
-5. **Open the app:**
-   Open [http://localhost:3000](http://localhost:3000) in your browser.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+### Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `TMDB_API_KEY` | ✅ | Your TMDB v3 API key from [themoviedb.org](https://www.themoviedb.org/settings/api) |
+
+> AniList does not require an API key — it's a public GraphQL API with a 90 req/min rate limit.
+
+### Available Scripts
+
+```bash
+npm run dev      # Start development server (Turbopack)
+npm run build    # Production build + TypeScript check
+npm run start    # Serve production build
+npm run lint     # ESLint
+```
 
 ---
 
-## 🌍 Localization
+## 📖 API Documentation
 
-Watchers Heaven supports multiple languages. To update or add new translations, modify the JSON files in the `messages/` directory:
+Full streaming provider reference: [`docs/streaming-providers.md`](docs/streaming-providers.md)
 
-| File | Language |
-|------|----------|
-| `en.json` | English |
-| `am.json` | Amharic |
-| `om.json` | Oromo |
-| `ti.json` | Tigrinya |
-| `so.json` | Somali |
+Covers URL structures, parameters, event formats, and gateway methods for all 10 providers:
 
-Translation logic is managed by `next-intl` and configured in `src/i18n/request.ts` and `src/i18n/routing.ts`.
+| Provider | Best For | Gateway Method |
+|----------|----------|---------------|
+| VidFast ⭐ | Movies | `getVidFastUrl()` |
+| VidRock ⭐ | TV Shows | `getVidRockUrl()` |
+| Videasy ⭐ | Anime | `getVideasyUrl()` |
+| VidLink | General | `getVidLinkUrl()` |
+| Vidsrc | General | `getVidsrcEmbedUrl()` |
+| Vidsrc.to | General | `getVidsrcToUrl()` |
+| VidKing | General | `getVidKingUrl()` |
+| ScreenScape | English | `getScreenScapeUrl()` |
+| TouStream | Live TV | `getTouStreamMovieUrl()` |
+| RiveStream | Torrent | `getMovieEmbedUrl()` |
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and open a pull request against `main`.
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feat/my-feature`
+3. Commit your changes: `git commit -m 'feat: add my feature'`
+4. Push to the branch: `git push origin feat/my-feature`
+5. Open a pull request against [OgBek/watchers-heaven](https://github.com/OgBek/watchers-heaven)
 
 ---
 
 ## 📄 License
 
-This project is open-source and available under the [MIT License](LICENSE).
+Distributed under the [MIT License](LICENSE).
 
 ---
 
-<p align="center">
-  Built with ❤️ for movie lovers everywhere.
-</p>
+<div align="center">
+  <sub>Built with ❤️ for movie lovers everywhere.</sub>
+</div>

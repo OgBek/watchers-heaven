@@ -227,6 +227,200 @@ export const ApiGateway = {
       : `${base}/tv/${id}/${season || 1}/${episode || 1}`;
   },
 
+  // --- VidRock API ---
+  getVidRockUrl: (
+    id: string | number,
+    type: 'movie' | 'tv',
+    season?: number,
+    episode?: number,
+    options?: {
+      autoplay?: boolean;        // auto-start playback
+      autonext?: boolean;        // auto-play next TV episode
+      theme?: string;            // hex color without #
+      download?: boolean;        // show/hide download button
+      nextbutton?: boolean;      // show/hide next episode notification
+      episodeselector?: boolean; // show/hide episode selector
+      lang?: string;             // subtitle language ISO code e.g. 'en'
+    }
+  ): string => {
+    const base = 'https://vidrock.ru';
+    const url = type === 'movie'
+      ? new URL(`${base}/movie/${id}`)
+      : new URL(`${base}/tv/${id}/${season || 1}/${episode || 1}`);
+
+    if (options?.autoplay !== undefined) url.searchParams.set('autoplay', String(options.autoplay));
+    if (options?.autonext !== undefined) url.searchParams.set('autonext', String(options.autonext));
+    if (options?.theme) url.searchParams.set('theme', options.theme);
+    if (options?.download !== undefined) url.searchParams.set('download', String(options.download));
+    if (options?.nextbutton !== undefined) url.searchParams.set('nextbutton', String(options.nextbutton));
+    if (options?.episodeselector !== undefined) url.searchParams.set('episodeselector', String(options.episodeselector));
+    if (options?.lang) url.searchParams.set('lang', options.lang);
+    return url.toString();
+  },
+
+  // --- AniList GraphQL API (via server proxy /api/anilist) ---
+
+  /**
+   * Search AniList for an anime by title and return its AniList ID.
+   * Used to convert TMDB anime titles → AniList IDs for Videasy embeds.
+   * Returns null if no match is found.
+   */
+  getAniListId: async (title: string): Promise<number | null> => {
+    const cacheKey = `anilist-id:${title.toLowerCase().trim()}`;
+    const cached = clientCacheGet<number | null>(cacheKey);
+    if (cached !== undefined) return cached;
+
+    const query = `
+      query ($search: String) {
+        Media(search: $search, type: ANIME) {
+          id
+          title { romaji english native }
+        }
+      }
+    `;
+
+    try {
+      const res = await fetch('/api/anilist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables: { search: title } }),
+      });
+      if (!res.ok) return null;
+      const json = await res.json() as { data?: { Media?: { id: number } } };
+      const id = json?.data?.Media?.id ?? null;
+      clientCacheSet(cacheKey, id, 60 * 60 * 1000); // cache 1 hour
+      return id;
+    } catch {
+      return null;
+    }
+  },
+
+  /**
+   * Search AniList for multiple anime — useful for populating a list page.
+   * Returns up to `perPage` results (max 50).
+   */
+  searchAniList: async (
+    search: string,
+    page = 1,
+    perPage = 20,
+  ): Promise<{ id: number; title: { romaji: string; english: string | null }; coverImage: { large: string }; episodes: number | null; averageScore: number | null }[]> => {
+    const cacheKey = `anilist-search:${search.toLowerCase().trim()}:${page}:${perPage}`;
+    const cached = clientCacheGet<ReturnType<typeof ApiGateway.searchAniList> extends Promise<infer T> ? T : never>(cacheKey);
+    if (cached) return cached;
+
+    const query = `
+      query ($search: String, $page: Int, $perPage: Int) {
+        Page(page: $page, perPage: $perPage) {
+          media(search: $search, type: ANIME, sort: POPULARITY_DESC) {
+            id
+            title { romaji english }
+            coverImage { large }
+            episodes
+            averageScore
+          }
+        }
+      }
+    `;
+
+    try {
+      const res = await fetch('/api/anilist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, variables: { search, page, perPage } }),
+      });
+      if (!res.ok) return [];
+      const json = await res.json() as { data?: { Page?: { media?: unknown[] } } };
+      const media = (json?.data?.Page?.media ?? []) as ReturnType<typeof ApiGateway.searchAniList> extends Promise<infer T> ? T : never;
+      clientCacheSet(cacheKey, media, 10 * 60 * 1000); // 10 min
+      return media;
+    } catch {
+      return [];
+    }
+  },
+
+  // --- Videasy API ---
+  getVideasyUrl: (
+    id: string | number,
+    type: 'movie' | 'tv' | 'anime',
+    season?: number,
+    episode?: number,
+    options?: {
+      color?: string;               // hex without #
+      progress?: number;            // resume position in seconds
+      nextEpisode?: boolean;        // show next episode button
+      episodeSelector?: boolean;    // built-in episode selector
+      autoplayNextEpisode?: boolean;// auto-play next episode
+      overlay?: boolean;            // Netflix-style overlay on pause
+    }
+  ): string => {
+    const base = 'https://player.videasy.net';
+    let url: string;
+
+    if (type === 'anime') {
+      // Anime: /anime/{anilistId}/{episode?}
+      url = episode !== undefined
+        ? `${base}/anime/${id}/${episode}`
+        : `${base}/anime/${id}`;
+    } else if (type === 'tv') {
+      url = `${base}/tv/${id}/${season || 1}/${episode || 1}`;
+    } else {
+      url = `${base}/movie/${id}`;
+    }
+
+    const params: string[] = [];
+    if (options?.color) params.push(`color=${options.color}`);
+    if (options?.progress !== undefined && options.progress > 0) params.push(`progress=${options.progress}`);
+    if (options?.nextEpisode !== undefined) params.push(`nextEpisode=${options.nextEpisode}`);
+    if (options?.episodeSelector !== undefined) params.push(`episodeSelector=${options.episodeSelector}`);
+    if (options?.autoplayNextEpisode !== undefined) params.push(`autoplayNextEpisode=${options.autoplayNextEpisode}`);
+    if (options?.overlay !== undefined) params.push(`overlay=${options.overlay}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    return url;
+  },
+
+  // --- VidFast API ---
+  getVidFastUrl: (
+    id: string | number,
+    type: 'movie' | 'tv',
+    season?: number,
+    episode?: number,
+    options?: {
+      theme?: string;         // hex color without #
+      autoPlay?: boolean;
+      title?: boolean;
+      poster?: boolean;
+      startAt?: number;       // seconds
+      server?: string;
+      hideServer?: boolean;
+      fullscreenButton?: boolean;
+      chromecast?: boolean;
+      nextButton?: boolean;   // TV only — show at 90% watched
+      autoNext?: boolean;     // TV only — requires nextButton
+      sub?: string;           // e.g. 'en', 'es', 'fr'
+    }
+  ): string => {
+    const base = 'https://vidfast.pro';
+    let url = type === 'movie'
+      ? `${base}/movie/${id}`
+      : `${base}/tv/${id}/${season || 1}/${episode || 1}`;
+
+    const params: string[] = [];
+    if (options?.autoPlay !== undefined) params.push(`autoPlay=${options.autoPlay}`);
+    if (options?.title !== undefined) params.push(`title=${options.title}`);
+    if (options?.poster !== undefined) params.push(`poster=${options.poster}`);
+    if (options?.startAt !== undefined && options.startAt > 0) params.push(`startAt=${options.startAt}`);
+    if (options?.theme) params.push(`theme=${options.theme}`);
+    if (options?.server) params.push(`server=${encodeURIComponent(options.server)}`);
+    if (options?.hideServer !== undefined) params.push(`hideServer=${options.hideServer}`);
+    if (options?.fullscreenButton !== undefined) params.push(`fullscreenButton=${options.fullscreenButton}`);
+    if (options?.chromecast !== undefined) params.push(`chromecast=${options.chromecast}`);
+    if (options?.nextButton !== undefined) params.push(`nextButton=${options.nextButton}`);
+    if (options?.autoNext !== undefined) params.push(`autoNext=${options.autoNext}`);
+    if (options?.sub) params.push(`sub=${options.sub}`);
+    if (params.length > 0) url += `?${params.join('&')}`;
+    return url;
+  },
+
   // --- TMDB API (with client-side cache + deduplication) ---
   fetchTmdb: async <T>(endpoint: string, params: Record<string, string> = {}): Promise<T> => {
     const isBrowser = typeof window !== 'undefined';

@@ -9,7 +9,7 @@ interface PosterCardProps {
   rating?: number;
   year?: string;
   className?: string;
-  type?: 'movie' | 'tv';
+  type?: 'movie' | 'tv' | 'anime';
 }
 
 // Quality badge removed — TMDB does not provide actual stream quality data
@@ -21,7 +21,13 @@ export function PosterCard({ id, title, posterPath, rating, year, className, typ
   const locale = segments[0] && ['en','am','om','ti','so'].includes(segments[0]) ? segments[0] : 'en';
 
   const handleClick = () => {
-    router.push(`/${locale}/${type}/${id}`);
+    if (type === 'anime') {
+      // Anime uses TMDB TV IDs but routes to watch with type=anime so the
+      // watch page can pick the best server (Videasy first)
+      router.push(`/${locale}/tv/${id}`);
+    } else {
+      router.push(`/${locale}/${type}/${id}`);
+    }
   };
 
   return (

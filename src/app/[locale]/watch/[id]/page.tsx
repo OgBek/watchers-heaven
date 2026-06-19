@@ -4,7 +4,7 @@ import { ArrowLeft, Maximize2, Minimize2, Play, RefreshCw, SkipForward, ArrowLef
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect, useRef, useCallback } from 'react';
 
-type Provider = 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
+type Provider = 'vidrock' | 'videasy' | 'vidfast' | 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
 
 export default function WatchPage() {
   const params = useParams();
@@ -17,14 +17,44 @@ export default function WatchPage() {
   const season = searchParams.get('s') ? parseInt(searchParams.get('s')!) : undefined;
   const episode = searchParams.get('e') ? parseInt(searchParams.get('e')!) : undefined;
   const isTv = season !== undefined || episode !== undefined;
+  const isAnime = searchParams.get('type') === 'anime';
 
-  const [provider, setProvider] = useState<Provider>('vidlink');
+  const [provider, setProvider] = useState<Provider>(
+    isAnime ? 'videasy' : isTv ? 'vidrock' : 'vidfast'
+  );
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [savedProgress, setSavedProgress] = useState<number>(0);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [initialProgressApplied, setInitialProgressApplied] = useState(false);
   const [accentColor, setAccentColor] = useState<string>('007bff');
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  // AniList ID — resolved once for anime content so Videasy gets the right ID
+  const [aniListId, setAniListId] = useState<number | null>(null);
+  const [aniListTitle, setAniListTitle] = useState<string>('');
+
+  // Resolve AniList ID when watching anime with Videasy
+  useEffect(() => {
+    if (!isAnime || provider !== 'videasy') return;
+    if (aniListId !== null) return; // already resolved
+
+    async function resolve() {
+      // Try to get the title from TMDB first, then search AniList
+      try {
+        const data = await ApiGateway.fetchTmdb<{ name?: string; original_name?: string }>(`/tv/${id}`);
+        const title = data.name || data.original_name || '';
+        if (title) {
+          setAniListTitle(title);
+          const aid = await ApiGateway.getAniListId(title);
+          setAniListId(aid ?? -1); // -1 = searched but not found
+        }
+      } catch {
+        setAniListId(-1);
+      }
+    }
+    resolve();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isAnime, provider]);
 
   // Next episode auto-play state
   const [showNextEpisodePopup, setShowNextEpisodePopup] = useState(false);
@@ -40,6 +70,66 @@ export default function WatchPage() {
     const startProgress = initialProgressApplied ? savedProgress : 0;
 
     switch (provider) {
+      case 'vidrock':
+        return ApiGateway.getVidRockUrl(
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode,
+          {
+            autoplay: true,
+            theme: accentColor,
+            autonext: false,        // we handle next episode ourselves
+            nextbutton: false,
+            episodeselector: isTv,
+            download: false,
+          }
+        );
+      case 'videasy':
+        // For anime: use AniList ID if resolved, fall back to TMDB ID with TV type
+        if (isAnime && aniListId && aniListId > 0) {
+          return ApiGateway.getVideasyUrl(
+            aniListId,
+            'anime',
+            undefined,
+            episode,
+            {
+              color: accentColor,
+              progress: startProgress > 0 ? startProgress : undefined,
+              overlay: true,
+            }
+          );
+        }
+        return ApiGateway.getVideasyUrl(
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode,
+          {
+            color: accentColor,
+            progress: startProgress > 0 ? startProgress : undefined,
+            nextEpisode: isTv ? false : undefined,
+            autoplayNextEpisode: false,
+            episodeSelector: isTv ? true : undefined,
+            overlay: true,
+          }
+        );
+      case 'vidfast':
+        return ApiGateway.getVidFastUrl(
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode,
+          {
+            autoPlay: true,
+            theme: accentColor,
+            title: true,
+            poster: true,
+            nextButton: isTv ? false : undefined, // we handle next episode ourselves
+            autoNext: false,
+            startAt: startProgress > 0 ? startProgress : undefined,
+          }
+        );
       case 'vidlink':
         return ApiGateway.getVidLinkUrl(
           id,
@@ -102,7 +192,7 @@ export default function WatchPage() {
           ? ApiGateway.getTvEmbedUrl(id, season || 1, episode || 1)
           : ApiGateway.getMovieEmbedUrl(id);
     }
-  }, [provider, id, isTv, season, episode, accentColor, initialProgressApplied, savedProgress]);
+  }, [provider, id, isTv, isAnime, aniListId, season, episode, accentColor, initialProgressApplied, savedProgress]);
 
   // ── goToNextEpisode declared before saveProgress (which calls it) ──
   const goToNextEpisode = useCallback(() => {
@@ -258,25 +348,72 @@ export default function WatchPage() {
 
       if (!eventData) return;
 
-      // --- VidLink PLAYER_EVENT (live playback updates) ---
+      // --- Videasy progress events ---
+      // Videasy sends: { id, type, progress, timestamp, duration, season?, episode? }
+      if (
+        eventData.id !== undefined &&
+        eventData.type !== undefined &&
+        eventData.timestamp !== undefined &&
+        eventData.duration !== undefined
+      ) {
+        const currentTime = eventData.timestamp as number;
+        const duration = eventData.duration as number;
+        if (duration > 0) saveProgress(currentTime, duration);
+      }
+
+      // --- VidFast / VidLink / VidRock PLAYER_EVENT (live playback updates) ---
       if (eventData.type === 'PLAYER_EVENT' && eventData.data) {
-        const playerData = eventData.data as Record<string, unknown>;
-        const currentTime = playerData.currentTime as number | undefined;
-        const duration = playerData.duration as number | undefined;
-        if (currentTime !== undefined && duration !== undefined) {
-          saveProgress(currentTime, duration);
+        // Validate origin for VidFast events
+        const vidfastOrigins = [
+          'https://vidfast.pro', 'https://vidfast.in', 'https://vidfast.io',
+          'https://vidfast.me', 'https://vidfast.net', 'https://vidfast.pm', 'https://vidfast.xyz',
+        ];
+        const isVidfast = vidfastOrigins.includes(event.origin);
+        const isVidlink = event.origin.includes('vidlink.pro');
+        const isVidrock = event.origin === 'https://vidrock.ru';
+        if (isVidfast || isVidlink || isVidrock || event.origin === '') {
+          const playerData = eventData.data as Record<string, unknown>;
+          const currentTime = playerData.currentTime as number | undefined;
+          const duration = playerData.duration as number | undefined;
+          if (currentTime !== undefined && duration !== undefined) {
+            saveProgress(currentTime, duration);
+          }
         }
       }
 
-      // --- VidLink MEDIA_DATA (media metadata & continue watching info) ---
+      // --- VidLink / VidFast / VidRock MEDIA_DATA (media metadata & continue watching info) ---
       if (eventData.type === 'MEDIA_DATA' && eventData.data) {
         const mediaData = eventData.data as Record<string, unknown>;
+
+        // VidFast stores its own richer progress format — persist it directly
+        if (typeof mediaData === 'object' && mediaData !== null) {
+          try {
+            const existing = localStorage.getItem('vidFastProgress');
+            const store: Record<string, unknown> = existing ? JSON.parse(existing) : {};
+            const entryKey = isTv ? `t${id}` : `m${id}`;
+            store[entryKey] = { ...((store[entryKey] as Record<string, unknown>) || {}), ...mediaData };
+            localStorage.setItem('vidFastProgress', JSON.stringify(store));
+          } catch { /* quota or parse error — silently skip */ }
+        }
+
+        // VidRock stores as an array under vidRockProgress
+        if (event.origin === 'https://vidrock.ru') {
+          try {
+            const existing = localStorage.getItem('vidRockProgress');
+            const list: Record<string, unknown>[] = existing ? JSON.parse(existing) : [];
+            const entryId = mediaData.id;
+            const idx = list.findIndex((item) => item.id === entryId);
+            if (idx >= 0) { list[idx] = { ...list[idx], ...mediaData }; }
+            else { list.unshift(mediaData); }
+            localStorage.setItem('vidRockProgress', JSON.stringify(list.slice(0, 50)));
+          } catch { /* silently skip */ }
+        }
+
         // Store metadata for Continue Watching list
         const continueWatchingKey = `continue-watching`;
         try {
           const existing = localStorage.getItem(continueWatchingKey);
           const list: Record<string, unknown>[] = existing ? JSON.parse(existing) : [];
-          // Update or insert this item
           const idx = list.findIndex((item) => item.id === id && item.season === (season || 0) && item.episode === (episode || 0));
           const entry = {
             id,
@@ -284,15 +421,10 @@ export default function WatchPage() {
             season: season || 0,
             episode: episode || 0,
             title: (mediaData.title as string) || `#${id}`,
-            poster: (mediaData.poster as string) || '',
+            poster: (mediaData.poster_path as string) || (mediaData.poster as string) || '',
             updatedAt: Date.now(),
           };
-          if (idx >= 0) {
-            list[idx] = entry;
-          } else {
-            list.unshift(entry);
-          }
-          // Keep only last 50 entries
+          if (idx >= 0) { list[idx] = entry; } else { list.unshift(entry); }
           localStorage.setItem(continueWatchingKey, JSON.stringify(list.slice(0, 50)));
         } catch (e) {
           console.error('Error saving continue watching data', e);
@@ -332,15 +464,33 @@ export default function WatchPage() {
     }
   };
 
-  const providersList: { id: Provider; name: string; quality: string; badge?: string }[] = [
-    { id: 'vidlink', name: 'VidLink', quality: '1080p / HLS', badge: '⭐' },
-    { id: 'vidsrc', name: 'Vidsrc', quality: '1080p / Multi' },
-    { id: 'vidsrcto', name: 'Vidsrc.to', quality: '1080p / Multi' },
-    { id: 'vidking', name: 'VidKing', quality: '1080p / Auto' },
-    { id: 'screenscape', name: 'ScreenScape', quality: '1080p / English' },
-    { id: 'toustream', name: 'TouStream', quality: '720p / Backup' },
-    { id: 'rivestream', name: 'RiveStream', quality: '1080p / Torrent' }
+  // Providers ordered by best fit for the current content type
+  // ⭐ marks the recommended server for that content type
+  const allProviders: { id: Provider; name: string; quality: string; badge?: string; best: ('movie' | 'tv' | 'anime')[] }[] = [
+    { id: 'vidfast',     name: 'VidFast',     quality: '1080p / HLS',     badge: '⭐', best: ['movie'] },
+    { id: 'vidrock',     name: 'VidRock',     quality: '1080p / Multi',   badge: '⭐', best: ['tv'] },
+    { id: 'videasy',     name: 'Videasy',     quality: '1080p / Multi',   badge: '⭐', best: ['anime'] },
+    { id: 'vidlink',     name: 'VidLink',     quality: '1080p / HLS',     best: ['movie', 'tv', 'anime'] },
+    { id: 'vidsrc',      name: 'Vidsrc',      quality: '1080p / Multi',   best: ['movie', 'tv', 'anime'] },
+    { id: 'vidsrcto',    name: 'Vidsrc.to',   quality: '1080p / Multi',   best: ['movie', 'tv', 'anime'] },
+    { id: 'vidking',     name: 'VidKing',     quality: '1080p / Auto',    best: ['movie', 'tv'] },
+    { id: 'screenscape', name: 'ScreenScape', quality: '1080p / English', best: ['movie', 'tv'] },
+    { id: 'toustream',   name: 'TouStream',   quality: '720p / Backup',   best: ['movie', 'tv'] },
+    { id: 'rivestream',  name: 'RiveStream',  quality: '1080p / Torrent', best: ['movie', 'tv'] },
   ];
+
+  const contentType: 'movie' | 'tv' | 'anime' = isAnime ? 'anime' : isTv ? 'tv' : 'movie';
+
+  // Sort: best-fit servers for current content type first, others after
+  const providersList = [...allProviders].sort((a, b) => {
+    const aFit = a.best.includes(contentType) ? 0 : 1;
+    const bFit = b.best.includes(contentType) ? 0 : 1;
+    return aFit - bFit;
+  }).map(({ id, name, quality, badge, best }) => ({
+    id, name, quality,
+    // Only show ⭐ badge when this provider's specialty matches the current content type
+    badge: badge && best[0] === contentType ? badge : undefined,
+  }));
 
   // Determine if this is Rivestream (apply sandbox restrictions)
   const isRivestream = provider === 'rivestream';

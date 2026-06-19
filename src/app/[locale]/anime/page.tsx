@@ -301,7 +301,7 @@ export default function AnimePage() {
                   posterPath={item.poster_path as string}
                   rating={item.vote_average as number}
                   year={item.first_air_date ? (item.first_air_date as string).split('-')[0] : ''}
-                  type="tv"
+                  type="anime"
                 />
               ))}
             </div>
