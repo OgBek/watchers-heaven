@@ -1,10 +1,11 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Play, Bookmark, RefreshCw, Star, Loader, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Play, Bookmark, RefreshCw, Star, Loader, Image as ImageIcon, Download } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect } from 'react';
 import { PosterCard } from '@/components/cards/PosterCard';
 import { isInWatchlist, toggleWatchlistItem } from '@/lib/watchlist';
+import { DownloadModal } from '@/components/download/DownloadModal';
 
 interface Genre { id: number; name: string; }
 interface Network { name: string; }
@@ -62,6 +63,8 @@ export default function TvShowDetailPage() {
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showDownload, setShowDownload] = useState(false);
+  const [downloadEpisode, setDownloadEpisode] = useState<{ season: number; episode: number } | null>(null);
 
   // Seasons and Episodes
   const [selectedSeason, setSelectedSeason] = useState<number>(1);
@@ -300,6 +303,15 @@ export default function TvShowDetailPage() {
                 <Play className="w-4 h-4 fill-white text-white" />
                 Watch S1E1
               </button>
+
+              <button
+                onClick={() => { setDownloadEpisode({ season: selectedSeason, episode: 1 }); setShowDownload(true); }}
+                className="flex items-center gap-2 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-accent-blue/50 hover:text-accent-blue text-xs font-bold transition"
+                title="Download episode"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
               
               <button 
                 onClick={toggleBookmark}
@@ -321,6 +333,18 @@ export default function TvShowDetailPage() {
               </button>
             </div>
           </div>
+
+          {/* Download Modal */}
+          {showDownload && downloadEpisode && (
+            <DownloadModal
+              id={id}
+              title={show.name ?? `Show #${id}`}
+              type="tv"
+              season={downloadEpisode.season}
+              episode={downloadEpisode.episode}
+              onClose={() => { setShowDownload(false); setDownloadEpisode(null); }}
+            />
+          )}
 
           {/* Overview & Metadata Block */}
           <div className="space-y-4 bg-white dark:bg-slate-900/30 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800/60 shadow-sm">
@@ -429,7 +453,16 @@ export default function TvShowDetailPage() {
                         <p className="text-[10px] text-slate-400 dark:text-slate-500 line-clamp-2 mt-0.5 leading-relaxed">{ep.overview || 'No description available for this episode.'}</p>
                       </div>
                     </div>
-                    <Play className="w-4 h-4 text-accent-blue dark:text-blue-400 shrink-0 hidden sm:block mr-2" />
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); setDownloadEpisode({ season: selectedSeason, episode: ep.episode_number }); setShowDownload(true); }}
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-accent-blue hover:border-accent-blue/40 transition"
+                        title="Download episode"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                      <Play className="w-4 h-4 text-accent-blue dark:text-blue-400 hidden sm:block mr-2" />
+                    </div>
                   </div>
                 ))}
               </div>

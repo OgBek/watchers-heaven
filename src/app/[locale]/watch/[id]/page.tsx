@@ -1,8 +1,9 @@
 'use client';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Maximize2, Minimize2, Play, RefreshCw, SkipForward, ArrowLeftCircle, RotateCcw, X } from 'lucide-react';
+import { ArrowLeft, Maximize2, Minimize2, Play, RefreshCw, SkipForward, ArrowLeftCircle, RotateCcw, X, Download } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { DownloadModal } from '@/components/download/DownloadModal';
 
 type Provider = 'vidrock' | 'videasy' | 'vidfast' | 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
 
@@ -23,6 +24,7 @@ export default function WatchPage() {
     isAnime ? 'videasy' : isTv ? 'vidrock' : 'vidfast'
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showDownload, setShowDownload] = useState(false);
   const [savedProgress, setSavedProgress] = useState<number>(0);
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [initialProgressApplied, setInitialProgressApplied] = useState(false);
@@ -541,8 +543,16 @@ export default function WatchPage() {
           ))}
         </div>
 
-        {/* Right Side: Refresh & Fullscreen */}
+        {/* Right Side: Download, Refresh & Fullscreen */}
         <div className="flex items-center gap-2 self-end md:self-auto">
+          <button
+            onClick={() => setShowDownload(true)}
+            className="flex items-center gap-1.5 text-slate-400 hover:text-white px-3 py-2 bg-slate-800/80 rounded-xl transition-colors text-xs font-semibold"
+            title="Download"
+          >
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Download</span>
+          </button>
           <button
             onClick={() => {
               if (iframeRef.current) {
@@ -723,6 +733,18 @@ export default function WatchPage() {
         <span>If the player shows a loading error, try switching servers above.</span>
         <span>Watch History is synced locally.</span>
       </div>
+
+      {/* Download Modal */}
+      {showDownload && (
+        <DownloadModal
+          id={id}
+          title={isTv ? `Show #${id}` : `Movie #${id}`}
+          type={isTv ? 'tv' : 'movie'}
+          season={season}
+          episode={episode}
+          onClose={() => setShowDownload(false)}
+        />
+      )}
     </div>
   );
 }

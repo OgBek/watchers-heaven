@@ -1,10 +1,11 @@
 'use client';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Play, Bookmark, RefreshCw, Star, Loader, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Play, Bookmark, RefreshCw, Star, Loader, Image as ImageIcon, Download } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect } from 'react';
 import { PosterCard } from '@/components/cards/PosterCard';
 import { isInWatchlist, toggleWatchlistItem } from '@/lib/watchlist';
+import { DownloadModal } from '@/components/download/DownloadModal';
 
 interface Genre { id: number; name: string; }
 interface Language { english_name: string; }
@@ -51,6 +52,7 @@ export default function MovieDetailPage() {
   const [recommendations, setRecommendations] = useState<RecommendationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [isBookmarked, setIsBookmarked] = useState(false);
+  const [showDownload, setShowDownload] = useState(false);
   
   // Track hovered section: 'left' | 'right' | null for dynamic column expansion
   const [hoveredSection, setHoveredSection] = useState<'left' | 'right' | null>(null);
@@ -262,6 +264,15 @@ export default function MovieDetailPage() {
               </button>
               
               <button 
+                onClick={() => setShowDownload(true)}
+                className="flex items-center gap-2 px-4 py-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-accent-blue/50 hover:text-accent-blue text-xs font-bold transition"
+                title="Download"
+              >
+                <Download className="w-4 h-4" />
+                Download
+              </button>
+
+              <button 
                 onClick={toggleBookmark}
                 className={`p-3 rounded-2xl border transition ${
                   isBookmarked 
@@ -281,6 +292,16 @@ export default function MovieDetailPage() {
               </button>
             </div>
           </div>
+
+          {/* Download Modal */}
+          {showDownload && (
+            <DownloadModal
+              id={id}
+              title={movie.title ?? `Movie #${id}`}
+              type="movie"
+              onClose={() => setShowDownload(false)}
+            />
+          )}
 
           {/* Overview & Metadata Block */}
           <div className="space-y-4 bg-white dark:bg-slate-900/30 backdrop-blur-sm p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800/60 shadow-sm">
