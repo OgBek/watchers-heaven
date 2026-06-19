@@ -1,11 +1,12 @@
 'use client';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Play, Bookmark, RefreshCw, Star, Loader, Image as ImageIcon, Download } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect } from 'react';
 import { PosterCard } from '@/components/cards/PosterCard';
 import { isInWatchlist, toggleWatchlistItem } from '@/lib/watchlist';
 import { DownloadModal } from '@/components/download/DownloadModal';
+import { CastSection } from '@/components/cast/CastSection';
 
 interface Genre { id: number; name: string; }
 interface Network { name: string; }
@@ -55,8 +56,10 @@ interface RecommendationItem {
 export default function TvShowDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const id = params.id as string;
   const locale = (params.locale as string) || 'en';
+  const isAnime = searchParams.get('from') === 'anime';
 
   const [show, setShow] = useState<ShowData | null>(null);
   const [credits, setCredits] = useState<CreditsData | null>(null);
@@ -219,39 +222,8 @@ export default function TvShowDetailPage() {
             </div>
           </div>
 
-          {/* Cast Members (Positioned under the poster) */}
-          <div className="space-y-3 pt-2">
-            <h3 className="text-[10px] font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase select-none">
-              Cast & Crew
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(credits?.cast)?.slice(0, 8).map((actor) => (
-                <div key={actor.id} className="flex items-center gap-3 bg-white dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-2xl shadow-sm hover:shadow-md transition">
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
-                    {actor.profile_path ? (
-                      <img 
-                        src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`} 
-                        alt={actor.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-[9px] font-bold">
-                        N/A
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-black text-slate-800 dark:text-slate-150 truncate leading-tight">{actor.name}</p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{actor.character}</p>
-                  </div>
-                </div>
-              ))}
-              {(!(credits?.cast) || credits.cast.length === 0) && (
-                <p className="text-xs text-slate-400 col-span-2">No cast information available.</p>
-              )}
-            </div>
-          </div>
+          {/* Cast Members — collapsible on mobile, always visible on desktop */}
+          <CastSection credits={credits} />
         </div>
 
         {/* RIGHT COLUMN: Backdrop Banner, Overview, Seasons & Related */}
@@ -297,11 +269,11 @@ export default function TvShowDetailPage() {
             {/* Quick Actions Panel */}
             <div className="flex items-center gap-2">
               <button 
-                onClick={() => router.push(`/${locale}/watch/${id}?s=1&e=1`)}
+                onClick={() => router.push(`/${locale}/watch/${id}?s=1&e=1${isAnime ? '&type=anime' : ''}`)}
                 className="flex items-center gap-2 bg-accent-blue hover:bg-blue-600 text-white px-5 py-3 rounded-2xl text-xs font-bold transition shadow-md"
               >
                 <Play className="w-4 h-4 fill-white text-white" />
-                Watch S1E1
+                {isAnime ? 'Watch Anime' : 'Watch S1E1'}
               </button>
 
               <button
@@ -428,7 +400,7 @@ export default function TvShowDetailPage() {
                 {seasonDetails.episodes.map((ep) => (
                   <div 
                     key={ep.id}
-                    onClick={() => router.push(`/${locale}/watch/${id}?s=${selectedSeason}&e=${ep.episode_number}`)}
+                    onClick={() => router.push(`/${locale}/watch/${id}?s=${selectedSeason}&e=${ep.episode_number}${isAnime ? '&type=anime' : ''}`)}
                     className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3 rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800 hover:border-blue-400/50 hover:bg-blue-50/10 dark:hover:bg-blue-950/10 cursor-pointer transition-all duration-300"
                   >
                     <div className="flex gap-3 min-w-0">

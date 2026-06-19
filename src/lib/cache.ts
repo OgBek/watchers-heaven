@@ -118,4 +118,4 @@ export class MemoryCache {
 
 // Singleton caches for the API proxy route
 export const tmdbCache = new MemoryCache(500, 10 * 60 * 1000);   // 10 min TTL, 500 entries
-export const channelsCache = new MemoryCache(1, 30 * 60 * 1000); // 30 min TTL, 1 entry
+export const channelsCache = new MemoryCache(5, 30 * 60 * 1000); // 30 min TTL, 5 entries (one per limit value)

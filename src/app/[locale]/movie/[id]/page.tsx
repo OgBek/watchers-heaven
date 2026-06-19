@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { PosterCard } from '@/components/cards/PosterCard';
 import { isInWatchlist, toggleWatchlistItem } from '@/lib/watchlist';
 import { DownloadModal } from '@/components/download/DownloadModal';
+import { CastSection } from '@/components/cast/CastSection';
 
 interface Genre { id: number; name: string; }
 interface Language { english_name: string; }
@@ -180,39 +181,8 @@ export default function MovieDetailPage() {
             </div>
           </div>
 
-          {/* Cast Members (Positioned under the poster) */}
-          <div className="space-y-3 pt-2">
-            <h3 className="text-[10px] font-black tracking-[0.25em] text-slate-400 dark:text-slate-500 uppercase select-none">
-              Cast & Crew
-            </h3>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(credits?.cast)?.slice(0, 8).map((actor) => (
-                <div key={actor.id} className="flex items-center gap-3 bg-white dark:bg-slate-900/50 backdrop-blur-sm border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-2xl shadow-sm hover:shadow-md transition">
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 shrink-0">
-                    {actor.profile_path ? (
-                      <img 
-                        src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`} 
-                        alt={actor.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-[9px] font-bold">
-                        N/A
-                      </div>
-                    )}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-black text-slate-800 dark:text-slate-150 truncate leading-tight">{actor.name}</p>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5">{actor.character}</p>
-                  </div>
-                </div>
-              ))}
-              {(!(credits?.cast) || credits.cast.length === 0) && (
-                <p className="text-xs text-slate-400 col-span-2">No cast information available.</p>
-              )}
-            </div>
-          </div>
+          {/* Cast Members — collapsible on mobile, always visible on desktop */}
+          <CastSection credits={credits} />
         </div>
 
         {/* RIGHT COLUMN: Backdrop Banner, Overview & Related */}

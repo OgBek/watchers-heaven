@@ -146,9 +146,16 @@ export const ApiGateway = {
     if (cached) return cached;
 
     const FALLBACK: TouStreamChannel[] = [
+      { slug: 'cnn', name: 'CNN' },
+      { slug: 'bbcnews', name: 'BBC News' },
+      { slug: 'espn', name: 'ESPN' },
+      { slug: 'foxnews', name: 'Fox News' },
+      { slug: 'bloomberg', name: 'Bloomberg' },
       { slug: 'cartoonnetwork', name: 'Cartoon Network' },
       { slug: 'disneychannel', name: 'Disney Channel' },
-      { slug: 'nickelodeon', name: 'Nickelodeon' }
+      { slug: 'nickelodeon', name: 'Nickelodeon' },
+      { slug: 'natgeo', name: 'National Geographic' },
+      { slug: 'discovery', name: 'Discovery Channel' },
     ];
 
     try {
@@ -225,6 +232,35 @@ export const ApiGateway = {
     return type === 'movie'
       ? `${base}/movie/${id}`
       : `${base}/tv/${id}/${season || 1}/${episode || 1}`;
+  },
+
+  // --- VidSync API ---
+  getVidSyncUrl: (
+    id: string | number,
+    type: 'movie' | 'tv',
+    season?: number,
+    episode?: number,
+    options?: {
+      autoPlay?: boolean;
+      startTime?: number;        // resume position in seconds
+      defaultServer?: string;    // e.g. 'cinevault'
+      theme?: string;            // hex without #
+      nextButton?: boolean;      // TV only — show at 90%
+      autoNext?: boolean;        // TV only — requires nextButton
+    }
+  ): string => {
+    const base = 'https://vidsync.live/embed';
+    const url = type === 'movie'
+      ? new URL(`${base}/movie/${id}`)
+      : new URL(`${base}/tv/${id}/${season || 1}/${episode || 1}`);
+
+    if (options?.autoPlay !== undefined) url.searchParams.set('autoPlay', String(options.autoPlay));
+    if (options?.startTime !== undefined && options.startTime > 0) url.searchParams.set('startTime', String(options.startTime));
+    if (options?.defaultServer) url.searchParams.set('defaultServer', options.defaultServer);
+    if (options?.theme) url.searchParams.set('theme', options.theme);
+    if (options?.nextButton !== undefined) url.searchParams.set('nextButton', String(options.nextButton));
+    if (options?.autoNext !== undefined) url.searchParams.set('autoNext', String(options.autoNext));
+    return url.toString();
   },
 
   // --- VidRock API ---

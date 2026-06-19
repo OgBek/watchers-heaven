@@ -9,18 +9,123 @@
 
 | Rank | 🎬 Movies | 📺 TV Shows | 🎌 Anime |
 |------|-----------|-------------|---------|
-| 1 ⭐ | VidFast | VidRock | Videasy |
-| 2 | VidRock | VidFast | VidRock |
-| 3 | Videasy | Videasy | VidFast |
-| 4 | VidLink | VidLink | VidLink |
-| 5 | Vidsrc | Vidsrc | Vidsrc |
-| 6 | Vidsrc.to | Vidsrc.to | Vidsrc.to |
-| 7 | VidKing | VidKing | VidKing |
-| 8 | ScreenScape | ScreenScape | ScreenScape |
-| 9 | TouStream | TouStream | TouStream |
-| 10 | RiveStream | RiveStream | RiveStream |
+| 1 ⭐ | VidSync | VidRock | Videasy |
+| 2 | VidFast | VidFast | VidRock |
+| 3 | VidRock | Videasy | VidFast |
+| 4 | Videasy | VidLink | VidLink |
+| 5 | VidLink | Vidsrc | Vidsrc |
+| 6 | Vidsrc | Vidsrc.to | Vidsrc.to |
+| 7 | Vidsrc.to | VidKing | VidKing |
+| 8 | VidKing | ScreenScape | ScreenScape |
+| 9 | ScreenScape | TouStream | TouStream |
+| 10 | TouStream | RiveStream | RiveStream |
+| 11 | RiveStream | — | — |
 
-The watch page automatically sets the best default provider and reorders the server switcher based on the content type being played.
+### Why VidSync leads for Movies
+
+| Feature | VidSync | VidFast | VidRock |
+|---------|:-------:|:-------:|:-------:|
+| Resume via URL param | ✅ `startTime` | ✅ `startAt` | ❌ |
+| Server picker param | ✅ `defaultServer` | ❌ | ❌ |
+| `PLAYER_EVENT` with title+poster | ✅ | ❌ | ❌ |
+| `MEDIA_DATA` normalized entry | ✅ full entry | partial | partial |
+| On-demand `getMediaData` command | ✅ | ❌ | ❌ |
+| `autoNext` TV | ✅ | ✅ | ✅ |
+| Theme color | ✅ | ✅ | ✅ |
+| TMDB + IMDB IDs | TMDB only | ✅ both | ✅ both |
+
+---
+
+## VidSync ⭐ Movies
+
+**Base URL:** `https://vidsync.live/embed`  
+**Accepts:** TMDB ID only  
+**Events:** `VIDSYNC_PLAYER_EVENT` + `VIDSYNC_MEDIA_DATA` (richest payload of all providers)
+
+```
+https://vidsync.live/embed/movie/{tmdbId}
+https://vidsync.live/embed/tv/{tmdbId}/{season}/{episode}
+```
+
+**Parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `autoPlay` | boolean | Auto-start playback |
+| `startTime` | number | Resume position in seconds |
+| `defaultServer` | string | Preferred server name (e.g. `cinevault`) |
+| `theme` | string | Hex color without `#` |
+| `nextButton` | boolean | TV only — show next episode button at 90% |
+| `autoNext` | boolean | TV only — auto-play next (requires `nextButton`) |
+
+**Gateway method**
+
+```ts
+ApiGateway.getVidSyncUrl(id, type, season?, episode?, options?)
+```
+
+**Events**
+
+VidSync uses prefixed event types and includes the full normalized progress entry:
+
+```ts
+window.addEventListener('message', (event) => {
+  const msg = event.data;
+  if (!msg || typeof msg !== 'object') return;
+
+  if (msg.type === 'VIDSYNC_PLAYER_EVENT') {
+    const { event: name, currentTime, duration, title, poster, progress } = msg.data;
+    // progress.watched, progress.duration, progress.lastUpdated
+  }
+
+  if (msg.type === 'VIDSYNC_MEDIA_DATA') {
+    // msg.data.entry — full normalized object, ready to persist
+    // stored locally under localStorage['vidSyncProgress']
+  }
+});
+```
+
+**On-demand status request** (unique to VidSync):
+
+```ts
+iframeRef.contentWindow?.postMessage(
+  { type: 'VIDSYNC_PLAYER_COMMAND', action: 'getMediaData' },
+  '*'
+);
+```
+
+**VIDSYNC_PLAYER_EVENT payload shape:**
+
+```json
+{
+  "type": "VIDSYNC_PLAYER_EVENT",
+  "data": {
+    "event": "timeupdate",
+    "currentTime": 352.42,
+    "duration": 2667.23,
+    "tmdbId": 533535,
+    "mediaType": "movie",
+    "title": "Deadpool & Wolverine",
+    "poster": "https://image.tmdb.org/...jpg",
+    "playing": true,
+    "muted": false,
+    "volume": 1,
+    "progress": {
+      "watched": 352.42,
+      "duration": 2667.23,
+      "lastUpdated": 1746975000000
+    }
+  }
+}
+```
+
+**Examples**
+
+```
+https://vidsync.live/embed/movie/299534?autoPlay=true&theme=007bff
+https://vidsync.live/embed/movie/278?startTime=120&defaultServer=cinevault
+https://vidsync.live/embed/tv/66732/1/5?nextButton=true&autoNext=true
+```
 
 ---
 

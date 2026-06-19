@@ -1,5 +1,5 @@
 'use client';
-import { Play, Bookmark, RefreshCw, Image as ImageIcon } from 'lucide-react';
+import { Play, Bookmark, RefreshCw, Image as ImageIcon, Star } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useRef } from 'react';
 import { isInWatchlist, toggleWatchlistItem } from '@/lib/watchlist';
@@ -12,6 +12,10 @@ interface Movie {
   poster_path?: string;
   overview?: string;
   media_type?: string;
+  vote_average?: number;
+  release_date?: string;
+  first_air_date?: string;
+  genre_ids?: number[];
 }
 
 interface HeroFeatureProps {
@@ -136,7 +140,7 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
         </div>
 
         {/* Floating Info Card */}
-        <div className="absolute bottom-[-1px] left-1/2 -translate-x-1/2 z-40 w-full sm:w-[420px] h-[110px] flex justify-center">
+        <div className="absolute bottom-[-1px] left-1/2 -translate-x-1/2 z-40 w-full sm:w-[460px] h-[120px] flex justify-center">
           <div className="w-full h-full flex items-center gap-3 bg-[var(--color-surface-primary)] dark:bg-[var(--color-surface-secondary)] px-5 pt-8 pb-3.5 hero-tab">
             
             {/* Left Side: Vertical Category Marker */}
@@ -146,13 +150,35 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
               </span>
             </div>
 
-            {/* Right Side: Title & Actions */}
-            <div className="flex flex-col flex-1 min-w-0">
-              <h2 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white mb-1.5 truncate">
-                {currentMovie.title || currentMovie.name || "Loading Title..."}
-              </h2>
-              
-              <div className="flex items-center gap-1.5 w-full">
+            {/* Right Side: Title, Meta & Actions */}
+            <div className="flex flex-col flex-1 min-w-0 gap-1">
+              {/* Title + Rating row */}
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white truncate flex-1">
+                  {currentMovie.title || currentMovie.name || 'Loading Title...'}
+                </h2>
+                {currentMovie.vote_average !== undefined && currentMovie.vote_average > 0 && (
+                  <div className="flex items-center gap-0.5 bg-yellow-400/10 border border-yellow-400/20 px-1.5 py-0.5 rounded-lg shrink-0">
+                    <Star className="w-2.5 h-2.5 fill-yellow-400 text-yellow-400" />
+                    <span className="text-[10px] font-black text-yellow-500 dark:text-yellow-400">
+                      {currentMovie.vote_average.toFixed(1)}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Year + type meta */}
+              {(() => {
+                const year = (currentMovie.release_date || currentMovie.first_air_date || '').slice(0, 4);
+                return year ? (
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold -mt-0.5">
+                    {year} · {isTV ? 'Series' : 'Film'}
+                  </p>
+                ) : null;
+              })()}
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-1.5 w-full mt-0.5">
                 <button 
                   onClick={handleWatch}
                   className="flex items-center justify-center gap-1 bg-[var(--color-accent-blue)] text-white px-3 py-1.5 rounded-xl text-xs font-bold shadow-sm transition hover:brightness-110"
@@ -181,9 +207,7 @@ export function HeroFeature({ movies }: HeroFeatureProps) {
                 </button>
 
                 <button 
-                  onClick={() => {
-                    setActiveIndex((prev) => (prev + 1) % movies.length);
-                  }}
+                  onClick={() => setActiveIndex((prev) => (prev + 1) % movies.length)}
                   className="p-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
                   title="Next Slide"
                 >

@@ -22,9 +22,8 @@ export function PosterCard({ id, title, posterPath, rating, year, className, typ
 
   const handleClick = () => {
     if (type === 'anime') {
-      // Anime uses TMDB TV IDs but routes to watch with type=anime so the
-      // watch page can pick the best server (Videasy first)
-      router.push(`/${locale}/tv/${id}`);
+      // Anime: go to TV detail page but with ?from=anime so Watch button passes type=anime
+      router.push(`/${locale}/tv/${id}?from=anime`);
     } else {
       router.push(`/${locale}/${type}/${id}`);
     }

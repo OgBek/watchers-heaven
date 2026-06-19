@@ -5,7 +5,7 @@ import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DownloadModal } from '@/components/download/DownloadModal';
 
-type Provider = 'vidrock' | 'videasy' | 'vidfast' | 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
+type Provider = 'vidsync' | 'vidrock' | 'videasy' | 'vidfast' | 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
 
 export default function WatchPage() {
   const params = useParams();
@@ -21,7 +21,7 @@ export default function WatchPage() {
   const isAnime = searchParams.get('type') === 'anime';
 
   const [provider, setProvider] = useState<Provider>(
-    isAnime ? 'videasy' : isTv ? 'vidrock' : 'vidfast'
+    isAnime ? 'videasy' : isTv ? 'vidrock' : 'vidsync'
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showDownload, setShowDownload] = useState(false);
@@ -72,6 +72,20 @@ export default function WatchPage() {
     const startProgress = initialProgressApplied ? savedProgress : 0;
 
     switch (provider) {
+      case 'vidsync':
+        return ApiGateway.getVidSyncUrl(
+          id,
+          isTv ? 'tv' : 'movie',
+          season,
+          episode,
+          {
+            autoPlay: true,
+            theme: accentColor,
+            startTime: startProgress > 0 ? startProgress : undefined,
+            nextButton: isTv ? false : undefined, // we handle next episode ourselves
+            autoNext: false,
+          }
+        );
       case 'vidrock':
         return ApiGateway.getVidRockUrl(
           id,
@@ -247,6 +261,17 @@ export default function WatchPage() {
   useEffect(() => {
     if (iframeRef.current && !showResumePrompt) {
       iframeRef.current.src = getEmbedUrl();
+      // For VidSync: request saved progress snapshot immediately after load
+      if (provider === 'vidsync') {
+        const frame = iframeRef.current;
+        const onLoad = () => {
+          frame.contentWindow?.postMessage(
+            { type: 'VIDSYNC_PLAYER_COMMAND', action: 'getMediaData' },
+            '*'
+          );
+        };
+        frame.addEventListener('load', onLoad, { once: true });
+      }
     }
   }, [provider, initialProgressApplied, showResumePrompt, getEmbedUrl]);
 
@@ -363,6 +388,28 @@ export default function WatchPage() {
         if (duration > 0) saveProgress(currentTime, duration);
       }
 
+      // --- VidSync VIDSYNC_PLAYER_EVENT ---
+      if (eventData.type === 'VIDSYNC_PLAYER_EVENT' && eventData.data) {
+        const d = eventData.data as Record<string, unknown>;
+        const currentTime = d.currentTime as number | undefined;
+        const duration = d.duration as number | undefined;
+        if (currentTime !== undefined && duration !== undefined) {
+          saveProgress(currentTime, duration);
+        }
+      }
+
+      // --- VidSync VIDSYNC_MEDIA_DATA — full normalized progress entry ---
+      if (eventData.type === 'VIDSYNC_MEDIA_DATA' && eventData.data) {
+        const d = eventData.data as Record<string, unknown>;
+        try {
+          const existing = localStorage.getItem('vidSyncProgress');
+          const store: Record<string, unknown> = existing ? JSON.parse(existing) : {};
+          const entryKey = isTv ? `t${id}` : `m${id}`;
+          store[entryKey] = { ...((store[entryKey] as Record<string, unknown>) || {}), ...d };
+          localStorage.setItem('vidSyncProgress', JSON.stringify(store));
+        } catch { /* silently skip */ }
+      }
+
       // --- VidFast / VidLink / VidRock PLAYER_EVENT (live playback updates) ---
       if (eventData.type === 'PLAYER_EVENT' && eventData.data) {
         // Validate origin for VidFast events
@@ -469,7 +516,8 @@ export default function WatchPage() {
   // Providers ordered by best fit for the current content type
   // ⭐ marks the recommended server for that content type
   const allProviders: { id: Provider; name: string; quality: string; badge?: string; best: ('movie' | 'tv' | 'anime')[] }[] = [
-    { id: 'vidfast',     name: 'VidFast',     quality: '1080p / HLS',     badge: '⭐', best: ['movie'] },
+    { id: 'vidsync',     name: 'VidSync',     quality: '1080p / HLS',     badge: '⭐', best: ['movie'] },
+    { id: 'vidfast',     name: 'VidFast',     quality: '1080p / HLS',     best: ['movie'] },
     { id: 'vidrock',     name: 'VidRock',     quality: '1080p / Multi',   badge: '⭐', best: ['tv'] },
     { id: 'videasy',     name: 'Videasy',     quality: '1080p / Multi',   badge: '⭐', best: ['anime'] },
     { id: 'vidlink',     name: 'VidLink',     quality: '1080p / HLS',     best: ['movie', 'tv', 'anime'] },
