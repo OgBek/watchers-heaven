@@ -10,7 +10,8 @@ import {
   VylaMeta,
   VylaSource,
   VylaSubtitle,
-  VylaErrorClass
+  VylaErrorClass,
+  VylaEvent
 } from '../../lib/api/vyla-client';
 
 export interface VylaPlayerHandle {
@@ -91,7 +92,8 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
     setActiveSourceIdx(idx);
     setError(null);
     loadHls(src.url, streamId.current);
-  }, [sources, loadHls]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sources]);
 
   const handlePlaybackError = useCallback((errClass: VylaErrorClass) => {
     const { nextIdx } = VylaClient.handleRetries(sources, activeSourceIdx, errClass);
@@ -165,10 +167,14 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
 
     const fetchStream = async () => {
         try {
-            const tmdbIdStr = id.toString();
-            const generator = type === 'movie' 
-                ? VylaClient.streamMovie(tmdbIdStr, controller.signal)
-                : VylaClient.streamTV(tmdbIdStr, season || 1, episode || 1, controller.signal);
+            let generatorPromise: Promise<AsyncGenerator<VylaEvent, void, unknown>>;
+            if (type === 'tv' && season !== undefined && episode !== undefined) {
+                generatorPromise = VylaClient.streamTV(id.toString(), season, episode, controller.signal);
+            } else {
+                generatorPromise = VylaClient.streamMovie(id.toString(), controller.signal);
+            }
+
+            const generator = await generatorPromise;
             
             let firstSource = true;
 

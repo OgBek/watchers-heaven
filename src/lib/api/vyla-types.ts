@@ -76,7 +76,8 @@ export type VylaErrorClass =
   | 'NoSources'
   | 'NetworkError'
   | 'ParsingError'
-  | 'PlaybackError';
+  | 'PlaybackError'
+  | 'TimeoutError';
 
 export interface VylaError {
   classification: VylaErrorClass;
