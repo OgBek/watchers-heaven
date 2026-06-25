@@ -2,13 +2,14 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useWatchPartyStore } from '@/stores/watch-party-store';
 import { supabase } from '@/lib/supabase/client';
 import { calculateLatencyCompensation, computeSyncStatus, shouldCorrectDrift } from '@/lib/watch-party/sync';
-import { RealtimePartyPayload } from '@/types/watch-party';
-import { PlayerHandle } from '@/types/watch-party';
+import { PlayerHandle, RealtimePartyPayload, WatchPartyMember, BroadcastKickPayload } from '@/types/watch-party';
+import { useRouter } from 'next/navigation';
 
 const SYNC_INTERVAL_MS = 5000; // 5 seconds
 
 export function useWatchParty(roomCode: string, playerRef: React.RefObject<PlayerHandle | null>) {
   const store = useWatchPartyStore();
+  const router = useRouter();
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // 1. Ensure Auth Session
@@ -106,6 +107,37 @@ export function useWatchParty(roomCode: string, playerRef: React.RefObject<Playe
             }
             
             store.setViewerCount(count);
+
+            // Build members list
+            let guestCounter = 1;
+            const newMembers: WatchPartyMember[] = [];
+            
+            // Host is always first if present
+            if (state[party.host_user_id]) {
+              newMembers.push({
+                userId: party.host_user_id,
+                name: 'Host',
+                role: 'host'
+              });
+            }
+
+            for (const key of Object.keys(state)) {
+              if (key === party.host_user_id) continue;
+              newMembers.push({
+                userId: key,
+                name: `Guest ${guestCounter++}`,
+                role: 'guest'
+              });
+            }
+            store.setMembers(newMembers);
+          })
+          .on('broadcast', { event: 'kick' }, (payload) => {
+            const data = payload.payload as BroadcastKickPayload;
+            if (data.targetUserId === store.userId) {
+              supabase.removeChannel(channel);
+              store.setError('You have been kicked by the host.');
+              store.setConnectionStatus('disconnected');
+            }
           })
           .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
@@ -224,9 +256,20 @@ export function useWatchParty(roomCode: string, playerRef: React.RefObject<Playe
     }
   }, [store.isHost, roomCode, store.playing]);
 
+  const kickUser = useCallback((targetUserId: string) => {
+    if (!store.isHost || !store.party) return;
+    
+    supabase.channel(`party:${store.party.id}`).send({
+      type: 'broadcast',
+      event: 'kick',
+      payload: { targetUserId } as BroadcastKickPayload
+    });
+  }, [store.isHost, store.party]);
+
   return {
     handlePlay,
     handlePause,
     handleSeek,
+    kickUser
   };
 }

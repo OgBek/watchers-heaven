@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { ConnectionStatus, SyncStatus, WatchParty, RealtimePartyPayload } from '@/types/watch-party';
+import { ConnectionStatus, RealtimePartyPayload, SyncStatus, WatchParty, WatchPartyMember } from '@/types/watch-party';
 
 interface WatchPartyState {
   party: WatchParty | null;
@@ -10,6 +10,7 @@ interface WatchPartyState {
   connectionStatus: ConnectionStatus;
   syncStatus: SyncStatus;
   viewerCount: number;
+  members: WatchPartyMember[];
   error: string | null;
   
   // Actions
@@ -21,6 +22,7 @@ interface WatchPartyState {
   setConnectionStatus: (status: ConnectionStatus) => void;
   setSyncStatus: (status: SyncStatus) => void;
   setViewerCount: (count: number) => void;
+  setMembers: (members: WatchPartyMember[]) => void;
   setError: (error: string | null) => void;
   handleRealtimeUpdate: (payload: RealtimePartyPayload) => void;
   reset: () => void;
@@ -35,6 +37,7 @@ export const useWatchPartyStore = create<WatchPartyState>((set, get) => ({
   connectionStatus: 'disconnected',
   syncStatus: 'synced',
   viewerCount: 1,
+  members: [],
   error: null,
 
   setParty: (party) => set({ party }),
@@ -45,6 +48,7 @@ export const useWatchPartyStore = create<WatchPartyState>((set, get) => ({
   setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
   setSyncStatus: (syncStatus) => set({ syncStatus }),
   setViewerCount: (viewerCount) => set({ viewerCount }),
+  setMembers: (members) => set({ members }),
   setError: (error) => set({ error }),
   
   handleRealtimeUpdate: (payload) => {
@@ -72,6 +76,7 @@ export const useWatchPartyStore = create<WatchPartyState>((set, get) => ({
     connectionStatus: 'disconnected',
     syncStatus: 'synced',
     viewerCount: 1,
+    members: [],
     error: null,
   })
 }));

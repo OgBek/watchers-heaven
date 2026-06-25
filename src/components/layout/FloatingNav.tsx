@@ -39,6 +39,11 @@ export function FloatingNav() {
 
   const localePath = (path: string) => `/${locale}${path === '/' ? '' : path}`;
 
+  // Hide navigation entirely when in a Watch Party room
+  if (currentPath.startsWith('/party/')) {
+    return null;
+  }
+
   return (
     <nav className="fixed bottom-3 left-3 right-3 lg:bottom-auto lg:left-4 lg:right-auto lg:top-1/2 lg:-translate-y-1/2 z-50 flex items-center justify-center">
       <div className="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md rounded-2xl lg:rounded-3xl shadow-2xl border border-slate-100 dark:border-slate-700/60 flex flex-row lg:flex-col items-center py-2 px-3 lg:py-4 lg:px-1 w-full lg:w-14 h-14 lg:h-auto lg:max-h-[85vh] gap-1.5 justify-between lg:justify-start lg:overflow-visible">

@@ -45,6 +45,12 @@ export interface PlaybackUpdate {
 
 // ─── UI State Types ─────────────────────────────────────────────────────────
 
+export interface WatchPartyMember {
+  userId: string;
+  name: string;
+  role: 'host' | 'guest';
+}
+
 export interface PlayerHandle {
   play: () => void;
   pause: () => void;
@@ -63,4 +69,8 @@ export interface RealtimePartyPayload {
   new: WatchParty;
   old: Partial<WatchParty>;
   eventType: 'UPDATE';
+}
+
+export interface BroadcastKickPayload {
+  targetUserId: string;
 }

@@ -1,9 +1,21 @@
 'use client';
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import { Code, Code2, HelpCircle, ChevronDown, ExternalLink } from 'lucide-react';
 
 export function Footer() {
   const [isApiOpen, setIsApiOpen] = useState(false);
+  const pathname = usePathname() || '/';
+  
+  // Extract locale
+  const segments = pathname.split('/').filter(Boolean);
+  const locale = segments[0] && ['en','am','om','ti','so'].includes(segments[0]) ? segments[0] : 'en';
+  const currentPath = '/' + segments.slice(1).join('/');
+
+  // Hide footer entirely when in a Watch Party room
+  if (currentPath.startsWith('/party/')) {
+    return null;
+  }
 
   return (
     <footer className="w-full mt-20 border-t border-slate-100 dark:border-slate-800/80 bg-white/50 dark:bg-slate-900/30 backdrop-blur-md transition-colors duration-300">

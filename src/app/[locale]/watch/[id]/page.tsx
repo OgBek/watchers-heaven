@@ -35,7 +35,7 @@ export default function WatchPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleCreateParty = async () => {
-    if (!['vyla', 'vidsync'].includes(provider)) return;
+    if (provider !== 'vyla') return;
     setIsCreatingParty(true);
     try {
       // 1. Ensure user has a session to create the party
@@ -669,14 +669,12 @@ export default function WatchPage() {
         </div>
       </div>
 
-      {/* Watch Party Banner */}
-      {['vyla', 'vidsync'].includes(provider) && (
-        <div className="bg-blue-900/40 border-b border-blue-800/50 px-4 py-2 flex items-center justify-between z-10">
-          <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-blue-400" />
-            <span className="text-sm font-semibold text-blue-100">
-              Watch Party mode — Powered by {providersList.find(p => p.id === provider)?.name || provider}
-            </span>
+      {/* Watch Party Banner — Vyla only (only provider with full playback control) */}
+      {provider === 'vyla' && (
+        <div className="bg-gradient-to-r from-blue-900/50 via-blue-900/40 to-indigo-900/50 border-b border-blue-800/50 px-4 py-2.5 flex items-center justify-between z-10">
+          <div className="flex items-center gap-2.5">
+            <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            <span className="text-sm font-semibold text-blue-100">Watch Party available — Powered by Vyla</span>
           </div>
           <button
             onClick={handleCreateParty}
