@@ -3,11 +3,11 @@ import { useWatchPartyStore } from '@/stores/watch-party-store';
 import { supabase } from '@/lib/supabase/client';
 import { calculateLatencyCompensation, computeSyncStatus, shouldCorrectDrift } from '@/lib/watch-party/sync';
 import { RealtimePartyPayload } from '@/types/watch-party';
-import { VylaPlayerHandle } from '@/components/player/VylaPlayer';
+import { PlayerHandle } from '@/types/watch-party';
 
 const SYNC_INTERVAL_MS = 5000; // 5 seconds
 
-export function useWatchParty(roomCode: string, playerRef: React.RefObject<VylaPlayerHandle | null>) {
+export function useWatchParty(roomCode: string, playerRef: React.RefObject<PlayerHandle | null>) {
   const store = useWatchPartyStore();
   const syncIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -55,9 +55,22 @@ export function useWatchParty(roomCode: string, playerRef: React.RefObject<VylaP
           playerRef.current.seekTo(party.current_time);
         }
 
-        // Setup Realtime
+        // Cleanup any existing channel for this topic (fixes StrictMode re-mount errors)
+        const topic = `party:${party.id}`;
+        const existingChannels = supabase.getChannels().filter((c) => c.topic === topic);
+        for (const c of existingChannels) {
+          await supabase.removeChannel(c);
+        }
+
+        // Setup Realtime with Presence
         channel = supabase
-          .channel(`party:${party.id}`)
+          .channel(topic, {
+            config: {
+              presence: {
+                key: store.userId || undefined,
+              },
+            },
+          })
           .on(
             'postgres_changes',
             {
@@ -80,9 +93,24 @@ export function useWatchParty(roomCode: string, playerRef: React.RefObject<VylaP
               }
             }
           )
-          .subscribe((status) => {
+          .on('presence', { event: 'sync' }, () => {
+            const state = channel.presenceState();
+            const count = Object.keys(state).length;
+            
+            // Enforce max 10 users limit (if we are a guest and the room is full)
+            if (count > 10 && store.userId !== party.host_user_id) {
+              supabase.removeChannel(channel);
+              store.setError('Room is full (max 10 people)');
+              store.setConnectionStatus('disconnected');
+              return;
+            }
+            
+            store.setViewerCount(count);
+          })
+          .subscribe(async (status) => {
             if (status === 'SUBSCRIBED') {
               store.setConnectionStatus('connected');
+              await channel.track({ user: store.userId });
             } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
               store.setConnectionStatus('disconnected');
             }

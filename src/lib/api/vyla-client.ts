@@ -20,7 +20,7 @@ export class VylaClient {
 
     globalTokenPromise = (async () => {
       try {
-        const res = await fetch(`${BASE_URL}/api/auth`, { method: 'POST' });
+        const res = await fetch('/api/vyla/auth', { method: 'POST' });
         if (!res.ok) throw new Error(`Auth failed: ${res.status}`);
         const data = await res.json();
         tokenExpiresAt = Date.now() + (data.expires_in || 1800) * 1000;
@@ -83,7 +83,7 @@ export class VylaClient {
     try {
         response = await fetch(`${BASE_URL}${endpoint}`, {
         headers: {
-            'Authorization': `Bearer ${token}`,
+            'X-Session-Token': token,
             'Accept': 'text/event-stream'
         },
         signal: controller.signal
@@ -156,37 +156,61 @@ export class VylaClient {
 
   static async streamMovie(tmdbId: string, signal: AbortSignal) {
     const token = await this.getToken();
-    return this.streamMedia(`/api/stream/movie/${tmdbId}`, token, signal);
+    return this.streamMedia(`/movie?id=${tmdbId}`, token, signal);
   }
 
   static async streamTV(tmdbId: string, season: number, episode: number, signal: AbortSignal) {
     const token = await this.getToken();
-    return this.streamMedia(`/api/stream/tv/${tmdbId}/${season}/${episode}`, token, signal);
+    return this.streamMedia(`/tv?id=${tmdbId}&season=${season}&episode=${episode}`, token, signal);
   }
 
   // --- Ancillary Data ---
   static async getDownloads(type: 'movie' | 'tv', id: string | number, season?: number, episode?: number, signal?: AbortSignal): Promise<VylaDownload[]> {
       let url: string;
       if (type === 'tv' && season !== undefined && episode !== undefined) {
-          url = `${BASE_URL}/downloads/tv/${id}/${season}/${episode}`;
+          url = `${BASE_URL}/api/downloads/tv/${id}/${season}/${episode}`;
       } else {
-          url = `${BASE_URL}/downloads/movie/${id}`;
+          url = `${BASE_URL}/api/downloads/movie/${id}`;
       }
 
-      const res = await fetch(url, { signal });
-      if (!res.ok) throw new Error(`Download API returned ${res.status}`);
-      const data = await res.json() as { downloads?: VylaDownload[] } | VylaDownload[];
-      const downloads: VylaDownload[] = Array.isArray(data) ? data : data.downloads ?? [];
-      const active = downloads.filter((d) => d.active !== false);
-      if (active.length === 0) throw new Error('No download links available');
-      return active;
+      try {
+          const token = await this.getToken();
+          const res = await fetch(url, {
+              headers: { 'X-Session-Token': token },
+              signal
+          });
+          if (!res.ok) throw new Error(`Download API returned ${res.status}`);
+          const data = await res.json() as { downloads?: VylaDownload[] } | VylaDownload[];
+          const downloads: VylaDownload[] = Array.isArray(data) ? data : data.downloads ?? [];
+          const active = downloads.filter((d) => d.active !== false);
+          if (active.length === 0) throw new Error('No download links available');
+          return active;
+      } catch {
+          const res = await fetch(url, { signal });
+          if (!res.ok) throw new Error(`Download API returned ${res.status}`);
+          const data = await res.json() as { downloads?: VylaDownload[] } | VylaDownload[];
+          const downloads: VylaDownload[] = Array.isArray(data) ? data : data.downloads ?? [];
+          const active = downloads.filter((d) => d.active !== false);
+          if (active.length === 0) throw new Error('No download links available');
+          return active;
+      }
   }
 
   static async getSubtitles(tmdbId: string): Promise<VylaSubtitle[]> {
-      const res = await fetch(`${BASE_URL}/api/subtitles/${tmdbId}`);
-      if (!res.ok) return [];
-      const data = await res.json();
-      return data.subtitles || [];
+      try {
+          const token = await this.getToken();
+          const res = await fetch(`${BASE_URL}/api/subtitles/movie/${tmdbId}`, {
+              headers: { 'X-Session-Token': token }
+          });
+          if (!res.ok) return [];
+          const data = await res.json();
+          return data.subtitles || [];
+      } catch {
+          const res = await fetch(`${BASE_URL}/api/subtitles/movie/${tmdbId}`);
+          if (!res.ok) return [];
+          const data = await res.json();
+          return data.subtitles || [];
+      }
   }
 
   // --- Health & Circuit Breaker ---

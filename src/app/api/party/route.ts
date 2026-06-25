@@ -5,12 +5,18 @@ import { generateRoomCode } from '@/lib/watch-party/room-code';
 
 export async function POST(req: NextRequest) {
   try {
-    const supabase = createServerSupabaseClient();
+    const authHeader = req.headers.get('Authorization');
+    const token = authHeader?.split('Bearer ')[1];
+    if (!token) {
+      return NextResponse.json({ error: 'Missing authorization token' }, { status: 401 });
+    }
+
+    const supabase = createServerSupabaseClient(token);
     
     // 1. Ensure user is authenticated (anonymously or otherwise)
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
-    if (authError || !session) {
+    if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -40,7 +46,7 @@ export async function POST(req: NextRequest) {
         season: data.season ?? null,
         episode: data.episode ?? null,
         provider: data.provider,
-        host_user_id: session.user.id,
+        host_user_id: user.id,
         playing: false,
         current_time: 0,
         status: 'active'

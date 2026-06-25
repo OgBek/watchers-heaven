@@ -9,6 +9,7 @@ interface WatchPartyState {
   currentTime: number;
   connectionStatus: ConnectionStatus;
   syncStatus: SyncStatus;
+  viewerCount: number;
   error: string | null;
   
   // Actions
@@ -19,6 +20,7 @@ interface WatchPartyState {
   setCurrentTime: (time: number) => void;
   setConnectionStatus: (status: ConnectionStatus) => void;
   setSyncStatus: (status: SyncStatus) => void;
+  setViewerCount: (count: number) => void;
   setError: (error: string | null) => void;
   handleRealtimeUpdate: (payload: RealtimePartyPayload) => void;
   reset: () => void;
@@ -32,6 +34,7 @@ export const useWatchPartyStore = create<WatchPartyState>((set, get) => ({
   currentTime: 0,
   connectionStatus: 'disconnected',
   syncStatus: 'synced',
+  viewerCount: 1,
   error: null,
 
   setParty: (party) => set({ party }),
@@ -41,6 +44,7 @@ export const useWatchPartyStore = create<WatchPartyState>((set, get) => ({
   setCurrentTime: (currentTime) => set({ currentTime }),
   setConnectionStatus: (connectionStatus) => set({ connectionStatus }),
   setSyncStatus: (syncStatus) => set({ syncStatus }),
+  setViewerCount: (viewerCount) => set({ viewerCount }),
   setError: (error) => set({ error }),
   
   handleRealtimeUpdate: (payload) => {
@@ -67,6 +71,7 @@ export const useWatchPartyStore = create<WatchPartyState>((set, get) => ({
     currentTime: 0,
     connectionStatus: 'disconnected',
     syncStatus: 'synced',
+    viewerCount: 1,
     error: null,
   })
 }));

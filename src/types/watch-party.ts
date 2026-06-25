@@ -45,6 +45,14 @@ export interface PlaybackUpdate {
 
 // ─── UI State Types ─────────────────────────────────────────────────────────
 
+export interface PlayerHandle {
+  play: () => void;
+  pause: () => void;
+  seekTo: (time: number) => void;
+  getCurrentTime: () => number;
+  isPlaying: () => boolean;
+}
+
 export type ConnectionStatus = 'connecting' | 'connected' | 'reconnecting' | 'disconnected';
 
 export type SyncStatus = 'synced' | 'syncing' | 'out-of-sync';

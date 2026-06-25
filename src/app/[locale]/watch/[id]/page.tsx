@@ -35,28 +35,33 @@ export default function WatchPage() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const handleCreateParty = async () => {
-    if (provider !== 'vyla') return;
+    if (!['vyla', 'vidsync'].includes(provider)) return;
     setIsCreatingParty(true);
     try {
       // 1. Ensure user has a session to create the party
-      const { data: { session } } = await supabase.auth.getSession();
+      let { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         const { error } = await supabase.auth.signInAnonymously();
         if (error) throw new Error('Failed to authenticate anonymously');
+        const authRes = await supabase.auth.getSession();
+        session = authRes.data.session;
       }
 
       const movieTitle = isTv ? `TV Show #${id} (S${season}E${episode})` : `Movie #${id}`;
       
       const res = await fetch('/api/party', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {})
+        },
         body: JSON.stringify({
           movieId: id,
           movieTitle,
           mediaType: isTv ? 'tv' : 'movie',
           season,
           episode,
-          provider: 'vyla'
+          provider
         })
       });
       
@@ -635,17 +640,6 @@ export default function WatchPage() {
 
         {/* Right Side: Download, Refresh & Fullscreen */}
         <div className="flex items-center gap-2 self-end md:self-auto">
-          {provider === 'vyla' && (
-            <button
-              onClick={handleCreateParty}
-              disabled={isCreatingParty}
-              className="flex items-center gap-1.5 text-white px-3 py-2 bg-blue-600/90 hover:bg-blue-500 rounded-xl transition-colors text-xs font-semibold disabled:opacity-50"
-              title="Watch Together"
-            >
-              <Users className="w-4 h-4" />
-              <span className="hidden sm:inline">{isCreatingParty ? 'Creating...' : 'Watch Party'}</span>
-            </button>
-          )}
           <button
             onClick={() => setShowDownload(true)}
             className="flex items-center gap-1.5 text-slate-400 hover:text-white px-3 py-2 bg-slate-800/80 rounded-xl transition-colors text-xs font-semibold"
@@ -674,6 +668,26 @@ export default function WatchPage() {
           </button>
         </div>
       </div>
+
+      {/* Watch Party Banner */}
+      {['vyla', 'vidsync'].includes(provider) && (
+        <div className="bg-blue-900/40 border-b border-blue-800/50 px-4 py-2 flex items-center justify-between z-10">
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-blue-400" />
+            <span className="text-sm font-semibold text-blue-100">
+              Watch Party mode — Powered by {providersList.find(p => p.id === provider)?.name || provider}
+            </span>
+          </div>
+          <button
+            onClick={handleCreateParty}
+            disabled={isCreatingParty}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+          >
+            <span className="hidden sm:inline">{isCreatingParty ? 'Creating...' : 'Create Watch Party'}</span>
+            <Users className="w-3.5 h-3.5 sm:hidden" />
+          </button>
+        </div>
+      )}
 
       {/* Main Video Frame & Overlays */}
       <div className="flex-1 flex items-center justify-center relative bg-black">

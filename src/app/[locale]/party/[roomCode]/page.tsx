@@ -4,8 +4,10 @@ import { useParams, useRouter } from 'next/navigation';
 import { useRef, useState, useEffect } from 'react';
 import { useWatchParty } from '@/hooks/use-watch-party';
 import { useWatchPartyStore } from '@/stores/watch-party-store';
-import { VylaPlayer, VylaPlayerHandle } from '@/components/player/VylaPlayer';
-import { Link2, Crown, LogOut, Loader, AlertCircle } from 'lucide-react';
+import { VylaPlayer } from '@/components/player/VylaPlayer';
+import { VidSyncPlayer } from '@/components/player/VidSyncPlayer';
+import { PlayerHandle } from '@/types/watch-party';
+import { Link2, Crown, LogOut, Loader, AlertCircle, Users } from 'lucide-react';
 
 export default function PartyRoomPage() {
   const params = useParams();
@@ -13,7 +15,7 @@ export default function PartyRoomPage() {
   const locale = (params.locale as string) || 'en';
   const roomCode = params.roomCode as string;
 
-  const playerRef = useRef<VylaPlayerHandle>(null);
+  const playerRef = useRef<PlayerHandle>(null);
   
   const { handlePlay, handlePause, handleSeek } = useWatchParty(roomCode, playerRef);
   const store = useWatchPartyStore();
@@ -100,6 +102,11 @@ export default function PartyRoomPage() {
         </div>
 
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-slate-800 rounded-lg text-xs font-bold">
+            <Users className="w-3.5 h-3.5 text-blue-400" />
+            <span>{store.viewerCount}/10</span>
+          </div>
+
           {store.isHost && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 bg-yellow-500/20 text-yellow-500 rounded-lg text-[10px] font-bold uppercase tracking-wider">
               <Crown className="w-3 h-3" />
@@ -135,16 +142,31 @@ export default function PartyRoomPage() {
 
       {/* Main Video Area */}
       <div className="flex-1 relative bg-black">
-        <VylaPlayer
-          ref={playerRef}
-          id={store.party.movie_id}
-          type={store.party.media_type}
-          season={store.party.season || undefined}
-          episode={store.party.episode || undefined}
-          onPlay={handlePlay}
-          onPause={handlePause}
-          onSeek={handleSeek}
-        />
+        {store.party.provider === 'vyla' && (
+          <VylaPlayer
+            ref={playerRef}
+            id={store.party.movie_id}
+            type={store.party.media_type}
+            season={store.party.season || undefined}
+            episode={store.party.episode || undefined}
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onSeek={handleSeek}
+          />
+        )}
+        
+        {store.party.provider === 'vidsync' && (
+          <VidSyncPlayer
+            ref={playerRef}
+            id={store.party.movie_id}
+            type={store.party.media_type}
+            season={store.party.season || undefined}
+            episode={store.party.episode || undefined}
+            onPlay={handlePlay}
+            onPause={handlePause}
+            onSeek={handleSeek}
+          />
+        )}
         
         {/* Disconnection Warning Overlay */}
         {store.connectionStatus === 'reconnecting' && (

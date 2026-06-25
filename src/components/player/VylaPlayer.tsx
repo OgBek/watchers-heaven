@@ -14,13 +14,7 @@ import {
   VylaEvent
 } from '../../lib/api/vyla-client';
 
-export interface VylaPlayerHandle {
-  play: () => void;
-  pause: () => void;
-  seekTo: (time: number) => void;
-  getCurrentTime: () => number;
-  isPlaying: () => boolean;
-}
+import { PlayerHandle } from '@/types/watch-party';
 
 export interface VylaPlayerProps {
   id: string | number;
@@ -39,7 +33,7 @@ export interface VylaPlayerProps {
 
 const MAX_QUEUE_SIZE = 20;
 
-export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
+export const VylaPlayer = forwardRef<PlayerHandle, VylaPlayerProps>(({
   id, type, season, episode, accentColor = '007bff', startAt = 0, onProgress,
   onReady, onPlay: onPlayProp, onPause: onPauseProp, onSeek, onTimeUpdate: onTimeUpdateProp
 }, ref) => {
@@ -152,6 +146,17 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
     video.play().catch(() => {});
   }, [startAt, handlePlaybackError]);
 
+  const loadHlsRef = useRef(loadHls);
+  const handlePlaybackErrorRef = useRef(handlePlaybackError);
+
+  useEffect(() => {
+    loadHlsRef.current = loadHls;
+  }, [loadHls]);
+
+  useEffect(() => {
+    handlePlaybackErrorRef.current = handlePlaybackError;
+  }, [handlePlaybackError]);
+
   const openStream = useCallback(() => {
     setSources([]);
     setSubtitles([]);
@@ -164,6 +169,7 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
 
     const currentId = ++streamId.current;
     const controller = new AbortController();
+    let localSourceCount = 0;
 
     const fetchStream = async () => {
         try {
@@ -187,6 +193,7 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
                 }
 
                 if (payload.type === 'source' && payload.source) {
+                    localSourceCount++;
                     setSources(prev => {
                         if (prev.find(s => s.source === payload.source.source && s.url === payload.source.url)) {
                             return prev;
@@ -194,18 +201,18 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
                         const next = [...prev, payload.source];
                         return VylaClient.rankSources(next).slice(0, MAX_QUEUE_SIZE);
                     });
-                    setSourceCount(c => c + 1);
+                    setSourceCount(localSourceCount);
                     setLoading(false);
 
                     if (firstSource) {
                         firstSource = false;
-                        loadHls(payload.source.url, currentId);
+                        loadHlsRef.current(payload.source.url, currentId);
                     }
                 }
 
                 if (payload.type === 'done') {
                     setDone(true);
-                    if (sourceCount === 0 && !firstSource === false) {
+                    if (localSourceCount === 0) {
                         setError('No working sources found for this title.');
                         setLoading(false);
                     }
@@ -216,7 +223,7 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
             if (streamId.current !== currentId) return;
             if (e.name === 'AbortError') return;
             setLoading(false);
-            if (sourceCount === 0) {
+            if (localSourceCount === 0) {
                 setError(e.message || 'Could not connect to Vyla API.');
             }
         }
@@ -227,7 +234,7 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
     return () => {
         controller.abort();
     };
-  }, [id, type, season, episode, loadHls, sourceCount]);
+  }, [id, type, season, episode]);
 
   useEffect(() => {
     const cleanup = openStream();
@@ -266,7 +273,7 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
     const onDurationChange = () => setDuration(video.duration || 0);
     const onVolumeChange = () => { setVolume(video.volume); setMuted(video.muted); };
     const onError = () => {
-        handlePlaybackError('PlaybackError');
+        handlePlaybackErrorRef.current('PlaybackError');
     };
     const onCanPlay = () => onReady?.();
 
@@ -286,7 +293,7 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
       video.removeEventListener('error', onError);
       video.removeEventListener('canplay', onCanPlay);
     };
-  }, [handlePlaybackError, onProgress, onPlayProp, onPauseProp, onSeek, onTimeUpdateProp, onReady]);
+  }, [onProgress, onPlayProp, onPauseProp, onSeek, onTimeUpdateProp, onReady]);
 
   useEffect(() => {
     const onChange = () => setFullscreen(!!document.fullscreenElement);

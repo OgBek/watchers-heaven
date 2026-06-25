@@ -58,13 +58,13 @@ Unlike every other provider, Vyla returns **actual verified stream URLs** you pl
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/auth` | POST | Returns a session token (valid for 30 min) |
-| `/api/stream/movie/:tmdbId` | GET (SSE) | Stream sources + meta for a movie |
-| `/api/stream/tv/:tmdbId/:season/:episode` | GET (SSE) | Stream sources + meta for a TV episode |
-| `/api/subtitles/:tmdbId` | GET | Subtitle tracks only |
-| `/downloads/movie/:tmdbId` | GET | Download links for a movie |
-| `/downloads/tv/:tmdbId/:season/:episode` | GET | Download links for a TV episode |
-| `/api/health` | GET | Per-provider health check with latency |
+| `/api/auth` | POST | Returns a session token (valid for 30 min). Requires API key header. |
+| `/movie?id=:tmdbId` | GET (SSE) | Stream sources + meta for a movie (standard/partner key only) |
+| `/tv?id=:tmdbId&season=:season&episode=:episode` | GET (SSE) | Stream sources + meta for a TV episode (standard/partner key only) |
+| `/api/subtitles/movie/:tmdbId` | GET | Subtitle tracks only |
+| `/api/downloads/movie/:tmdbId` | GET | Download links for a movie |
+| `/api/downloads/tv/:tmdbId/:season/:episode` | GET | Download links for a TV episode |
+| `/api/health` | GET | Per-provider health check with latency (public key allowed) |
 
 ### SSE Event Flow
 
@@ -120,7 +120,7 @@ The `VylaClient` singleton handles all SSE parsing, token deduplication, circuit
 ### Download endpoint
 
 ```
-GET https://missourimonster-vyla-v2.hf.space/downloads/movie/550
+GET https://missourimonster-vyla-v2.hf.space/api/downloads/movie/550
 → {
     "downloads": [
       { "url": "https://...", "quality": "720p", "size": "996 MB", "type": "mkv", "active": true },
@@ -128,7 +128,7 @@ GET https://missourimonster-vyla-v2.hf.space/downloads/movie/550
     ]
   }
 
-GET https://missourimonster-vyla-v2.hf.space/downloads/tv/1396/1/1
+GET https://missourimonster-vyla-v2.hf.space/api/downloads/tv/1396/1/1
 → { "downloads": [...] }
 ```
 
@@ -143,9 +143,9 @@ Fields: `url` (direct link), `quality` (`720p`, `1080p`, `2160p`), `size` (human
 ### Examples
 
 ```
-https://missourimonster-vyla-v2.hf.space/api/stream/movie/550
-https://missourimonster-vyla-v2.hf.space/api/stream/tv/1399/1/1
-https://missourimonster-vyla-v2.hf.space/downloads/movie/550
+https://missourimonster-vyla-v2.hf.space/movie?id=550
+https://missourimonster-vyla-v2.hf.space/tv?id=1399&season=1&episode=1
+https://missourimonster-vyla-v2.hf.space/api/downloads/movie/550
 https://missourimonster-vyla-v2.hf.space/api/health
 ```
 

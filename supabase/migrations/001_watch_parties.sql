@@ -61,3 +61,7 @@ CREATE POLICY "host_delete_party"
 
 -- 4. Enable Realtime for this table
 ALTER PUBLICATION supabase_realtime ADD TABLE watch_parties;
+
+-- 5. Grant base privileges to Supabase auth roles
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.watch_parties TO anon;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.watch_parties TO authenticated;
