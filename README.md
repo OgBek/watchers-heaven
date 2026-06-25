@@ -64,8 +64,8 @@ Browse movies, TV shows, anime, and live channels — all in one place.
   - 🎬 Movies → Vyla ⭐, VidFast ⭐, VidRock, Videasy, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream, VidSync
   - 📺 TV Shows → Vyla ⭐, VidRock ⭐, VidFast, Videasy, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream, VidSync
   - 🎌 Anime → Videasy ⭐, VidRock, VidFast, VidLink, Vidsrc, Vidsrc.to, VidKing, ScreenScape, TouStream, RiveStream, VidSync
-- **Vyla** — real HLS/MP4 streams via SSE with live verification, multi-provider fanout, built-in CORS proxy, and multi-language subtitles
-- **VylaPlayer** — custom native `<video>` player with source switcher, subtitle selector, seek bar, volume, and fullscreen
+- **Vyla v2** — real HLS/MP4 streams via SSE with live verification, session-token auth, multi-provider fanout, built-in CORS proxy, and multi-language subtitles
+- **VylaClient & VylaPlayer** — dedicated service layer for network logistics (circuit breakers, SSE parsing) and a custom native `<video>` player for UI state
 - **AniList ID resolution** — anime content automatically resolves TMDB titles → AniList IDs so Videasy gets the correct anime embed
 - **Provider-specific resume** — each server tracks its own progress independently in `localStorage`
 - **Next episode auto-advance** with a glassmorphic countdown popup and 15-second cancel window
@@ -126,7 +126,7 @@ Full i18n support via `next-intl` across 5 languages:
 | Movie Data | [TMDB API](https://developer.themoviedb.org/docs) |
 | Anime Data | [AniList GraphQL API](https://docs.anilist.co/) |
 | Live TV | [TouStream](https://toustream.xyz) |
-| Streaming | [Vyla API](https://vyla.mintlify.app/introduction) (HLS) |
+| Streaming | [Vyla v2 API](https://vyla.mintlify.app/introduction) (HLS/SSE) |
 
 ---
 
@@ -183,7 +183,7 @@ src/
 │   │   ├── movies/           # Movies browse + filters
 │   │   ├── person/[id]/      # Actor filmography (movies, TV, anime, K-Drama tabs)
 │   │   ├── tv/[id]/          # TV show detail + episode browser
-│   │   ├── watch/[id]/       # Multi-provider watch player (Vyla native + 11 iframes)
+│   │   ├── watch/[id]/       # Multi-provider watch player (VylaClient + 11 iframes)
 │   │   ├── watchlist/        # localStorage-backed bookmarks
 │   │   ├── search/           # Global search
 │   │   ├── stats/            # Viewing statistics
@@ -269,7 +269,7 @@ Covers URL structures, parameters, event formats, and gateway methods for all 10
 
 | Provider | Best For | Gateway Method |
 |----------|----------|---------------|
-| Vyla ⭐ | Movies + TV (real HLS) | `VylaPlayer` component |
+| Vyla v2 ⭐ | Movies + TV (real HLS) | `VylaClient` + `VylaPlayer` |
 | VidFast ⭐ | Movies | `getVidFastUrl()` |
 | VidRock ⭐ | TV Shows | `getVidRockUrl()` |
 | Videasy ⭐ | Anime | `getVideasyUrl()` |

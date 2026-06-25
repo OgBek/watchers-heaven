@@ -46,11 +46,11 @@
 
 ---
 
-## Vyla ⭐ Movies & TV Shows
+## Vyla v2 ⭐ Movies & TV Shows
 
-**Base URL:** `https://missourimonster-vyla.hf.space`  
+**Base URL:** `https://missourimonster-vyla-v2.hf.space`  
 **Type:** Real HLS/MP4 streams via SSE — NOT an iframe  
-**Auth:** None required · CORS: `*`
+**Auth:** Session Token required · CORS: `*`
 
 Unlike every other provider, Vyla returns **actual verified stream URLs** you play in a native `<video>` element. It fans out to 14+ backend providers in parallel, drops dead sources, and streams results back one at a time via Server-Sent Events.
 
@@ -58,17 +58,18 @@ Unlike every other provider, Vyla returns **actual verified stream URLs** you pl
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/movie?id=:tmdbId` | GET (SSE) | Stream sources + meta for a movie |
-| `/tv?id=:tmdbId&season=:s&episode=:e` | GET (SSE) | Stream sources + meta for a TV episode |
-| `/subtitles?id=:tmdbId&type=movie` | GET | Subtitle tracks only |
+| `/api/auth` | POST | Returns a session token (valid for 30 min) |
+| `/api/stream/movie/:tmdbId` | GET (SSE) | Stream sources + meta for a movie |
+| `/api/stream/tv/:tmdbId/:season/:episode` | GET (SSE) | Stream sources + meta for a TV episode |
+| `/api/subtitles/:tmdbId` | GET | Subtitle tracks only |
 | `/downloads/movie/:tmdbId` | GET | Download links for a movie |
 | `/downloads/tv/:tmdbId/:season/:episode` | GET | Download links for a TV episode |
-| `/health` | GET | Per-provider health check with latency |
+| `/api/health` | GET | Per-provider health check with latency |
 
 ### SSE Event Flow
 
 ```
-EventSource open
+EventSource open (Requires Bearer token)
   → meta    (immediate) — TMDB info + subtitles
   → source  (one per working provider)
   → source
@@ -88,7 +89,7 @@ EventSource open
 // source — one per working provider
 { type: "source",
   source: { source: "provider-key", label: "Provider Name",
-            url: "https://missourimonster-vyla.hf.space/api?url=...&pp=1" } }
+            url: "https://missourimonster-vyla-v2.hf.space/api?url=...&pp=1" } }
 
 // done — stream complete
 { type: "done", total: 14 }
@@ -100,10 +101,11 @@ The `url` in each `source` event is a fully-proxied CORS-safe stream URL:
 - **HLS** (`.m3u8`): pass directly to `hls.loadSource()` — segment and key URIs are pre-rewritten
 - **MP4**: set as `video.src` directly
 
-### Gateway component
+### Gateway component (`VylaClient` + `VylaPlayer`)
+
+The `VylaClient` singleton handles all SSE parsing, token deduplication, circuit breaking, and time-weighted EMA fallback ranking. The player only handles UI state.
 
 ```ts
-// In VylaPlayer.tsx — opens SSE, collects sources, loads first into hls.js
 <VylaPlayer
   id={tmdbId}
   type="movie" | "tv"
@@ -118,7 +120,7 @@ The `url` in each `source` event is a fully-proxied CORS-safe stream URL:
 ### Download endpoint
 
 ```
-GET https://missourimonster-vyla.hf.space/downloads/movie/550
+GET https://missourimonster-vyla-v2.hf.space/downloads/movie/550
 → {
     "downloads": [
       { "url": "https://...", "quality": "720p", "size": "996 MB", "type": "mkv", "active": true },
@@ -126,7 +128,7 @@ GET https://missourimonster-vyla.hf.space/downloads/movie/550
     ]
   }
 
-GET https://missourimonster-vyla.hf.space/downloads/tv/1396/1/1
+GET https://missourimonster-vyla-v2.hf.space/downloads/tv/1396/1/1
 → { "downloads": [...] }
 ```
 
@@ -141,10 +143,10 @@ Fields: `url` (direct link), `quality` (`720p`, `1080p`, `2160p`), `size` (human
 ### Examples
 
 ```
-https://missourimonster-vyla.hf.space/movie?id=550
-https://missourimonster-vyla.hf.space/tv?id=1399&season=1&episode=1
-https://missourimonster-vyla.hf.space/downloads?id=550&type=movie
-https://missourimonster-vyla.hf.space/health
+https://missourimonster-vyla-v2.hf.space/api/stream/movie/550
+https://missourimonster-vyla-v2.hf.space/api/stream/tv/1399/1/1
+https://missourimonster-vyla-v2.hf.space/downloads/movie/550
+https://missourimonster-vyla-v2.hf.space/api/health
 ```
 
 ---

@@ -85,7 +85,7 @@ export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
 
 
 
-  const switchSource = useCallback((idx: number) => {
+  const switchSource: (idx: number) => void = useCallback((idx: number) => {
     const src = sources[idx];
     if (!src) return;
     setActiveSourceIdx(idx);
