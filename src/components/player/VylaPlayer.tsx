@@ -1,46 +1,27 @@
 'use client';
 
-/**
- * VylaPlayer
- * Native HLS video player powered by the Vyla API.
- * Vyla fans out to multiple providers via SSE, verifies streams live,
- * and returns proxied CORS-safe HLS/MP4 URLs + subtitles.
- */
-
-import { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import {
   Play, Pause, Volume2, VolumeX, Maximize2, Minimize2,
-  Loader, AlertCircle, RefreshCw, ChevronDown, Subtitles,
+  Loader, AlertCircle, RefreshCw, ChevronDown, Subtitles
 } from 'lucide-react';
+import {
+  VylaClient,
+  VylaMeta,
+  VylaSource,
+  VylaSubtitle,
+  VylaErrorClass
+} from '../../lib/api/vyla-client';
 
-const VYLA_BASE = 'https://missourimonster-vyla.hf.space';
-
-// ─── Types ───────────────────────────────────────────────────────────────────
-
-interface VylaMeta {
-  id: number;
-  title: string;
-  release_date?: string;
-  runtime?: number;
-  vote_average?: number;
+export interface VylaPlayerHandle {
+  play: () => void;
+  pause: () => void;
+  seekTo: (time: number) => void;
+  getCurrentTime: () => number;
+  isPlaying: () => boolean;
 }
 
-interface VylaSource {
-  source: string;
-  label: string;
-  url: string;
-}
-
-interface VylaSubtitle {
-  label: string;
-  file: string;
-  type: 'vtt' | 'srt';
-  source: string;
-}
-
-// ─── Props ───────────────────────────────────────────────────────────────────
-
-interface VylaPlayerProps {
+export interface VylaPlayerProps {
   id: string | number;
   type: 'movie' | 'tv';
   season?: number;
@@ -48,24 +29,44 @@ interface VylaPlayerProps {
   accentColor?: string;
   startAt?: number;
   onProgress?: (currentTime: number, duration: number) => void;
+  onReady?: () => void;
+  onPlay?: () => void;
+  onPause?: () => void;
+  onSeek?: (time: number) => void;
+  onTimeUpdate?: (time: number) => void;
 }
 
-// ─── Component ───────────────────────────────────────────────────────────────
+const MAX_QUEUE_SIZE = 20;
 
-export function VylaPlayer({
+export const VylaPlayer = forwardRef<VylaPlayerHandle, VylaPlayerProps>(({
   id, type, season, episode, accentColor = '007bff', startAt = 0, onProgress,
-}: VylaPlayerProps) {
+  onReady, onPlay: onPlayProp, onPause: onPauseProp, onSeek, onTimeUpdate: onTimeUpdateProp
+}, ref) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const hlsRef = useRef<any>(null);
+  const lastTimeUpdateRef = useRef<number>(startAt);
+  const streamId = useRef(0);
+
+  useImperativeHandle(ref, () => ({
+    play: () => { videoRef.current?.play().catch(() => {}); },
+    pause: () => { videoRef.current?.pause(); },
+    seekTo: (time) => {
+      if (videoRef.current && Math.abs(videoRef.current.currentTime - time) > 0.5) {
+        lastTimeUpdateRef.current = time;
+        videoRef.current.currentTime = time;
+      }
+    },
+    getCurrentTime: () => videoRef.current?.currentTime || 0,
+    isPlaying: () => !videoRef.current?.paused,
+  }), []);
 
   const [sources, setSources] = useState<VylaSource[]>([]);
   const [subtitles, setSubtitles] = useState<VylaSubtitle[]>([]);
   const [meta, setMeta] = useState<VylaMeta | null>(null);
   const [activeSourceIdx, setActiveSourceIdx] = useState(0);
   const [activeSubtitle, setActiveSubtitle] = useState<string | null>(null);
-
   const [loading, setLoading] = useState(true);
   const [sourceCount, setSourceCount] = useState(0);
   const [done, setDone] = useState(false);
@@ -82,24 +83,43 @@ export function VylaPlayer({
   const [showSubMenu, setShowSubMenu] = useState(false);
   const controlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // ── Build SSE endpoint ──────────────────────────────────────────────────────
-  const sseUrl = type === 'movie'
-    ? `${VYLA_BASE}/movie?id=${id}`
-    : `${VYLA_BASE}/tv?id=${id}&season=${season || 1}&episode=${episode || 1}`;
 
-  // ── Load Hls.js dynamically (client-side only) ──────────────────────────────
-  const loadHls = useCallback(async (url: string) => {
+
+  const switchSource = useCallback((idx: number) => {
+    const src = sources[idx];
+    if (!src) return;
+    setActiveSourceIdx(idx);
+    setError(null);
+    loadHls(src.url, streamId.current);
+  }, [sources, loadHls]);
+
+  const handlePlaybackError = useCallback((errClass: VylaErrorClass) => {
+    const { nextIdx } = VylaClient.handleRetries(sources, activeSourceIdx, errClass);
+    
+    setActiveSourceIdx(prev => {
+        if (nextIdx !== -1) {
+            setTimeout(() => switchSource(nextIdx), 0);
+            return nextIdx;
+        }
+        setError('All sources failed. Try refreshing.');
+        return prev;
+    });
+  }, [sources, activeSourceIdx, switchSource]);
+
+  const loadHls = useCallback(async (url: string, currentId: number) => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Destroy previous instance
     if (hlsRef.current) {
+      hlsRef.current.stopLoad();
+      hlsRef.current.detachMedia();
       hlsRef.current.destroy();
       hlsRef.current = null;
     }
 
+    if (streamId.current !== currentId) return;
+
     if (url.includes('.m3u8') || url.includes('/api?url=')) {
-      // HLS source — use hls.js
       try {
         const HlsModule = await import('hls.js');
         const Hls = HlsModule.default;
@@ -109,37 +129,27 @@ export function VylaPlayer({
           hls.loadSource(url);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            if (streamId.current !== currentId) return;
             if (startAt > 0) video.currentTime = startAt;
             video.play().catch(() => {});
           });
           hls.on(Hls.Events.ERROR, (_: unknown, data: { fatal: boolean; type: string }) => {
+            if (streamId.current !== currentId) return;
             if (data.fatal) {
-              setError(`HLS error: ${data.type}`);
+              handlePlaybackError('PlaybackError');
             }
           });
           return;
         }
-      } catch {
-        // hls.js not available — fall through to native
-      }
+      } catch { }
     }
 
-    // MP4 or native HLS (Safari)
+    if (streamId.current !== currentId) return;
     video.src = url;
     if (startAt > 0) video.currentTime = startAt;
     video.play().catch(() => {});
-  }, [startAt]);
+  }, [startAt, handlePlaybackError]);
 
-  // ── Switch to a specific source ──────────────────────────────────────────────
-  const switchSource = useCallback((idx: number) => {
-    const src = sources[idx];
-    if (!src) return;
-    setActiveSourceIdx(idx);
-    setError(null);
-    loadHls(src.url);
-  }, [sources, loadHls]);
-
-  // ── Open SSE stream ──────────────────────────────────────────────────────────
   const openStream = useCallback(() => {
     setSources([]);
     setSubtitles([]);
@@ -150,92 +160,109 @@ export function VylaPlayer({
     setSourceCount(0);
     setActiveSourceIdx(0);
 
-    const es = new EventSource(sseUrl);
-    let firstSource = true;
+    const currentId = ++streamId.current;
+    const controller = new AbortController();
 
-    es.onmessage = (ev) => {
-      try {
-        const payload = JSON.parse(ev.data as string) as {
-          type: string;
-          meta?: VylaMeta;
-          subtitles?: VylaSubtitle[];
-          source?: VylaSource;
-          total?: number;
-        };
+    const fetchStream = async () => {
+        try {
+            const tmdbIdStr = id.toString();
+            const generator = type === 'movie' 
+                ? VylaClient.streamMovie(tmdbIdStr, controller.signal)
+                : VylaClient.streamTV(tmdbIdStr, season || 1, episode || 1, controller.signal);
+            
+            let firstSource = true;
 
-        if (payload.type === 'meta') {
-          if (payload.meta) setMeta(payload.meta);
-          if (payload.subtitles?.length) setSubtitles(payload.subtitles);
-        }
+            for await (const payload of generator) {
+                if (streamId.current !== currentId) break;
 
-        if (payload.type === 'source' && payload.source) {
-          setSources((prev) => [...prev, payload.source!]);
-          setSourceCount((c) => c + 1);
-          setLoading(false);
-          // Auto-load first working source
-          if (firstSource) {
-            firstSource = false;
-            loadHls(payload.source.url);
-          }
-        }
+                if (payload.type === 'meta') {
+                    if (payload.meta) setMeta(payload.meta as VylaMeta);
+                    if (payload.subtitles?.length) setSubtitles(payload.subtitles);
+                }
 
-        if (payload.type === 'done') {
-          setDone(true);
-          es.close();
-          if (sourceCount === 0 && !firstSource === false) {
-            setError('No working sources found for this title.');
+                if (payload.type === 'source' && payload.source) {
+                    setSources(prev => {
+                        if (prev.find(s => s.source === payload.source.source && s.url === payload.source.url)) {
+                            return prev;
+                        }
+                        const next = [...prev, payload.source];
+                        return VylaClient.rankSources(next).slice(0, MAX_QUEUE_SIZE);
+                    });
+                    setSourceCount(c => c + 1);
+                    setLoading(false);
+
+                    if (firstSource) {
+                        firstSource = false;
+                        loadHls(payload.source.url, currentId);
+                    }
+                }
+
+                if (payload.type === 'done') {
+                    setDone(true);
+                    if (sourceCount === 0 && !firstSource === false) {
+                        setError('No working sources found for this title.');
+                        setLoading(false);
+                    }
+                }
+            }
+        } catch (err: unknown) {
+            const e = err as Error;
+            if (streamId.current !== currentId) return;
+            if (e.name === 'AbortError') return;
             setLoading(false);
-          }
+            if (sourceCount === 0) {
+                setError(e.message || 'Could not connect to Vyla API.');
+            }
         }
-      } catch { /* malformed event — skip */ }
     };
 
-    es.onerror = () => {
-      es.close();
-      setLoading(false);
-      if (sources.length === 0) {
-        setError('Could not connect to Vyla API. Try another server.');
-      }
+    fetchStream();
+
+    return () => {
+        controller.abort();
     };
+  }, [id, type, season, episode, loadHls, sourceCount]);
 
-    return () => es.close();
-  }, [sseUrl, loadHls, sourceCount, sources.length]);
-
-  // ── Start stream on mount ────────────────────────────────────────────────────
   useEffect(() => {
     const cleanup = openStream();
     return () => {
-      cleanup?.();
-      if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
+      cleanup();
+      if (hlsRef.current) {
+        hlsRef.current.stopLoad();
+        hlsRef.current.detachMedia();
+        hlsRef.current.destroy();
+        hlsRef.current = null;
+      }
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, type, season, episode]);
+  }, [openStream]);
 
-  // ── Video event listeners ────────────────────────────────────────────────────
+
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const onPlay = () => setPlaying(true);
-    const onPause = () => setPlaying(false);
+    const onPlay = () => { setPlaying(true); onPlayProp?.(); };
+    const onPause = () => { setPlaying(false); onPauseProp?.(); };
     const onTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-      onProgress?.(video.currentTime, video.duration || 0);
+      const v = videoRef.current;
+      if (!v) return;
+
+      if (Math.abs(v.currentTime - lastTimeUpdateRef.current) > 2.0) {
+        onSeek?.(v.currentTime);
+      }
+      lastTimeUpdateRef.current = v.currentTime;
+
+      setCurrentTime(v.currentTime);
+      onProgress?.(v.currentTime, v.duration || 0);
+      onTimeUpdateProp?.(v.currentTime);
     };
     const onDurationChange = () => setDuration(video.duration || 0);
     const onVolumeChange = () => { setVolume(video.volume); setMuted(video.muted); };
     const onError = () => {
-      // Try next source automatically
-      setActiveSourceIdx((prev) => {
-        const next = prev + 1;
-        if (next < sources.length) {
-          switchSource(next);
-          return next;
-        }
-        setError('All sources failed. Try refreshing.');
-        return prev;
-      });
+        handlePlaybackError('PlaybackError');
     };
+    const onCanPlay = () => onReady?.();
 
     video.addEventListener('play', onPlay);
     video.addEventListener('pause', onPause);
@@ -243,6 +270,7 @@ export function VylaPlayer({
     video.addEventListener('durationchange', onDurationChange);
     video.addEventListener('volumechange', onVolumeChange);
     video.addEventListener('error', onError);
+    video.addEventListener('canplay', onCanPlay);
     return () => {
       video.removeEventListener('play', onPlay);
       video.removeEventListener('pause', onPause);
@@ -250,24 +278,22 @@ export function VylaPlayer({
       video.removeEventListener('durationchange', onDurationChange);
       video.removeEventListener('volumechange', onVolumeChange);
       video.removeEventListener('error', onError);
+      video.removeEventListener('canplay', onCanPlay);
     };
-  }, [sources, switchSource, onProgress]);
+  }, [handlePlaybackError, onProgress, onPlayProp, onPauseProp, onSeek, onTimeUpdateProp, onReady]);
 
-  // ── Fullscreen listener ──────────────────────────────────────────────────────
   useEffect(() => {
     const onChange = () => setFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', onChange);
     return () => document.removeEventListener('fullscreenchange', onChange);
   }, []);
 
-  // ── Controls auto-hide ───────────────────────────────────────────────────────
   const resetControlsTimer = useCallback(() => {
     setShowControls(true);
     if (controlsTimerRef.current) clearTimeout(controlsTimerRef.current);
     controlsTimerRef.current = setTimeout(() => setShowControls(false), 3000);
   }, []);
 
-  // ── Helpers ──────────────────────────────────────────────────────────────────
   const togglePlay = () => {
     const v = videoRef.current;
     if (!v) return;
@@ -309,8 +335,6 @@ export function VylaPlayer({
     return `${m}:${sec}`;
   };
 
-  // ─── Render ────────────────────────────────────────────────────────────────
-
   return (
     <div
       ref={containerRef}
@@ -318,13 +342,11 @@ export function VylaPlayer({
       onMouseMove={resetControlsTimer}
       onClick={resetControlsTimer}
     >
-      {/* Native video element */}
       <video
         ref={videoRef}
         className="w-full h-full object-contain"
         playsInline
       >
-        {/* Active subtitle track */}
         {activeSubtitle && (
           <track
             kind="subtitles"
@@ -334,7 +356,6 @@ export function VylaPlayer({
         )}
       </video>
 
-      {/* Loading overlay */}
       {loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 gap-3">
           <Loader className="w-10 h-10 animate-spin text-white" />
@@ -347,7 +368,6 @@ export function VylaPlayer({
         </div>
       )}
 
-      {/* Error overlay */}
       {error && !loading && (
         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/90 z-20 gap-4 p-6">
           <AlertCircle className="w-10 h-10 text-red-400" />
@@ -362,7 +382,6 @@ export function VylaPlayer({
         </div>
       )}
 
-      {/* Source badge — top left */}
       {!loading && sources.length > 0 && (
         <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
           <span
@@ -379,14 +398,12 @@ export function VylaPlayer({
         </div>
       )}
 
-      {/* Controls overlay — only show when video has loaded and has a known duration */}
       {!loading && !error && duration > 0 && (
       <div
         className={`absolute inset-x-0 bottom-0 z-30 transition-opacity duration-300 ${showControls || !playing ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         <div className="bg-gradient-to-t from-black/90 via-black/40 to-transparent px-4 pt-8 pb-4 space-y-2">
 
-          {/* Seek bar */}
           <input
             type="range"
             min={0}
@@ -398,10 +415,8 @@ export function VylaPlayer({
             style={{ accentColor: `#${accentColor}` }}
           />
 
-          {/* Bottom controls row */}
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              {/* Play/Pause */}
               <button onClick={togglePlay} className="text-white hover:opacity-80 transition p-1">
                 {playing
                   ? <Pause className="w-5 h-5 fill-white" />
@@ -409,7 +424,6 @@ export function VylaPlayer({
                 }
               </button>
 
-              {/* Volume */}
               <div className="flex items-center gap-1.5">
                 <button onClick={toggleMute} className="text-white hover:opacity-80 transition p-1">
                   {muted || volume === 0
@@ -429,14 +443,12 @@ export function VylaPlayer({
                 />
               </div>
 
-              {/* Time */}
               <span className="text-white text-[11px] font-mono font-semibold tabular-nums">
                 {fmt(currentTime)} / {fmt(duration)}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Source switcher */}
               {sources.length > 1 && (
                 <div className="relative">
                   <button
@@ -450,7 +462,7 @@ export function VylaPlayer({
                     <div className="absolute bottom-8 right-0 bg-slate-900 border border-slate-700 rounded-xl overflow-hidden shadow-xl min-w-[150px] z-40">
                       {sources.map((src, i) => (
                         <button
-                          key={src.source}
+                          key={`${src.source}-${i}`}
                           onClick={() => { switchSource(i); setShowSourceMenu(false); }}
                           className={`w-full text-left px-3 py-2 text-xs font-semibold transition ${
                             i === activeSourceIdx
@@ -466,7 +478,6 @@ export function VylaPlayer({
                 </div>
               )}
 
-              {/* Subtitle switcher */}
               {subtitles.length > 0 && (
                 <div className="relative">
                   <button
@@ -498,12 +509,11 @@ export function VylaPlayer({
                 </div>
               )}
 
-              {/* Fullscreen */}
               <button onClick={toggleFullscreen} className="text-white hover:opacity-80 transition p-1">
                 {fullscreen
                   ? <Minimize2 className="w-4 h-4" />
                   : <Maximize2 className="w-4 h-4" />
-                }
+              }
               </button>
             </div>
           </div>
@@ -512,4 +522,6 @@ export function VylaPlayer({
       )}
     </div>
   );
-}
+});
+
+VylaPlayer.displayName = 'VylaPlayer';

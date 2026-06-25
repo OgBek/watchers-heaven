@@ -1,10 +1,11 @@
 'use client';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { ArrowLeft, Maximize2, Minimize2, Play, RefreshCw, SkipForward, ArrowLeftCircle, RotateCcw, X, Download } from 'lucide-react';
+import { ArrowLeft, Maximize2, Minimize2, Play, RefreshCw, SkipForward, ArrowLeftCircle, RotateCcw, X, Download, Users } from 'lucide-react';
 import { ApiGateway } from '@/lib/api/gateway';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DownloadModal } from '@/components/download/DownloadModal';
 import { VylaPlayer } from '@/components/player/VylaPlayer';
+import { supabase } from '@/lib/supabase/client';
 
 type Provider = 'vyla' | 'vidsync' | 'vidrock' | 'videasy' | 'vidfast' | 'vidlink' | 'vidsrc' | 'vidsrcto' | 'vidking' | 'screenscape' | 'toustream' | 'rivestream';
 
@@ -30,7 +31,44 @@ export default function WatchPage() {
   const [showResumePrompt, setShowResumePrompt] = useState(false);
   const [initialProgressApplied, setInitialProgressApplied] = useState(false);
   const [accentColor, setAccentColor] = useState<string>('007bff');
+  const [isCreatingParty, setIsCreatingParty] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  const handleCreateParty = async () => {
+    if (provider !== 'vyla') return;
+    setIsCreatingParty(true);
+    try {
+      // 1. Ensure user has a session to create the party
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) throw new Error('Failed to authenticate anonymously');
+      }
+
+      const movieTitle = isTv ? `TV Show #${id} (S${season}E${episode})` : `Movie #${id}`;
+      
+      const res = await fetch('/api/party', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          movieId: id,
+          movieTitle,
+          mediaType: isTv ? 'tv' : 'movie',
+          season,
+          episode,
+          provider: 'vyla'
+        })
+      });
+      
+      if (!res.ok) throw new Error('Failed to create party');
+      const data = await res.json();
+      router.push(`/${locale}/party/${data.roomCode}`);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to create Watch Party');
+      setIsCreatingParty(false);
+    }
+  };
 
   // AniList ID — resolved once for anime content so Videasy gets the right ID
   const [aniListId, setAniListId] = useState<number | null>(null);
@@ -597,6 +635,17 @@ export default function WatchPage() {
 
         {/* Right Side: Download, Refresh & Fullscreen */}
         <div className="flex items-center gap-2 self-end md:self-auto">
+          {provider === 'vyla' && (
+            <button
+              onClick={handleCreateParty}
+              disabled={isCreatingParty}
+              className="flex items-center gap-1.5 text-white px-3 py-2 bg-blue-600/90 hover:bg-blue-500 rounded-xl transition-colors text-xs font-semibold disabled:opacity-50"
+              title="Watch Together"
+            >
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">{isCreatingParty ? 'Creating...' : 'Watch Party'}</span>
+            </button>
+          )}
           <button
             onClick={() => setShowDownload(true)}
             className="flex items-center gap-1.5 text-slate-400 hover:text-white px-3 py-2 bg-slate-800/80 rounded-xl transition-colors text-xs font-semibold"

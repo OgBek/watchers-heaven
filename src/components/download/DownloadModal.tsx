@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Download, X, Film, Tv, Loader, AlertCircle } from 'lucide-react';
+import { VylaClient } from '../../lib/api/vyla-client';
 
 export type DownloadQuality = '360p' | '480p' | '720p' | '1080p' | '4K';
 
@@ -38,7 +39,7 @@ function qualityColor(q: string): string {
   return QUALITY_COLORS[norm] || QUALITY_COLORS['Unknown'];
 }
 
-const VYLA_BASE = 'https://missourimonster-vyla.hf.space';
+
 
 export function DownloadModal({
   id, title, type, season, episode, onClose,
@@ -50,37 +51,38 @@ export function DownloadModal({
   const isTv = type === 'tv' && season !== undefined;
 
   useEffect(() => {
+    const controller = new AbortController();
+    const { signal } = controller;
+
     async function fetchLinks() {
       setLoading(true);
       setError(null);
       try {
-        // Vyla /downloads endpoint — correct path pattern: /downloads/movie/:id or /downloads/tv/:id/:s/:e
-        let url: string;
-        if (type === 'tv' && season !== undefined && episode !== undefined) {
-          url = `${VYLA_BASE}/downloads/tv/${id}/${season}/${episode}`;
-        } else {
-          url = `${VYLA_BASE}/downloads/movie/${id}`;
-        }
-
-        const res = await fetch(url);
-        if (!res.ok) throw new Error(`Download API returned ${res.status}`);
-        const data = await res.json() as { downloads?: VylaDownload[] } | VylaDownload[];
-
-        const downloads: VylaDownload[] = Array.isArray(data)
-          ? data
-          : (data as { downloads?: VylaDownload[] }).downloads ?? [];
-
-        // Filter only active links
-        const active = downloads.filter((d) => d.active !== false);
-        if (active.length === 0) throw new Error('No download links available');
+        const active = await VylaClient.getDownloads(type, id, season, episode, signal);
         setLinks(active);
-      } catch (e) {
+      } catch (err: unknown) {
+        const e = err as Error;
+        if (e.name === 'AbortError') return;
         setError(e instanceof Error ? e.message : 'Failed to fetch download links');
       } finally {
-        setLoading(false);
+        if (!signal.aborted) setLoading(false);
       }
     }
     fetchLinks();
+
+    const onOnline = () => controller.abort();
+    const onPageShow = (e: PageTransitionEvent) => {
+        if (e.persisted) controller.abort();
+    };
+
+    window.addEventListener('online', onOnline);
+    window.addEventListener('pageshow', onPageShow);
+
+    return () => {
+        controller.abort();
+        window.removeEventListener('online', onOnline);
+        window.removeEventListener('pageshow', onPageShow);
+    };
   }, [id, type, season, episode]);
 
   return (

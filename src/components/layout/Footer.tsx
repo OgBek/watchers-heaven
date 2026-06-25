@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Github, Code, HelpCircle, ChevronDown, ExternalLink } from 'lucide-react';
+import { Code, Code2, HelpCircle, ChevronDown, ExternalLink } from 'lucide-react';
 
 export function Footer() {
   const [isApiOpen, setIsApiOpen] = useState(false);
@@ -28,7 +28,7 @@ export function Footer() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-accent-blue dark:hover:text-blue-400 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-100 dark:border-slate-800 smooth-transition"
             >
-              <Github className="w-4 h-4" />
+              <Code2 className="w-4 h-4" />
               <span>GitHub Repository</span>
               <ExternalLink className="w-3 h-3 opacity-60" />
             </a>
