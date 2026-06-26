@@ -248,7 +248,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 |----------|----------|-------------|
 | `TMDB_API_KEY` | ✅ | Your TMDB v3 API key from [themoviedb.org](https://www.themoviedb.org/settings/api) |
 | `VYLA_API_KEY` | ❌ | Your Vyla API key for standard/partner tier streaming (optional, falls back to public tier) |
-
+| `NEXT_PUBLIC_SUPABASE_URL` | ✅ |Your supabse project url  for watchparty integration |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | ✅ |Your supabse API key for watchparty integration |
 > AniList does not require an API key — it's a public GraphQL API with a 90 req/min rate limit.
 
 ### Available Scripts
